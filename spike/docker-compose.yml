@@ -1,0 +1,11 @@
+# Spike only: verify what metric/log names and labels actually land in
+# Prometheus and Loki when a Node app exports OTLP to grafana/otel-lgtm.
+services:
+  lgtm:
+    image: grafana/otel-lgtm:0.40.0   # pinned; dev/demo image, not for production
+    ports:
+      - "3000:3000"   # Grafana (for eyeballing only)
+      - "4318:4318"   # OTLP HTTP in
+      - "9090:9090"   # Prometheus HTTP API
+      - "3100:3100"   # Loki HTTP API -- NOT published by upstream run script; verifying
+    mem_limit: 2g
