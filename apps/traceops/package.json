@@ -1,0 +1,30 @@
+{
+  "name": "@traceops/app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "smoke:groq": "tsx scripts/groq-smoke.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "private": "true",
+  "dependencies": {
+    "@traceops/contracts": "file:../../packages/contracts",
+    "groq-sdk": "~1.6.0",
+    "zod": "~4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "~26.6.6",
+    "tsx": "~4.23.15",
+    "typescript": "~7.0.2",
+    "vitest": "~5.1.0"
+  }
+}
