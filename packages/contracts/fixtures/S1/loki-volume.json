@@ -1,0 +1,274 @@
+{
+ "status": "success",
+ "data": {
+  "resultType": "matrix",
+  "result": [
+   {
+    "metric": {
+     "severity_text": "error"
+    },
+    "values": [
+     [
+      1794853680,
+      "791"
+     ],
+     [
+      1794853740,
+      "1340"
+     ],
+     [
+      1794853800,
+      "359"
+     ],
+     [
+      1794853860,
+      "121"
+     ]
+    ]
+   },
+   {
+    "metric": {
+     "severity_text": "info"
+    },
+    "values": [
+     [
+      1794853440,
+      "539"
+     ],
+     [
+      1794853500,
+      "1708"
+     ],
+     [
+      1794853560,
+      "1730"
+     ],
+     [
+      1794853620,
+      "1769"
+     ],
+     [
+      1794853680,
+      "911"
+     ]
+    ]
+   },
+   {
+    "metric": {
+     "severity_text": "warn"
+    },
+    "values": [
+     [
+      1794853440,
+      "3"
+     ],
+     [
+      1794853500,
+      "9"
+     ],
+     [
+      1794853560,
+      "6"
+     ],
+     [
+      1794853620,
+      "6"
+     ],
+     [
+      1794853680,
+      "2"
+     ]
+    ]
+   }
+  ],
+  "stats": {
+   "summary": {
+    "bytesProcessedPerSecond": 40227646,
+    "linesProcessedPerSecond": 69280,
+    "totalBytesProcessed": 5396589,
+    "totalLinesProcessed": 9294,
+    "execTime": 0.13415125,
+    "queueTime": 0,
+    "subqueries": 0,
+    "totalEntriesReturned": 3,
+    "splits": 0,
+    "shards": 1,
+    "totalPostFilterLines": 9294,
+    "totalStructuredMetadataBytesProcessed": 5068846
+   },
+   "querier": {
+    "store": {
+     "totalChunksRef": 0,
+     "totalChunksDownloaded": 0,
+     "chunksDownloadTime": 0,
+     "queryReferencedStructuredMetadata": false,
+     "queryUsedV2Engine": false,
+     "chunk": {
+      "headChunkBytes": 0,
+      "headChunkLines": 0,
+      "decompressedBytes": 0,
+      "decompressedLines": 0,
+      "compressedBytes": 0,
+      "totalDuplicates": 0,
+      "postFilterLines": 0,
+      "headChunkStructuredMetadataBytes": 0,
+      "decompressedStructuredMetadataBytes": 0
+     },
+     "chunkRefsFetchTime": 0,
+     "congestionControlLatency": 0,
+     "pipelineWrapperFilteredLines": 0,
+     "dataobj": {
+      "prePredicateDecompressedRows": 0,
+      "prePredicateDecompressedBytes": 0,
+      "prePredicateDecompressedStructuredMetadataBytes": 0,
+      "postPredicateRows": 0,
+      "postPredicateDecompressedBytes": 0,
+      "postPredicateStructuredMetadataBytes": 0,
+      "postFilterRows": 0,
+      "pagesScanned": 0,
+      "pagesDownloaded": 0,
+      "pagesDownloadedBytes": 0,
+      "pageBatches": 0,
+      "totalRowsAvailable": 0,
+      "totalPageDownloadTime": 0
+     }
+    },
+    "querierExecTime": 0.182136916
+   },
+   "ingester": {
+    "totalReached": 1,
+    "totalChunksMatched": 2,
+    "totalBatches": 20,
+    "totalLinesSent": 9294,
+    "store": {
+     "totalChunksRef": 0,
+     "totalChunksDownloaded": 0,
+     "chunksDownloadTime": 0,
+     "queryReferencedStructuredMetadata": true,
+     "queryUsedV2Engine": false,
+     "chunk": {
+      "headChunkBytes": 100796,
+      "headChunkLines": 411,
+      "decompressedBytes": 5295793,
+      "decompressedLines": 8883,
+      "compressedBytes": 123850,
+      "totalDuplicates": 0,
+      "postFilterLines": 9294,
+      "headChunkStructuredMetadataBytes": 94976,
+      "decompressedStructuredMetadataBytes": 4973870
+     },
+     "chunkRefsFetchTime": 109917,
+     "congestionControlLatency": 0,
+     "pipelineWrapperFilteredLines": 0,
+     "dataobj": {
+      "prePredicateDecompressedRows": 0,
+      "prePredicateDecompressedBytes": 0,
+      "prePredicateDecompressedStructuredMetadataBytes": 0,
+      "postPredicateRows": 0,
+      "postPredicateDecompressedBytes": 0,
+      "postPredicateStructuredMetadataBytes": 0,
+      "postFilterRows": 0,
+      "pagesScanned": 0,
+      "pagesDownloaded": 0,
+      "pagesDownloadedBytes": 0,
+      "pageBatches": 0,
+      "totalRowsAvailable": 0,
+      "totalPageDownloadTime": 0
+     }
+    },
+    "recvWaitTime": 0.064168665
+   },
+   "cache": {
+    "chunk": {
+     "entriesFound": 0,
+     "entriesRequested": 0,
+     "entriesStored": 0,
+     "bytesReceived": 0,
+     "bytesSent": 0,
+     "requests": 0,
+     "downloadTime": 0,
+     "queryLengthServed": 0
+    },
+    "index": {
+     "entriesFound": 0,
+     "entriesRequested": 0,
+     "entriesStored": 0,
+     "bytesReceived": 0,
+     "bytesSent": 0,
+     "requests": 0,
+     "downloadTime": 0,
+     "queryLengthServed": 0
+    },
+    "result": {
+     "entriesFound": 0,
+     "entriesRequested": 0,
+     "entriesStored": 0,
+     "bytesReceived": 0,
+     "bytesSent": 0,
+     "requests": 0,
+     "downloadTime": 0,
+     "queryLengthServed": 0
+    },
+    "statsResult": {
+     "entriesFound": 0,
+     "entriesRequested": 0,
+     "entriesStored": 0,
+     "bytesReceived": 0,
+     "bytesSent": 0,
+     "requests": 0,
+     "downloadTime": 0,
+     "queryLengthServed": 0
+    },
+    "volumeResult": {
+     "entriesFound": 0,
+     "entriesRequested": 0,
+     "entriesStored": 0,
+     "bytesReceived": 0,
+     "bytesSent": 0,
+     "requests": 0,
+     "downloadTime": 0,
+     "queryLengthServed": 0
+    },
+    "seriesResult": {
+     "entriesFound": 0,
+     "entriesRequested": 0,
+     "entriesStored": 0,
+     "bytesReceived": 0,
+     "bytesSent": 0,
+     "requests": 0,
+     "downloadTime": 0,
+     "queryLengthServed": 0
+    },
+    "labelResult": {
+     "entriesFound": 0,
+     "entriesRequested": 0,
+     "entriesStored": 0,
+     "bytesReceived": 0,
+     "bytesSent": 0,
+     "requests": 0,
+     "downloadTime": 0,
+     "queryLengthServed": 0
+    },
+    "instantMetricResult": {
+     "entriesFound": 0,
+     "entriesRequested": 0,
+     "entriesStored": 0,
+     "bytesReceived": 0,
+     "bytesSent": 0,
+     "requests": 0,
+     "downloadTime": 0,
+     "queryLengthServed": 0
+    }
+   },
+   "index": {
+    "totalChunks": 0,
+    "postFilterChunks": 0,
+    "shardsDuration": 0,
+    "usedBloomFilters": false,
+    "totalStreams": 0,
+    "chunkRefsLookupTime": 0,
+    "bloomFilterTime": 0
+   }
+  }
+ }
+}

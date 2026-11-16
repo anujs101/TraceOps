@@ -9,3 +9,8 @@ services:
       - "9090:9090"   # Prometheus HTTP API
       - "3100:3100"   # Loki HTTP API -- NOT published by upstream run script; verifying
     mem_limit: 2g
+  postgres:                           # pool-lab only
+    image: postgres:latest            # local image, PG 18; pin a tag in the real compose
+    environment: { POSTGRES_USER: lab, POSTGRES_PASSWORD: lab, POSTGRES_DB: lab }
+    ports: ["5432:5432"]
+    mem_limit: 256m

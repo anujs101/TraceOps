@@ -1,0 +1,11 @@
+{
+ "scenario": "S2",
+ "service": "demo-service",
+ "start": "2026-11-16T18:31:06.000Z",
+ "end": "2026-11-16T18:36:04.000Z",
+ "deploy_at": "2026-11-16T18:32:37.000Z",
+ "backend": "grafana/otel-lgtm:0.40.0",
+ "step_s": 15,
+ "captured_by": "spike/pool-lab/capture-fixtures.sh",
+ "notes": "FAULT=cpu_burn CPU_ITER=300000 at deploy_at; load 30 rps until T_DROP=2026-11-16T18:34:43.000Z then 6 rps. CAVEAT: baseline (start..deploy_at) overlaps the tail of the S1 run; 1m rates and 5m gauge lookback carry S1 values. Use deploy_at+60s.. for S2 signals."
+}

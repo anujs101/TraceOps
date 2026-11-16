@@ -1,0 +1,11 @@
+{
+ "scenario": "S1",
+ "service": "demo-service",
+ "start": "2026-11-16T18:23:38.000Z",
+ "end": "2026-11-16T18:30:39.000Z",
+ "deploy_at": "2026-11-16T18:25:39.000Z",
+ "backend": "grafana/otel-lgtm:0.40.0",
+ "step_s": 15,
+ "captured_by": "spike/pool-lab/capture-fixtures.sh",
+ "notes": "clean run; FAULT=pool_leak at deploy_at; load 30 rps until T_DROP=2026-11-16T18:28:47.000Z then 6 rps"
+}

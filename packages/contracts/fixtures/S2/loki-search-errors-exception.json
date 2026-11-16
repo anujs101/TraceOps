@@ -1,0 +1,579 @@
+{
+ "status": "success",
+ "data": {
+  "resultType": "streams",
+  "encodingFlags": [
+   "categorize-labels"
+  ],
+  "result": [
+   {
+    "stream": {
+     "deployment_environment_name": "lab",
+     "service_instance_id": "<scrubbed>",
+     "service_name": "demo-service"
+    },
+    "values": [
+     [
+      "1794854139246000000",
+      "request failed",
+      {
+       "structuredMetadata": {
+        "detected_level": "error",
+        "exception_message": "Connection terminated due to connection timeout: Connection terminated unexpectedly",
+        "exception_stacktrace": "<scrubbed>",
+        "exception_type": "Error",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794854139246000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/orders",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.1",
+        "severity_number": "17",
+        "severity_text": "error",
+        "span_id": "a7b30359f3d7b3da",
+        "status": "500",
+        "trace_id": "4d96e833c38db2fbb6f9d27137d69e85"
+       }
+      }
+     ],
+     [
+      "1794854139240000000",
+      "request failed",
+      {
+       "structuredMetadata": {
+        "detected_level": "error",
+        "exception_message": "Connection terminated due to connection timeout: Connection terminated unexpectedly",
+        "exception_stacktrace": "<scrubbed>",
+        "exception_type": "Error",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794854139240000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/orders",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.1",
+        "severity_number": "17",
+        "severity_text": "error",
+        "span_id": "c4adb9e27aa2c781",
+        "status": "500",
+        "trace_id": "8dee4667a51fe2a4f9ab57a22acd16ec"
+       }
+      }
+     ],
+     [
+      "1794854139227000000",
+      "request failed",
+      {
+       "structuredMetadata": {
+        "detected_level": "error",
+        "exception_message": "Connection terminated due to connection timeout: Connection terminated unexpectedly",
+        "exception_stacktrace": "<scrubbed>",
+        "exception_type": "Error",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794854139227000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/products",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.1",
+        "severity_number": "17",
+        "severity_text": "error",
+        "span_id": "109a4bfad8a6dd4b",
+        "status": "500",
+        "trace_id": "27df17df53a141591d427ed27c280e65"
+       }
+      }
+     ],
+     [
+      "1794854138820000000",
+      "request failed",
+      {
+       "structuredMetadata": {
+        "detected_level": "error",
+        "exception_message": "Connection terminated due to connection timeout: Connection terminated unexpectedly",
+        "exception_stacktrace": "<scrubbed>",
+        "exception_type": "Error",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794854138820000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/products",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.1",
+        "severity_number": "17",
+        "severity_text": "error",
+        "span_id": "83686bb6b71cf0f2",
+        "status": "500",
+        "trace_id": "62a2b4ad12708b8fee9b953cc0f85a78"
+       }
+      }
+     ],
+     [
+      "1794854138618000000",
+      "request failed",
+      {
+       "structuredMetadata": {
+        "detected_level": "error",
+        "exception_message": "Connection terminated due to connection timeout: Connection terminated unexpectedly",
+        "exception_stacktrace": "<scrubbed>",
+        "exception_type": "Error",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794854138618000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/orders",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.1",
+        "severity_number": "17",
+        "severity_text": "error",
+        "span_id": "68784b16fd1a7d64",
+        "status": "500",
+        "trace_id": "49dba7b9c82a16f9e8531cd3fdbc89bb"
+       }
+      }
+     ],
+     [
+      "1794854138144000000",
+      "request failed",
+      {
+       "structuredMetadata": {
+        "detected_level": "error",
+        "exception_message": "Connection terminated due to connection timeout: Connection terminated unexpectedly",
+        "exception_stacktrace": "<scrubbed>",
+        "exception_type": "Error",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794854138144000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/products",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.1",
+        "severity_number": "17",
+        "severity_text": "error",
+        "span_id": "8541659b7df615ed",
+        "status": "500",
+        "trace_id": "1ffcddce181176f457412aa1de00a922"
+       }
+      }
+     ],
+     [
+      "1794854136875000000",
+      "request failed",
+      {
+       "structuredMetadata": {
+        "detected_level": "error",
+        "exception_message": "Connection terminated due to connection timeout: Connection terminated unexpectedly",
+        "exception_stacktrace": "<scrubbed>",
+        "exception_type": "Error",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794854136875000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/orders",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.1",
+        "severity_number": "17",
+        "severity_text": "error",
+        "span_id": "11b3f19f5e635064",
+        "status": "500",
+        "trace_id": "f8eac76eb5d81e2654b5583336f1cdaf"
+       }
+      }
+     ],
+     [
+      "1794854136868000000",
+      "request failed",
+      {
+       "structuredMetadata": {
+        "detected_level": "error",
+        "exception_message": "Connection terminated due to connection timeout: Connection terminated unexpectedly",
+        "exception_stacktrace": "<scrubbed>",
+        "exception_type": "Error",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794854136868000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/products",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.1",
+        "severity_number": "17",
+        "severity_text": "error",
+        "span_id": "45a451565b130f26",
+        "status": "500",
+        "trace_id": "5ae08e881bea74349cf931bbd98df6bd"
+       }
+      }
+     ],
+     [
+      "1794854136312000000",
+      "request failed",
+      {
+       "structuredMetadata": {
+        "detected_level": "error",
+        "exception_message": "Connection terminated due to connection timeout: Connection terminated unexpectedly",
+        "exception_stacktrace": "<scrubbed>",
+        "exception_type": "Error",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794854136312000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/products",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.1",
+        "severity_number": "17",
+        "severity_text": "error",
+        "span_id": "59c9f8454714a0ba",
+        "status": "500",
+        "trace_id": "bc236d45e6e2b43bb2ce95d0027ec8ac"
+       }
+      }
+     ],
+     [
+      "1794854135315000000",
+      "request failed",
+      {
+       "structuredMetadata": {
+        "detected_level": "error",
+        "exception_message": "Connection terminated due to connection timeout: Connection terminated unexpectedly",
+        "exception_stacktrace": "<scrubbed>",
+        "exception_type": "Error",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794854135315000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/products",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.1",
+        "severity_number": "17",
+        "severity_text": "error",
+        "span_id": "149cfee48fa6da42",
+        "status": "500",
+        "trace_id": "3c4ff14e30869b066b6286cf818dabb4"
+       }
+      }
+     ]
+    ]
+   }
+  ],
+  "stats": {
+   "summary": {
+    "bytesProcessedPerSecond": 33857496,
+    "linesProcessedPerSecond": 62187,
+    "totalBytesProcessed": 2785926,
+    "totalLinesProcessed": 5117,
+    "execTime": 0.082284,
+    "queueTime": 0,
+    "subqueries": 0,
+    "totalEntriesReturned": 10,
+    "splits": 0,
+    "shards": 1,
+    "totalPostFilterLines": 10,
+    "totalStructuredMetadataBytesProcessed": 2608984
+   },
+   "querier": {
+    "store": {
+     "totalChunksRef": 0,
+     "totalChunksDownloaded": 0,
+     "chunksDownloadTime": 0,
+     "queryReferencedStructuredMetadata": false,
+     "queryUsedV2Engine": false,
+     "chunk": {
+      "headChunkBytes": 0,
+      "headChunkLines": 0,
+      "decompressedBytes": 0,
+      "decompressedLines": 0,
+      "compressedBytes": 0,
+      "totalDuplicates": 0,
+      "postFilterLines": 0,
+      "headChunkStructuredMetadataBytes": 0,
+      "decompressedStructuredMetadataBytes": 0
+     },
+     "chunkRefsFetchTime": 0,
+     "congestionControlLatency": 0,
+     "pipelineWrapperFilteredLines": 0,
+     "dataobj": {
+      "prePredicateDecompressedRows": 0,
+      "prePredicateDecompressedBytes": 0,
+      "prePredicateDecompressedStructuredMetadataBytes": 0,
+      "postPredicateRows": 0,
+      "postPredicateDecompressedBytes": 0,
+      "postPredicateStructuredMetadataBytes": 0,
+      "postFilterRows": 0,
+      "pagesScanned": 0,
+      "pagesDownloaded": 0,
+      "pagesDownloadedBytes": 0,
+      "pageBatches": 0,
+      "totalRowsAvailable": 0,
+      "totalPageDownloadTime": 0
+     }
+    },
+    "querierExecTime": 0.132789
+   },
+   "ingester": {
+    "totalReached": 1,
+    "totalChunksMatched": 2,
+    "totalBatches": 2,
+    "totalLinesSent": 10,
+    "store": {
+     "totalChunksRef": 0,
+     "totalChunksDownloaded": 0,
+     "chunksDownloadTime": 0,
+     "queryReferencedStructuredMetadata": true,
+     "queryUsedV2Engine": false,
+     "chunk": {
+      "headChunkBytes": 142926,
+      "headChunkLines": 613,
+      "decompressedBytes": 2643000,
+      "decompressedLines": 4504,
+      "compressedBytes": 59770,
+      "totalDuplicates": 0,
+      "postFilterLines": 10,
+      "headChunkStructuredMetadataBytes": 132544,
+      "decompressedStructuredMetadataBytes": 2476440
+     },
+     "chunkRefsFetchTime": 762458,
+     "congestionControlLatency": 0,
+     "pipelineWrapperFilteredLines": 0,
+     "dataobj": {
+      "prePredicateDecompressedRows": 0,
+      "prePredicateDecompressedBytes": 0,
+      "prePredicateDecompressedStructuredMetadataBytes": 0,
+      "postPredicateRows": 0,
+      "postPredicateDecompressedBytes": 0,
+      "postPredicateStructuredMetadataBytes": 0,
+      "postFilterRows": 0,
+      "pagesScanned": 0,
+      "pagesDownloaded": 0,
+      "pagesDownloadedBytes": 0,
+      "pageBatches": 0,
+      "totalRowsAvailable": 0,
+      "totalPageDownloadTime": 0
+     }
+    },
+    "recvWaitTime": 0.062237
+   },
+   "cache": {
+    "chunk": {
+     "entriesFound": 0,
+     "entriesRequested": 0,
+     "entriesStored": 0,
+     "bytesReceived": 0,
+     "bytesSent": 0,
+     "requests": 0,
+     "downloadTime": 0,
+     "queryLengthServed": 0
+    },
+    "index": {
+     "entriesFound": 0,
+     "entriesRequested": 0,
+     "entriesStored": 0,
+     "bytesReceived": 0,
+     "bytesSent": 0,
+     "requests": 0,
+     "downloadTime": 0,
+     "queryLengthServed": 0
+    },
+    "result": {
+     "entriesFound": 0,
+     "entriesRequested": 0,
+     "entriesStored": 0,
+     "bytesReceived": 0,
+     "bytesSent": 0,
+     "requests": 0,
+     "downloadTime": 0,
+     "queryLengthServed": 0
+    },
+    "statsResult": {
+     "entriesFound": 0,
+     "entriesRequested": 0,
+     "entriesStored": 0,
+     "bytesReceived": 0,
+     "bytesSent": 0,
+     "requests": 0,
+     "downloadTime": 0,
+     "queryLengthServed": 0
+    },
+    "volumeResult": {
+     "entriesFound": 0,
+     "entriesRequested": 0,
+     "entriesStored": 0,
+     "bytesReceived": 0,
+     "bytesSent": 0,
+     "requests": 0,
+     "downloadTime": 0,
+     "queryLengthServed": 0
+    },
+    "seriesResult": {
+     "entriesFound": 0,
+     "entriesRequested": 0,
+     "entriesStored": 0,
+     "bytesReceived": 0,
+     "bytesSent": 0,
+     "requests": 0,
+     "downloadTime": 0,
+     "queryLengthServed": 0
+    },
+    "labelResult": {
+     "entriesFound": 0,
+     "entriesRequested": 0,
+     "entriesStored": 0,
+     "bytesReceived": 0,
+     "bytesSent": 0,
+     "requests": 0,
+     "downloadTime": 0,
+     "queryLengthServed": 0
+    },
+    "instantMetricResult": {
+     "entriesFound": 0,
+     "entriesRequested": 0,
+     "entriesStored": 0,
+     "bytesReceived": 0,
+     "bytesSent": 0,
+     "requests": 0,
+     "downloadTime": 0,
+     "queryLengthServed": 0
+    }
+   },
+   "index": {
+    "totalChunks": 0,
+    "postFilterChunks": 0,
+    "shardsDuration": 0,
+    "usedBloomFilters": false,
+    "totalStreams": 0,
+    "chunkRefsLookupTime": 0,
+    "bloomFilterTime": 0
+   }
+  }
+ }
+}

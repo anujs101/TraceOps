@@ -1,0 +1,898 @@
+{
+ "status": "success",
+ "data": {
+  "resultType": "streams",
+  "encodingFlags": [
+   "categorize-labels"
+  ],
+  "result": [
+   {
+    "stream": {
+     "deployment_environment_name": "lab",
+     "service_instance_id": "<scrubbed>",
+     "service_name": "demo-service"
+    },
+    "values": [
+     [
+      "1794853538245000000",
+      "order rejected",
+      {
+       "structuredMetadata": {
+        "detected_level": "warn",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794853538245000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/orders",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.0",
+        "severity_number": "13",
+        "severity_text": "warn",
+        "span_id": "b0a1d9d6c2cdd3ea",
+        "status": "409",
+        "trace_id": "5301652b7d525bd7cb70bfca9618bc40"
+       }
+      }
+     ],
+     [
+      "1794853511501000000",
+      "order rejected",
+      {
+       "structuredMetadata": {
+        "detected_level": "warn",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794853511501000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/orders",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.0",
+        "severity_number": "13",
+        "severity_text": "warn",
+        "span_id": "677290a1d8001245",
+        "status": "409",
+        "trace_id": "e38cd7bf08539a4a622f9913695f5a06"
+       }
+      }
+     ],
+     [
+      "1794853510721000000",
+      "order rejected",
+      {
+       "structuredMetadata": {
+        "detected_level": "warn",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794853510721000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/orders",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.0",
+        "severity_number": "13",
+        "severity_text": "warn",
+        "span_id": "db48ab032e3e3579",
+        "status": "409",
+        "trace_id": "9f0fba46bce50baf54a758ee5851ff60"
+       }
+      }
+     ],
+     [
+      "1794853508972000000",
+      "order rejected",
+      {
+       "structuredMetadata": {
+        "detected_level": "warn",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794853508972000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/orders",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.0",
+        "severity_number": "13",
+        "severity_text": "warn",
+        "span_id": "6378f009cff034a6",
+        "status": "409",
+        "trace_id": "40321702f5c85e89dab438de635c9298"
+       }
+      }
+     ],
+     [
+      "1794853493877000000",
+      "order rejected",
+      {
+       "structuredMetadata": {
+        "detected_level": "warn",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794853493877000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/orders",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.0",
+        "severity_number": "13",
+        "severity_text": "warn",
+        "span_id": "e54c65b20bd50cc5",
+        "status": "409",
+        "trace_id": "be1c57bf82a2cf9bd07f79d99d9ec59e"
+       }
+      }
+     ],
+     [
+      "1794853491152000000",
+      "order rejected",
+      {
+       "structuredMetadata": {
+        "detected_level": "warn",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794853491152000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/orders",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.0",
+        "severity_number": "13",
+        "severity_text": "warn",
+        "span_id": "0e338775aaa7c267",
+        "status": "409",
+        "trace_id": "829c7d32b00f0a76a939813743972ab5"
+       }
+      }
+     ],
+     [
+      "1794853475339000000",
+      "order rejected",
+      {
+       "structuredMetadata": {
+        "detected_level": "warn",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794853475339000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/orders",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.0",
+        "severity_number": "13",
+        "severity_text": "warn",
+        "span_id": "c299822a84414247",
+        "status": "409",
+        "trace_id": "e905983a89568076c2e17f45608e3056"
+       }
+      }
+     ],
+     [
+      "1794853459680000000",
+      "order rejected",
+      {
+       "structuredMetadata": {
+        "detected_level": "warn",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794853459680000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/orders",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.0",
+        "severity_number": "13",
+        "severity_text": "warn",
+        "span_id": "0bc45e8e0eddd3dd",
+        "status": "409",
+        "trace_id": "5f6497adabc80d6d783909195efb5d1a"
+       }
+      }
+     ],
+     [
+      "1794853456203000000",
+      "order rejected",
+      {
+       "structuredMetadata": {
+        "detected_level": "warn",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794853456203000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/orders",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.0",
+        "severity_number": "13",
+        "severity_text": "warn",
+        "span_id": "11fd736fc30ec7b0",
+        "status": "409",
+        "trace_id": "d188c6380b10398257bc871a3c2252c1"
+       }
+      }
+     ],
+     [
+      "1794853446080000000",
+      "order rejected",
+      {
+       "structuredMetadata": {
+        "detected_level": "warn",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794853446080000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/orders",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.0",
+        "severity_number": "13",
+        "severity_text": "warn",
+        "span_id": "f87eb40748cafa94",
+        "status": "409",
+        "trace_id": "e9b378feb72bcf276a218469e48b4c73"
+       }
+      }
+     ]
+    ]
+   },
+   {
+    "stream": {
+     "deployment_environment_name": "lab",
+     "service_instance_id": "<scrubbed>",
+     "service_name": "demo-service"
+    },
+    "values": [
+     [
+      "1794853650781000000",
+      "order rejected",
+      {
+       "structuredMetadata": {
+        "detected_level": "warn",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794853650781000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/orders",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.1",
+        "severity_number": "13",
+        "severity_text": "warn",
+        "span_id": "3efc06b3e48e9e5e",
+        "status": "409",
+        "trace_id": "fbaa7e5f56aa4840d882f2eb9c99ee25"
+       }
+      }
+     ],
+     [
+      "1794853621744000000",
+      "order rejected",
+      {
+       "structuredMetadata": {
+        "detected_level": "warn",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794853621744000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/orders",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.1",
+        "severity_number": "13",
+        "severity_text": "warn",
+        "span_id": "34b419aab7221b08",
+        "status": "409",
+        "trace_id": "6c288d700c17a1d30aa61cd5cbcc539a"
+       }
+      }
+     ],
+     [
+      "1794853613708000000",
+      "order rejected",
+      {
+       "structuredMetadata": {
+        "detected_level": "warn",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794853613708000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/orders",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.1",
+        "severity_number": "13",
+        "severity_text": "warn",
+        "span_id": "4ab0507305d12bf2",
+        "status": "409",
+        "trace_id": "32932299a76136fd0c23033362029592"
+       }
+      }
+     ],
+     [
+      "1794853605765000000",
+      "order rejected",
+      {
+       "structuredMetadata": {
+        "detected_level": "warn",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794853605765000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/orders",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.1",
+        "severity_number": "13",
+        "severity_text": "warn",
+        "span_id": "5ff3dabe17f519d3",
+        "status": "409",
+        "trace_id": "cb06f3de5f0a13550849a938a6cb79e3"
+       }
+      }
+     ],
+     [
+      "1794853586164000000",
+      "order rejected",
+      {
+       "structuredMetadata": {
+        "detected_level": "warn",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794853586164000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/orders",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.1",
+        "severity_number": "13",
+        "severity_text": "warn",
+        "span_id": "395aa47b97edc216",
+        "status": "409",
+        "trace_id": "fd42f619c724050e0ca1c86de7609e59"
+       }
+      }
+     ],
+     [
+      "1794853581656000000",
+      "order rejected",
+      {
+       "structuredMetadata": {
+        "detected_level": "warn",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794853581656000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/orders",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.1",
+        "severity_number": "13",
+        "severity_text": "warn",
+        "span_id": "65a6bc2537f29573",
+        "status": "409",
+        "trace_id": "d59b146e1528dfd93414cfe9ae9acf1f"
+       }
+      }
+     ],
+     [
+      "1794853571100000000",
+      "order rejected",
+      {
+       "structuredMetadata": {
+        "detected_level": "warn",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794853571100000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/orders",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.1",
+        "severity_number": "13",
+        "severity_text": "warn",
+        "span_id": "6005a229ff948970",
+        "status": "409",
+        "trace_id": "52eb017676219c7662b9288c13f64c0e"
+       }
+      }
+     ],
+     [
+      "1794853567855000000",
+      "order rejected",
+      {
+       "structuredMetadata": {
+        "detected_level": "warn",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794853567855000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/orders",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.1",
+        "severity_number": "13",
+        "severity_text": "warn",
+        "span_id": "57d034035410115b",
+        "status": "409",
+        "trace_id": "70437e216ca3417779eb14cabf2b0954"
+       }
+      }
+     ],
+     [
+      "1794853553173000000",
+      "order rejected",
+      {
+       "structuredMetadata": {
+        "detected_level": "warn",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794853553173000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/orders",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.1",
+        "severity_number": "13",
+        "severity_text": "warn",
+        "span_id": "ac813c057305b7b5",
+        "status": "409",
+        "trace_id": "e7b9aad239e1b7ff0957cdae9fd2bd5e"
+       }
+      }
+     ],
+     [
+      "1794853545732000000",
+      "order rejected",
+      {
+       "structuredMetadata": {
+        "detected_level": "warn",
+        "flags": "1",
+        "host_arch": "<scrubbed>",
+        "host_id": "<scrubbed>",
+        "host_name": "<scrubbed>",
+        "observed_timestamp": "1794853545732000000",
+        "os_type": "darwin",
+        "os_version": "<scrubbed>",
+        "process_command": "<scrubbed>",
+        "process_command_args": "<scrubbed>",
+        "process_executable_name": "<scrubbed>",
+        "process_executable_path": "<scrubbed>",
+        "process_owner": "<scrubbed>",
+        "process_pid": "<scrubbed>",
+        "process_runtime_description": "Node.js",
+        "process_runtime_name": "nodejs",
+        "process_runtime_version": "24.6.0",
+        "route": "/orders",
+        "scope_name": "@opentelemetry/instrumentation-pino",
+        "scope_version": "0.71.0",
+        "service_version": "1.0.1",
+        "severity_number": "13",
+        "severity_text": "warn",
+        "span_id": "a8bbe2502ab41799",
+        "status": "409",
+        "trace_id": "6dac296832acd0ea5ad98c0bec80fd09"
+       }
+      }
+     ]
+    ]
+   }
+  ],
+  "stats": {
+   "summary": {
+    "bytesProcessedPerSecond": 14948860,
+    "linesProcessedPerSecond": 25744,
+    "totalBytesProcessed": 5396589,
+    "totalLinesProcessed": 9294,
+    "execTime": 0.361003,
+    "queueTime": 0,
+    "subqueries": 0,
+    "totalEntriesReturned": 20,
+    "splits": 0,
+    "shards": 1,
+    "totalPostFilterLines": 26,
+    "totalStructuredMetadataBytesProcessed": 5068846
+   },
+   "querier": {
+    "store": {
+     "totalChunksRef": 0,
+     "totalChunksDownloaded": 0,
+     "chunksDownloadTime": 0,
+     "queryReferencedStructuredMetadata": false,
+     "queryUsedV2Engine": false,
+     "chunk": {
+      "headChunkBytes": 0,
+      "headChunkLines": 0,
+      "decompressedBytes": 0,
+      "decompressedLines": 0,
+      "compressedBytes": 0,
+      "totalDuplicates": 0,
+      "postFilterLines": 0,
+      "headChunkStructuredMetadataBytes": 0,
+      "decompressedStructuredMetadataBytes": 0
+     },
+     "chunkRefsFetchTime": 0,
+     "congestionControlLatency": 0,
+     "pipelineWrapperFilteredLines": 0,
+     "dataobj": {
+      "prePredicateDecompressedRows": 0,
+      "prePredicateDecompressedBytes": 0,
+      "prePredicateDecompressedStructuredMetadataBytes": 0,
+      "postPredicateRows": 0,
+      "postPredicateDecompressedBytes": 0,
+      "postPredicateStructuredMetadataBytes": 0,
+      "postFilterRows": 0,
+      "pagesScanned": 0,
+      "pagesDownloaded": 0,
+      "pagesDownloadedBytes": 0,
+      "pageBatches": 0,
+      "totalRowsAvailable": 0,
+      "totalPageDownloadTime": 0
+     }
+    },
+    "querierExecTime": 0.604921
+   },
+   "ingester": {
+    "totalReached": 1,
+    "totalChunksMatched": 2,
+    "totalBatches": 1,
+    "totalLinesSent": 20,
+    "store": {
+     "totalChunksRef": 0,
+     "totalChunksDownloaded": 0,
+     "chunksDownloadTime": 0,
+     "queryReferencedStructuredMetadata": true,
+     "queryUsedV2Engine": false,
+     "chunk": {
+      "headChunkBytes": 100796,
+      "headChunkLines": 411,
+      "decompressedBytes": 5295793,
+      "decompressedLines": 8883,
+      "compressedBytes": 123850,
+      "totalDuplicates": 0,
+      "postFilterLines": 26,
+      "headChunkStructuredMetadataBytes": 94976,
+      "decompressedStructuredMetadataBytes": 4973870
+     },
+     "chunkRefsFetchTime": 337584,
+     "congestionControlLatency": 0,
+     "pipelineWrapperFilteredLines": 0,
+     "dataobj": {
+      "prePredicateDecompressedRows": 0,
+      "prePredicateDecompressedBytes": 0,
+      "prePredicateDecompressedStructuredMetadataBytes": 0,
+      "postPredicateRows": 0,
+      "postPredicateDecompressedBytes": 0,
+      "postPredicateStructuredMetadataBytes": 0,
+      "postFilterRows": 0,
+      "pagesScanned": 0,
+      "pagesDownloaded": 0,
+      "pagesDownloadedBytes": 0,
+      "pageBatches": 0,
+      "totalRowsAvailable": 0,
+      "totalPageDownloadTime": 0
+     }
+    },
+    "recvWaitTime": 0.284314
+   },
+   "cache": {
+    "chunk": {
+     "entriesFound": 0,
+     "entriesRequested": 0,
+     "entriesStored": 0,
+     "bytesReceived": 0,
+     "bytesSent": 0,
+     "requests": 0,
+     "downloadTime": 0,
+     "queryLengthServed": 0
+    },
+    "index": {
+     "entriesFound": 0,
+     "entriesRequested": 0,
+     "entriesStored": 0,
+     "bytesReceived": 0,
+     "bytesSent": 0,
+     "requests": 0,
+     "downloadTime": 0,
+     "queryLengthServed": 0
+    },
+    "result": {
+     "entriesFound": 0,
+     "entriesRequested": 0,
+     "entriesStored": 0,
+     "bytesReceived": 0,
+     "bytesSent": 0,
+     "requests": 0,
+     "downloadTime": 0,
+     "queryLengthServed": 0
+    },
+    "statsResult": {
+     "entriesFound": 0,
+     "entriesRequested": 0,
+     "entriesStored": 0,
+     "bytesReceived": 0,
+     "bytesSent": 0,
+     "requests": 0,
+     "downloadTime": 0,
+     "queryLengthServed": 0
+    },
+    "volumeResult": {
+     "entriesFound": 0,
+     "entriesRequested": 0,
+     "entriesStored": 0,
+     "bytesReceived": 0,
+     "bytesSent": 0,
+     "requests": 0,
+     "downloadTime": 0,
+     "queryLengthServed": 0
+    },
+    "seriesResult": {
+     "entriesFound": 0,
+     "entriesRequested": 0,
+     "entriesStored": 0,
+     "bytesReceived": 0,
+     "bytesSent": 0,
+     "requests": 0,
+     "downloadTime": 0,
+     "queryLengthServed": 0
+    },
+    "labelResult": {
+     "entriesFound": 0,
+     "entriesRequested": 0,
+     "entriesStored": 0,
+     "bytesReceived": 0,
+     "bytesSent": 0,
+     "requests": 0,
+     "downloadTime": 0,
+     "queryLengthServed": 0
+    },
+    "instantMetricResult": {
+     "entriesFound": 0,
+     "entriesRequested": 0,
+     "entriesStored": 0,
+     "bytesReceived": 0,
+     "bytesSent": 0,
+     "requests": 0,
+     "downloadTime": 0,
+     "queryLengthServed": 0
+    }
+   },
+   "index": {
+    "totalChunks": 0,
+    "postFilterChunks": 0,
+    "shardsDuration": 0,
+    "usedBloomFilters": false,
+    "totalStreams": 0,
+    "chunkRefsLookupTime": 0,
+    "bloomFilterTime": 0
+   }
+  }
+ }
+}
