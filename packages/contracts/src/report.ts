@@ -4,8 +4,9 @@ import { ISO_UTC_MS } from './time.ts';
 export const CATEGORIES = ['db_pool_exhaustion', 'cpu_saturation', 'memory_pressure', 'dependency_latency', 'other'] as const;
 
 /**
- * ReportApi: the schema sent to Claude as `output_config.format`. It uses only
- * features the structured-output API supports (no min/max/length/pattern
+ * ReportApi: the schema sent as the provider's strict structured-output schema
+ * (Groq: response_format.json_schema, strict). It uses only features every
+ * enabled provider's strict mode supports (no min/max/length/pattern
  * constraints, every property required, additionalProperties:false).
  * Report (below) adds the constraints the API cannot enforce.
  *

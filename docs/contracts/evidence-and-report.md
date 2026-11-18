@@ -23,7 +23,7 @@ type Evidence = {
 Append-only. `result` and `stats` are computed by our code, never by the model.
 
 ## 2. Report
-**Two layers.** `ReportApi` is sent as `output_config.format` and contains only API-supported constructs: every property required, no length/count/pattern constraints. `Report` adds the structural checks the API can't enforce: id formats, ≥1 citation, unique value keys, summary ≤ 600 chars, `timeline.at` is IsoUtcMs.
+**Two layers.** `ReportApi` is sent as the provider's strict structured-output schema (Groq: `response_format.json_schema`, `strict: true`; v1.1 wording), in a request **separate from tool calling**. It contains only provider-supported constructs: every property required, no length/count/pattern constraints. `Report` adds the structural checks the API can't enforce: id formats, ≥1 citation, unique value keys, summary ≤ 600 chars, `timeline.at` is IsoUtcMs.
 
 ```ts
 type Report = {

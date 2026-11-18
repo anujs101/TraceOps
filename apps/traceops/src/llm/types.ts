@@ -45,8 +45,12 @@ export type CallMeta = {
   providerTimings: Record<string, number> | null;
 };
 
+/** Identifies the logical model request for llm_calls (Contracts v1.1). Attempts are numbered by the recorder. */
+export type CallTrace = { investigationId: string; turn: number };
+
 export type ChatRequest = {
-  stage: string; // e.g. "investigate" — recorded with the call
+  stage: string; // "investigate" for investigations — recorded with the call
+  trace?: CallTrace;
   messages: LlmMessage[];
   tools: ToolSpec[];
   maxOutputTokens: number;
@@ -61,7 +65,8 @@ export type ChatResult = {
 };
 
 export type StructuredRequest = {
-  stage: string; // e.g. "report"
+  stage: string; // "report" for investigations
+  trace?: CallTrace;
   messages: LlmMessage[];
   schemaName: string;
   /** Provider-compatible JSON Schema. Server-side validation happens AFTER, with the full zod schema. */

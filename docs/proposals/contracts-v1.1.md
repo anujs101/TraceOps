@@ -1,6 +1,6 @@
 # Proposal: Contracts v1.1 — provider-neutral LLM persistence and configuration
 
-**Status:** PROPOSED, not applied. Contracts v1 (`05cad4a`) stays unchanged until this is approved.
+**Status:** APPLIED on 2026-11-18 (branch `design/contracts-v1.1`). See `docs/contracts/README.md` → v1.1 amendments. Applied differences from this proposal: `attempt` column added (rows are per attempt); `GROQ_BASE_URL` added; `error_message` (redacted, ≤ 300 chars) kept as a column; contract-level DDL with CHECK constraints in `persistence.md` §1a. Kept below for history.
 **Trigger:** Groq chosen as the initial LLM provider (Groq spike, `apps/traceops/src/llm/`). v1 assumes Anthropic in three places.
 **Scope:** minimal. Three amendments, no new tables, no new documents.
 

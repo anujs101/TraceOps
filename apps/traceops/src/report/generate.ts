@@ -33,13 +33,15 @@ export async function generateValidatedReport(
   provider: LlmProvider,
   messages: LlmMessage[],
   evidence: Evidence[],
-  opts: { investigationId: string; sink: ReportSink; maxOutputTokens: number; call?: <T>(fn: () => Promise<T>) => Promise<T> },
+  opts: { investigationId: string; sink: ReportSink; maxOutputTokens: number; firstTurn?: number; call?: <T>(fn: () => Promise<T>) => Promise<T> },
 ): Promise<ReportOutcome> {
   const attempts: ReportAttempt[] = [];
   let convo = [...messages];
 
   for (let round = 0; round <= MAX_REPAIR_ROUNDS; round++) {
-    const output = await produce(provider, convo, opts);
+    // each report round is its own llm_calls turn, continuing after the investigate turns
+    const trace = { investigationId: opts.investigationId, turn: (opts.firstTurn ?? 1) + round };
+    const output = await produce(provider, convo, { ...opts, trace });
     const validation = validateReport(output.value, evidence);
     attempts.push({ round, output: output.value, validation });
     if (validation.passed || round === MAX_REPAIR_ROUNDS) break;
@@ -64,9 +66,9 @@ export async function generateValidatedReport(
 }
 
 /** Provider output → {value, rawText}. Contract-invalid JSON goes to the validator (V0) instead of aborting. */
-async function produce(provider: LlmProvider, messages: LlmMessage[], opts: { maxOutputTokens: number; call?: <T>(fn: () => Promise<T>) => Promise<T> }): Promise<{ value: unknown; rawText: string }> {
+async function produce(provider: LlmProvider, messages: LlmMessage[], opts: { maxOutputTokens: number; trace: { investigationId: string; turn: number }; call?: <T>(fn: () => Promise<T>) => Promise<T> }): Promise<{ value: unknown; rawText: string }> {
   try {
-    const r = await generateReport(provider, messages, { maxOutputTokens: opts.maxOutputTokens, call: opts.call });
+    const r = await generateReport(provider, messages, { maxOutputTokens: opts.maxOutputTokens, trace: opts.trace, call: opts.call });
     return { value: r.report, rawText: r.raw.rawText };
   } catch (e) {
     if (e instanceof LlmError && e.kind === 'schema_violation') {

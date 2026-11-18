@@ -35,6 +35,8 @@ export type ToolLoopOptions = {
   maxTurns: number;
   maxOutputTokens: number;
   signal?: AbortSignal;
+  /** llm_calls trace: turn numbers start at firstTurn (default 1). */
+  trace?: { investigationId: string; firstTurn?: number };
   /** Wraps each provider call (e.g. withRetry). */
   call?: <T>(fn: () => Promise<T>) => Promise<T>;
 };
@@ -51,7 +53,8 @@ export async function runToolLoop(provider: LlmProvider, initial: LlmMessage[], 
   const call = opts.call ?? ((fn) => fn());
 
   for (let turn = 1; turn <= opts.maxTurns; turn++) {
-    const res = await call(() => provider.chat({ stage: opts.stage, messages, tools: tools.map((t) => t.spec), maxOutputTokens: opts.maxOutputTokens, signal: opts.signal }));
+    const trace = opts.trace ? { investigationId: opts.trace.investigationId, turn: (opts.trace.firstTurn ?? 1) + turn - 1 } : undefined;
+    const res = await call(() => provider.chat({ stage: opts.stage, trace, messages, tools: tools.map((t) => t.spec), maxOutputTokens: opts.maxOutputTokens, signal: opts.signal }));
     messages.push({ role: 'assistant', content: res.content, toolCalls: res.toolCalls });
     if (res.toolCalls.length === 0) return { finalText: res.content, stopReason: res.stopReason, messages, toolRuns, turns: turn };
 

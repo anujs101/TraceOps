@@ -1,13 +1,14 @@
 import { z } from 'zod';
 
 /**
- * Offline compatibility check against the documented limits of Claude's
- * structured outputs (output_config.format and strict tool inputs):
+ * Offline, provider-neutral compatibility check: the conservative intersection
+ * of documented strict-schema limits (originally Claude's; Groq's strict mode
+ * is checked additionally by the Groq adapter's groqStrictProblems()):
  * supported: object/array/string/integer/number/boolean/null, enum, const,
  * anyOf, allOf, $ref/$defs, listed string formats, additionalProperties:false.
  * NOT supported: recursive schemas, numeric constraints, string length
  * constraints, complex array constraints, additionalProperties other than false.
- * A live API call is still required to fully verify (see VERIFY list).
+ * Live-verified with Groq (openai/gpt-oss-20b, strict) on 2026-11-17.
  */
 const UNSUPPORTED_KEYWORDS = [
   'minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum', 'multipleOf',

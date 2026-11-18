@@ -5,7 +5,7 @@ The model calls **only** these four tools. It never sees or writes PromQL, LogQL
 
 ## 1. Common rules
 - **Two schema layers.**
-  - `*Input`: sent to the API as strict tool schemas. They contain only constructs the structured-output API supports: no length, number or array constraints, no optional properties (use `null`). They are checked by `structuredOutputProblems()` in the test suite.
+  - `*Input`: sent to the provider as tool schemas. They contain only constructs every enabled provider's strict mode supports (v1.1 wording; live-verified with Groq): no length, number or array constraints, no optional properties (use `null`). They are checked by `structuredOutputProblems()` in the test suite.
   - `*Checked`: applied server-side before execution. It adds the limits: windows, string lengths, `limit` 1–50, integers.
 - **Invalid input** (fails `*Checked`): nothing is sent to a backend. The tool returns `status: "error"`, `error: "invalid_input: <reason>"`. The evidence row stores the **raw** model input in `args`, with `rendered_query: null` and `window: null`.
 - `service` is **not** an argument. It's bound from the incident; `renderPromql` rejects any service name outside `[a-z0-9-]`.

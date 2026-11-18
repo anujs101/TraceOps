@@ -10,7 +10,8 @@ export type GroqChatClient = {
 
 export function createGroqClient(cfg: GroqConfig): GroqChatClient {
   // SDK retries off: retries happen in withRetry() so every attempt is recorded.
-  return new Groq({ apiKey: cfg.apiKey.reveal(), maxRetries: 0, timeout: cfg.timeoutMs }) as unknown as GroqChatClient;
+  // baseURL passed explicitly so the SDK never silently picks up a different GROQ_BASE_URL.
+  return new Groq({ apiKey: cfg.apiKey.reveal(), baseURL: cfg.baseUrl, maxRetries: 0, timeout: cfg.timeoutMs }) as unknown as GroqChatClient;
 }
 
 export class GroqProvider implements LlmProvider {

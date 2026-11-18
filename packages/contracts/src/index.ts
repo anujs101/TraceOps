@@ -9,3 +9,4 @@ export * from './quantities.ts';
 export * from './grading.ts';
 export * from './backend.ts';
 export * from './api-schema.ts';
+export * from './llm.ts';

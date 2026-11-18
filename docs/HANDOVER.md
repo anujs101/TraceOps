@@ -11,14 +11,15 @@ Read this first in a new session. Preparation is finished; the next step is impl
 | `spike/observability` | `fb23d66` | first OTel → otel-lgtm spike |
 | `design/contracts` | `05cad4a` | **Contracts v1 (frozen)**: docs, `packages/contracts`, real fixtures |
 | `feat/llm-groq` | `155318e` (+ this note) | **Groq integration**: `apps/traceops/src/llm`, `src/report`, tests, v1.1 proposal |
+| `design/contracts-v1.1` | (uncommitted at time of writing) | **Contracts v1.1 applied**: provider-neutral `llm_calls`, LLM env config, `createLlmProvider()` |
 
 ## Tests
 Run each suite from its package folder:
 ```bash
-cd packages/contracts && npm ci && npm test && npm run typecheck   # 92 tests
+cd packages/contracts && npm ci && npm test && npm run typecheck   # 110 tests (v1.1)
 ```
 ```bash
-cd apps/traceops && npm ci && npm test && npm run typecheck        # 69 tests
+cd apps/traceops && npm ci && npm test && npm run typecheck        # 96 tests (v1.1)
 ```
 No Docker, network or API key needed. The live scripts in `apps/traceops/scripts/` do need the key, and they spend tokens.
 
@@ -27,7 +28,7 @@ No Docker, network or API key needed. The live scripts in `apps/traceops/scripts
 |---|---|
 | `docs/contracts/` | **Contracts v1 (frozen).** README lists verified items, open VERIFY items, untested assumptions |
 | `docs/research/` | experiment evidence: `spike-observability.md`, `pool-lab.md` (S1/S2 numbers, findings) |
-| `docs/proposals/contracts-v1.1.md` | **proposed, not applied**: provider-neutral `llm_calls`, LLM env vars, wording |
+| `docs/proposals/contracts-v1.1.md` | v1.1 proposal, now **applied** (kept for history) |
 | `packages/contracts/` | zod schemas, metric templates, numeric-grounding rules, grading, fixtures S1/S2 |
 | `apps/traceops/src/llm/` | provider-neutral `LlmProvider` (`chat` / `structured`), tool loop, recorder, retry, errors; `groq/` adapter |
 | `apps/traceops/src/report/` | validator V0–V8, `generateValidatedReport` (exactly one repair round) |
@@ -44,7 +45,8 @@ No Docker, network or API key needed. The live scripts in `apps/traceops/scripts
 8. LLM provider: **Groq**, `openai/gpt-oss-20b`, behind a provider-neutral interface. Tool calling and structured output are **separate requests**. Groq 400 `tool_use_failed` / `json_validate_failed` → retryable `invalid_generation`.
 
 ## Outstanding / not verified
-- Contracts **v1.1** amendments: proposed, awaiting approval (`docs/proposals/contracts-v1.1.md`).
+- Contracts **v1.1**: applied (see `docs/contracts/README.md`).
+- **Tier 2, deferred until after MVP evaluation:** similar-incident retrieval. Index only validated reports with a human-confirmed root cause; match on the signal fingerprint plus text; retrieved incidents are leads, never evidence (risk: S2 resembles S1); prove the benefit with a leave-one-out ablation. Needs a contract v1.2.
 - **Groq throughput:** account limits are 1,000 RPD / **8,000 TPM** (from headers); TPD not exposed. A 4-tool investigation used ≈ 12.7K input tokens; one report + repair is ≈ 12K. Expect 429 waits (observed up to 34 s, above the default 20 s retry cap). Evaluation (5 runs/scenario) likely exceeds a free-tier daily budget. Check the account limits page before evaluation.
 - The model often writes literal numbers instead of `{key}` placeholders. The validator catches this, and one repair fixed most but not all of it live.
 - Contracts v1 VERIFY items still open: S2 stability under screen recording, detector behaviour in S2 (latency rule only), redaction test corpus. (The live structured-output check is now done with Groq; that v1 item was written for Anthropic.)
@@ -59,7 +61,7 @@ cd spike && docker compose down
 They conflict with the ports in `environment.md` (3000/3100/4318/9090/5432), so stop them before starting `infra/compose.yml`.
 
 ## Recommended first step for implementation
-Branch from `feat/llm-groq`. Decide on v1.1, then build in the order the contracts allow parallelism:
+Branch from `design/contracts-v1.1` (contains v1.1 + the Groq layer), then build in the order the contracts allow parallelism:
 1. `infra/compose.yml` + `apps/demo-service`, following telemetry.md exactly (preload OTel, Views, export-time gauges, 500 + error log on acquire timeout). Owner: demo/infra session.
 2. In parallel: `apps/traceops` tool adapters (Prometheus/Loki → tool outputs), tested against `packages/contracts/fixtures`.
 3. Then detector → job queue → investigator (reusing `src/llm` and `src/report`) → minimal UI → evaluation.

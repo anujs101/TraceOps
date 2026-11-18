@@ -1,20 +1,9 @@
-/** Provider-neutral error taxonomy. Adapters map SDK errors into this. */
-export type LlmErrorKind =
-  | 'auth' // 401/403: bad or missing key — never retry
-  | 'rate_limit' // 429 — retry after retryAfterMs
-  | 'capacity' // provider-specific capacity (Groq 498), 503 — retry
-  | 'server' // 5xx — retry
-  | 'timeout' // client timeout — retry
-  | 'connection' // network — retry
-  | 'bad_request' // 400/404/413/422 — do not retry (fix the request)
-  | 'invalid_generation' // provider rejected the MODEL's output (e.g. Groq 400 tool_use_failed): re-sample
-  | 'malformed_response' // response missing fields / not valid JSON
-  | 'truncated' // stopped on max tokens
-  | 'schema_violation' // valid JSON but fails our server-side zod validation
-  | 'aborted'
-  | 'unknown';
+import { RETRYABLE_LLM_ERRORS, type LlmErrorKind } from '@traceops/contracts';
 
-const RETRYABLE: ReadonlySet<LlmErrorKind> = new Set(['rate_limit', 'capacity', 'server', 'timeout', 'connection', 'invalid_generation']);
+/** Provider-neutral error taxonomy: defined once in Contracts v1.1 (packages/contracts/src/llm.ts). */
+export type { LlmErrorKind };
+
+const RETRYABLE: ReadonlySet<LlmErrorKind> = new Set(RETRYABLE_LLM_ERRORS);
 
 export class LlmError extends Error {
   readonly kind: LlmErrorKind;

@@ -1,4 +1,4 @@
-# TraceOps MVP contracts — v1 (frozen 2026-11-17)
+# TraceOps MVP contracts — v1.1 (2026-11-18; v1 frozen 2026-11-17)
 
 These are the boundaries that let the demo-service and TraceOps be built **in parallel**. A build session may depend only on these files and on `@traceops/contracts`, never on another session's implementation.
 
@@ -14,6 +14,13 @@ These are the boundaries that let the demo-service and TraceOps be built **in pa
 | [evidence-and-report.md](evidence-and-report.md) | evidence, report, numeric grounding, validator V0–V8 | investigator → validator, UI |
 | [persistence.md](persistence.md) | tables, job queue, state machines | TraceOps internals |
 
+## v1.1 amendments (2026-11-18): provider-neutral LLM layer
+Only these changed relative to frozen v1 (`05cad4a`). Everything else is identical.
+- `persistence.md` §1a: `llm_calls` gains `attempt, provider, stage, kind, status, request_id, tool_call_count, error_kind, error_status, error_message, retry_after_ms, provider_timings`. Token columns become nullable. No v1 column is removed.
+- `environment.md` §4 and new §6: `LLM_PROVIDER`, `GROQ_*` variables, the provider interface, adapter requirements and error handling. `ANTHROPIC_API_KEY` is removed.
+- `tools.md` §1 and `evidence-and-report.md` §2: provider-neutral wording (Groq replaces the Claude `output_config` references).
+- `packages/contracts/src/llm.ts`: `LlmCall`, `LLM_ERROR_KINDS`, `LLM_DEFAULTS` (+ tests).
+
 ## Change rule
 v1 is frozen. A change is its own commit (markdown + package + tests, + recaptured fixtures if telemetry changed) with the reason, and only when implementation reveals a concrete problem. A build session that finds a contract wrong **stops and reports**; it never diverges silently.
 
@@ -26,7 +33,7 @@ Evidence: `docs/research/spike-observability.md`, `docs/research/pool-lab.md`.
 - Report and tool schemas pass an **offline** check against the documented structured-output limits.
 
 ## ⚠ NOT verified — open VERIFY items (do not treat as verified)
-1. **Live structured-output call.** No request has been made to the Claude API with `ReportApi` as `output_config.format` or with the four strict tool schemas (no API key was available). The offline check is not proof of acceptance.
+1. ~~Live structured-output call.~~ **Resolved in v1.1:** `ReportApi` (strict) and all four tool schemas were accepted live by Groq `openai/gpt-oss-20b` (2026-11-17). Not verified for any other provider.
 2. **S2 stability on the recording day.** S2 runs at CPU saturation; screen recording or other load will shift it. `CPU_ITER` may need retuning; rely on the validity gate.
 3. **Detector behaviour in S2.** Only the latency rule is expected to fire (5xx ≈ 0). Not yet exercised by a detector implementation.
 4. **Redaction patterns** (tokens, emails, connection strings) are specified but have no test corpus; the demo app emits none, so the fixtures cannot exercise them.

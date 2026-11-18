@@ -1,6 +1,6 @@
 import { Report, ReportApi, toApiJsonSchema, type Report as ReportT } from '@traceops/contracts';
 import { LlmError } from './errors.ts';
-import type { JsonSchema, LlmMessage, LlmProvider, StructuredResult } from './types.ts';
+import type { CallTrace, JsonSchema, LlmMessage, LlmProvider, StructuredResult } from './types.ts';
 
 /**
  * Stage 2: structured report generation, a SEPARATE request from tool calling
@@ -19,10 +19,10 @@ export function reportProviderSchema(): JsonSchema {
 
 export type ReportStageResult = { report: ReportT; raw: StructuredResult };
 
-export async function generateReport(provider: LlmProvider, messages: LlmMessage[], opts: { maxOutputTokens: number; signal?: AbortSignal; call?: <T>(fn: () => Promise<T>) => Promise<T> }): Promise<ReportStageResult> {
+export async function generateReport(provider: LlmProvider, messages: LlmMessage[], opts: { maxOutputTokens: number; signal?: AbortSignal; trace?: CallTrace; call?: <T>(fn: () => Promise<T>) => Promise<T> }): Promise<ReportStageResult> {
   const call = opts.call ?? ((fn) => fn());
   const raw = await call(() => provider.structured({
-    stage: 'report', messages, schemaName: REPORT_SCHEMA_NAME, schema: reportProviderSchema(),
+    stage: 'report', trace: opts.trace, messages, schemaName: REPORT_SCHEMA_NAME, schema: reportProviderSchema(),
     maxOutputTokens: opts.maxOutputTokens, signal: opts.signal,
   }));
   const checked = Report.safeParse(raw.value);

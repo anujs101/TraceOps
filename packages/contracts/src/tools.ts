@@ -5,7 +5,7 @@ import { METRIC_NAMES, SEVERITIES, LOG_ALLOWED_FIELDS } from './telemetry.ts';
 /**
  * Tool INPUT schemas. These are what the model fills (strict tool use).
  * They intentionally carry no string/number/array constraints, because the
- * Claude structured-output API does not support them; the `*Checked` variants
+ * providers' strict schema modes do not support them; the `*Checked` variants
  * add the server-side limits and are applied before execution.
  */
 export const WindowInput = z.union([
