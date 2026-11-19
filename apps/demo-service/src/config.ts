@@ -17,7 +17,7 @@ export function parseFault(raw: string | undefined): Fault {
 }
 
 export function parseCpuIter(raw: string | undefined): number {
-  if (raw === undefined || raw === '') return 300000; // scenario-db-pool.md S2
+  if (raw === undefined || raw === '') return 400000; // scenario-db-pool.md S2 (v1.4)
   const n = Number(raw);
   if (!Number.isInteger(n) || n <= 0) throw new Error(`invalid CPU_ITER "${raw}" (expected a positive integer)`);
   return n;

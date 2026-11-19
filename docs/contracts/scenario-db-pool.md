@@ -19,7 +19,7 @@ In Node, **pool exhaustion is a side effect of CPU starvation.** So S2 tests whe
 | Discriminators vs S2 | no recovery after load drop; event loop not busy; queries fast |
 | Ground-truth category | `db_pool_exhaustion` |
 
-## S2: CPU starvation with secondary pool saturation (`FAULT=cpu_burn`, `CPU_ITER=300000`, `SERVICE_VERSION=1.0.1`)
+## S2: CPU starvation with secondary pool saturation (`FAULT=cpu_burn`, `CPU_ITER=400000`, `SERVICE_VERSION=1.0.1`)
 | | |
 |---|---|
 | Ground truth | `GET /products` runs `crypto.pbkdf2Sync` (~33 ms per call on the M2), saturating the event loop |
@@ -56,4 +56,4 @@ A run counts only if the fault manifested as specified. Invalid runs are reporte
 ## Protocol
 N = 5 graded runs per scenario: re-investigations of the same incident (model variance) plus ≥ 2 fresh scenario runs (environment variance). Each run records: validity, outcome, latency, tool calls, tokens, cost. Report the raw table. **No unmeasured numbers.**
 
-**Known sensitivity:** S2 sits close to CPU saturation, so CPU taken by screen recording or other apps on the same laptop shifts it. The validity gate catches runs that didn't saturate; `CPU_ITER` may need retuning on the recording day.
+**Known sensitivity:** S2 sits close to CPU saturation, so CPU taken by screen recording or other apps on the same laptop shifts it. The validity gate catches runs that didn't saturate; `CPU_ITER` may need retuning on the recording day. **v1.4 (2026-11-19):** retuned 300000 → 400000 after two invalid S2 runs on a quieter machine; calibration table in `docs/proposals/s2-cpu-iter-retune.md` (400000: ELU 1.0, p95 2.4 s sustained, 5xx 0, `used` = 10).

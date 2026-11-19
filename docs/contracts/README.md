@@ -1,4 +1,4 @@
-# TraceOps MVP contracts — v1.3 (2026-11-19; v1.2 2026-11-19; v1.1 2026-11-18; v1 frozen 2026-11-17)
+# TraceOps MVP contracts — v1.4 (2026-11-19; v1.3 2026-11-19; v1.2 2026-11-19; v1.1 2026-11-18; v1 frozen 2026-11-17)
 
 These are the boundaries that let the demo-service and TraceOps be built **in parallel**. A build session may depend only on these files and on `@traceops/contracts`, never on another session's implementation.
 
@@ -20,6 +20,11 @@ Only these changed relative to frozen v1 (`05cad4a`). Everything else is identic
 - `environment.md` §4 and new §6: `LLM_PROVIDER`, `GROQ_*` variables, the provider interface, adapter requirements and error handling. `ANTHROPIC_API_KEY` is removed.
 - `tools.md` §1 and `evidence-and-report.md` §2: provider-neutral wording (Groq replaces the Claude `output_config` references).
 - `packages/contracts/src/llm.ts`: `LlmCall`, `LLM_ERROR_KINDS`, `LLM_DEFAULTS` (+ tests).
+
+## v1.4 amendments (2026-11-19): S2 `CPU_ITER` 300000 → 400000
+**Reason:** at 300000, S2 reached its intended state only while other load ran on the laptop. Run 1 was valid at load ~14.9; at load ~6–10 p95 peaked at 0.81 s and at ~3 at 0.08 s (ELU 0.887), so the latency alert never fired (two invalid runs, `docs/runs/s2-20261119T132445Z`, `…134241Z`). A calibration with no TraceOps app (`docs/proposals/s2-cpu-iter-retune.md`) found 400000 to be the smallest value with ELU ≥ 0.95, p95 ≥ 1.5 s sustained and 5xx < 0.05. Only these changed relative to v1.3:
+- `scenario-db-pool.md` S2 heading: `CPU_ITER=400000`; Known-sensitivity note points to the calibration. The pool-lab measurement row keeps 300000 (what was measured).
+- demo-service default `CPU_ITER` (`apps/demo-service/src/config.ts`) follows the contract. No `packages/contracts` source or fixture changes (the S2 fixtures were captured at 300000 and stay as historical captures).
 
 ## v1.3 amendments (2026-11-19): `error_ratio_5xx` is 0, not empty, without 5xx
 **Reason:** with no 5xx series the old numerator was empty, so the whole ratio was empty, which counts as missing data. detection.md §3 says missing data never resolves an incident, and §4 resolves only when every rule is `ok`. So an `http-slo` incident could never resolve on a healthy service. This was seen in both live S1 runs: the error-ratio rule reported `empty` through the healthy baseline, and each run's incident stayed `open` until the database was edited (`docs/proposals/detection-error-ratio-empty.md`). Only these changed relative to v1.2:
