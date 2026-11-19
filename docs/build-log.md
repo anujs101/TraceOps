@@ -23,3 +23,6 @@
 - 11:53 | C | DONE: 192/192 (96 new: db 15, detector 53, queue 28), 0 skipped, contracts unchanged, handoff lists beyond-contract behaviour | none | —
 - 11:53 | C | self-caught: first queue concurrency tests passed even with SKIP LOCKED removed → added row-lock test that fails without it | none | second mutation-style self-check by C
 - 11:54 | ops | merge plan | review C → merge C, B, A while D still builds; D last | order only constrains D; saves Wave 2 time
+- 12:00 | C | contract-guardian: 0 blockers; owed open dropped if rule recovers during DB failure (§4); severity counts "firing now" not "fired" (§5); 2 hand-typed types | sent fixes to C: never drop owed open, "fired" = reached firing this episode, contract types | literal contract reading; ambiguity resolved by main, not session
+- 12:00 | D | from C review: worker requeues on throw | told D: resolve for validation-failed/insufficient_evidence, throw only for retryable infra errors | seam between C worker and D handler
+- 12:00 | ops | guardian flagged crashed worker leaves investigations row 'running' forever | added to Wave 2 wiring: mark stale running → failed:worker_lost on reclaim | no contract owner for it
