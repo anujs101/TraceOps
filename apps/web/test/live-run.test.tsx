@@ -52,7 +52,8 @@ describe('recorded S1 live run', () => {
     go(`#/investigations/${invId}`);
     const hyp2 = await screen.findByTestId('hyp-hyp_2');
     const el = within(hyp2).getAllByTestId('num-el_max')[0]!;
-    expect(el.textContent).toBe('19.4 ms');
+    expect(el.textContent).toBe('19.4ms');
+    expect(el.getAttribute('aria-label')).toMatch(/^19\.4 ms: eventloop_delay_p99 max, exact 0\.019382271/);
     expect(el.getAttribute('data-tip')).toContain('exact 0.019382271');
     expect(hyp2.textContent).not.toMatch(/ms s\b/);
   });

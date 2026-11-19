@@ -40,7 +40,7 @@ export function Num({ v, withCountUnit = false, showUnit = true }: { v: BoundVal
       data-tip={`${what} · exact ${exact(v.value)} · ${v.evidence_id}`}
       data-testid={`num-${v.key}`}
     >
-      {f.text}{unitText && <span className="num-u">{unitText === '%' ? '%' : ` ${unitText}`}</span>}
+      {f.text}{unitText && <span className={unitText === '%' ? 'num-u num-pct' : 'num-u'}>{unitText}</span>}
     </button>
   );
 }

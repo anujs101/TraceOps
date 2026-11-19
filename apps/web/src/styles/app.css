@@ -77,6 +77,10 @@ button { font: inherit; color: inherit; }
   color: var(--signal); border-bottom: 1px dotted color-mix(in srgb, var(--signal) 70%, transparent);
 }
 .num { white-space: nowrap; }
+.num-u { margin-left: 0.18em; }
+.num-u.num-pct { margin-left: 0.04em; }
+/* mono spaces are a full ch wide: tighten them inside quantities ("37.8 s") */
+.num-cell, .ruler-time, .key-v, .claim-v, .claim-exact, .inc-times dd, .trigger-vals b { word-spacing: -0.4ch; }
 .num-u { font-family: var(--sans); font-weight: 400; color: color-mix(in srgb, var(--signal) 75%, var(--ink-2)); }
 .num:hover, .num.is-active { background: var(--signal-wash); border-bottom-style: solid; }
 .num.is-missing { color: var(--fault); }
@@ -151,7 +155,7 @@ button { font: inherit; color: inherit; }
 .ruler { margin: var(--s5) 0 var(--s4); }
 .ruler-track { position: relative; height: 2px; background: var(--line); margin: 0 6px; }
 .ruler-fill { position: absolute; inset: 0 auto 0 0; background: var(--ink-3); }
-.ruler-tick { position: absolute; top: -5px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 3px var(--bg); }
+.ruler-tick { position: absolute; top: -5px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: currentColor; border: 2px solid var(--bg); box-sizing: border-box; }
 .ruler.is-open .ruler-track { background: repeating-linear-gradient(90deg, var(--line) 0 4px, transparent 4px 8px); }
 .ruler-labels { display: flex; justify-content: space-between; gap: var(--s3); margin-top: var(--s3); }
 .ruler-labels li { display: flex; flex-direction: column; font-size: var(--t-xs); line-height: var(--lh-xs); min-width: 0; }
