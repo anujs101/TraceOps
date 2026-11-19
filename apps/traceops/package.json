@@ -10,6 +10,7 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "smoke:groq": "tsx scripts/groq-smoke.ts",
+    "smoke:deepseek": "tsx test/llm/deepseek/live-smoke.ts",
     "migrate": "tsx src/db/migrate.ts"
   },
   "keywords": [],
