@@ -1,6 +1,6 @@
 # Proposal: DeepSeek as a second LLM provider (Contracts v1.2)
 
-**From:** main session (Wave 2 integration) · **Status:** ACCEPTED by the user 2026-11-19 · APPLIED: see the commit hash in the README v1.2 entry
+**From:** main session (Wave 2 integration) · **Status:** ACCEPTED by the user 2026-11-19 · APPLIED in e64c8db (merged to main in e89ae2c)
 
 ## Problem
 Wave 2 adds a DeepSeek adapter (session E) and runs the S1 end-to-end evaluation with `LLM_PROVIDER=deepseek`. The contracts don't allow it yet:
