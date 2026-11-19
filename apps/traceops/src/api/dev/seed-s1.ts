@@ -62,7 +62,8 @@ function s1Report() {
           { key: 'pending_max', evidence_id: 'ev_4', field: 'max', value: pend.stats.max },
         ],
       },
-      { id: 'obs_3', statement: 'Event loop utilization peaked at {elu_max}, so the process was not CPU bound.', evidence_ids: ['ev_5'], values: [{ key: 'elu_max', evidence_id: 'ev_5', field: 'max', value: elu.stats.max }] },
+      { id: 'obs_3', statement: 'Event loop utilization peaked at {elu_max}, so the process was not CPU bound.', evidence_ids: ['ev_5'], // rounded to 3 significant figures, as a model would write it; V2 accepts honest rounding
+      values: [{ key: 'elu_max', evidence_id: 'ev_5', field: 'max', value: Number(elu.stats.max.toPrecision(3)) }] },
       {
         id: 'obs_4', statement: 'The most frequent log pattern is a connection timeout error, seen {p1_count} times; error logs total {err_sum} lines.',
         evidence_ids: ['ev_6', 'ev_7', 'ev_8'],
