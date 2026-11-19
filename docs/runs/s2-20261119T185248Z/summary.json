@@ -1,0 +1,343 @@
+{
+  "scenario": "S2",
+  "run_start": "2026-11-19T18:52:48.000Z",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "validity_gate": {
+    "times": {
+      "tBaselineStart": "2026-11-19T18:57:50.000Z",
+      "tDeploy": "2026-11-19T19:04:50.000Z",
+      "tDrop": "2026-11-19T19:08:20.000Z",
+      "tEnd": "2026-11-19T19:09:20.000Z"
+    },
+    "signal_summary": {
+      "baseline_clean": true,
+      "latency_alert_fired": true,
+      "pool_used_max": 10,
+      "pool_max": 10,
+      "pool_used_at_max_seconds": 205,
+      "pool_timeouts_increase": 0,
+      "eventloop_utilization_max": 1,
+      "pool_used_after_load_drop": null
+    },
+    "scenarioValid": {
+      "valid": true,
+      "reasons": []
+    }
+  },
+  "baseline_window": {
+    "derived_baseline": {
+      "start": "2026-11-19T19:00:48.041Z",
+      "end": "2026-11-19T19:03:03.332Z"
+    },
+    "derived_incident": {
+      "start": "2026-11-19T19:03:03.332Z",
+      "end": "2026-11-19T19:05:18.623Z"
+    },
+    "healthy": {
+      "start": "2026-11-19T18:57:50.000Z",
+      "deploy": "2026-11-19T19:04:50.000Z"
+    },
+    "covered": true,
+    "note": "investigation start approximated by investigation.started_at"
+  },
+  "incident": {
+    "id": "f4691f81-447b-495b-97eb-a8d77f4e830c",
+    "group": "http-slo",
+    "severity": "warning",
+    "status": "open",
+    "started_at": "2026-11-19T19:05:03.332Z",
+    "detected_at": "2026-11-19T19:05:18.333Z",
+    "resolved_at": null,
+    "reopen_count": 0,
+    "trigger": [
+      {
+        "rule_id": "http-latency-p95",
+        "query": "latency_p95",
+        "threshold": 1,
+        "observed": 2.25095894793707,
+        "at": "2026-11-19T19:05:18.333Z"
+      }
+    ]
+  },
+  "investigation": {
+    "id": "64c005db-29d5-4774-910c-c514f4a23a01",
+    "status": "completed",
+    "started_at": "2026-11-19T19:05:18.623Z",
+    "finished_at": "2026-11-19T19:05:53.026Z",
+    "tool_calls": 15,
+    "error": null
+  },
+  "report": {
+    "status": "probable_cause",
+    "top_hypothesis": {
+      "category": "db_pool_exhaustion",
+      "confidence": "high"
+    },
+    "hypotheses": [
+      {
+        "id": "hyp_1",
+        "category": "db_pool_exhaustion",
+        "confidence": "high"
+      },
+      {
+        "id": "hyp_2",
+        "category": "dependency_latency",
+        "confidence": "medium"
+      },
+      {
+        "id": "hyp_3",
+        "category": "cpu_saturation",
+        "confidence": "low"
+      },
+      {
+        "id": "hyp_4",
+        "category": "other",
+        "confidence": "low"
+      }
+    ],
+    "validation": "failed",
+    "repair_attempted": true,
+    "violations": [
+      {
+        "path": "observations.0.statement",
+        "rule": "V3",
+        "message": "unbound quantity \"9\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "observations.2.statement",
+        "rule": "V3",
+        "message": "unbound quantity \"0\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "observations.3.statement",
+        "rule": "V3",
+        "message": "unbound quantity \"1\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "observations.4.statement",
+        "rule": "V3",
+        "message": "unbound quantity \"0-1\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "observations.5.statement",
+        "rule": "V3",
+        "message": "unbound quantity \"~0.07\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "observations.6.statement",
+        "rule": "V3",
+        "message": "unbound quantity \"~4.7\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "hypotheses.0.confidence",
+        "rule": "V5",
+        "message": "high confidence requires supporting observations citing both prometheus and loki evidence"
+      },
+      {
+        "path": "summary",
+        "rule": "V3",
+        "message": "unbound quantity \"15\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.1.event",
+        "rule": "V3",
+        "message": "unbound quantity \"~9\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.1.event",
+        "rule": "V3",
+        "message": "unbound quantity \"0\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.1.event",
+        "rule": "V3",
+        "message": "unbound quantity \"0\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.1.event",
+        "rule": "V3",
+        "message": "unbound quantity \"~0.07\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.2.event",
+        "rule": "V3",
+        "message": "unbound quantity \"1.48\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.2.event",
+        "rule": "V3",
+        "message": "unbound quantity \"10\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.2.event",
+        "rule": "V3",
+        "message": "unbound quantity \"31\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.2.event",
+        "rule": "V3",
+        "message": "unbound quantity \"0.76\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.2.event",
+        "rule": "V3",
+        "message": "unbound quantity \"1\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.2.event",
+        "rule": "V3",
+        "message": "unbound quantity \"0.34\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.4.event",
+        "rule": "V3",
+        "message": "unbound quantity \"2.25\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.4.event",
+        "rule": "V3",
+        "message": "unbound quantity \"36\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.4.event",
+        "rule": "V3",
+        "message": "unbound quantity \"1.38\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.4.event",
+        "rule": "V3",
+        "message": "unbound quantity \"10\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.4.event",
+        "rule": "V3",
+        "message": "unbound quantity \"0.44\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.5.event",
+        "rule": "V3",
+        "message": "unbound quantity \"2.25\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.5.event",
+        "rule": "V3",
+        "message": "unbound quantity \"1)\" — use a {key} placeholder bound in values"
+      }
+    ],
+    "warnings_count": 9
+  },
+  "grade": {
+    "outcome": "invalid",
+    "pass": false,
+    "if_validation_had_passed": {
+      "outcome": "misattributed",
+      "pass": false
+    },
+    "basis": "gradeRun (packages/contracts/src/grading.ts)"
+  },
+  "actual_onset_order": {
+    "method": "Prometheus via contract METRIC_TEMPLATES, step 5 s, baseline [tBaselineStart,tDeploy], onset = first of 2 consecutive points above max(1.25×baseline max, mean+4σ, baseline max + max(5%, 0.01)) in [tDeploy, detected_at]",
+    "order": [
+      {
+        "metric": "pool_used",
+        "onset": "2026-11-19T19:05:00.000Z",
+        "baseline_max": 1,
+        "peak": 10
+      },
+      {
+        "metric": "pool_pending",
+        "onset": "2026-11-19T19:05:00.000Z",
+        "baseline_max": 0,
+        "peak": 39
+      },
+      {
+        "metric": "eventloop_delay_p99",
+        "onset": "2026-11-19T19:05:00.000Z",
+        "baseline_max": 0.017678335,
+        "peak": 0.449052671
+      },
+      {
+        "metric": "eventloop_utilization",
+        "onset": "2026-11-19T19:05:00.000Z",
+        "baseline_max": 0.11101497688567027,
+        "peak": 1
+      },
+      {
+        "metric": "latency_p95",
+        "onset": "2026-11-19T19:05:05.000Z",
+        "baseline_max": 0.00936286208462944,
+        "peak": 2.1954160513596723
+      },
+      {
+        "metric": "pool_wait_p95",
+        "onset": "2026-11-19T19:05:05.000Z",
+        "baseline_max": 0.0009558750773036486,
+        "peak": 1.3375435810232126
+      },
+      {
+        "metric": "db_operation_p95",
+        "onset": "2026-11-19T19:05:05.000Z",
+        "baseline_max": 0.004804769727085425,
+        "peak": 0.4342242648156817
+      }
+    ],
+    "no_onset": [
+      "latency_p50",
+      "request_rate",
+      "error_ratio_5xx",
+      "pool_idle",
+      "pool_max",
+      "pool_timeout_rate"
+    ]
+  },
+  "evidence": {
+    "rows": 15,
+    "by_tool_and_status": {
+      "log_volume": {
+        "ok": 1
+      },
+      "query_metric": {
+        "ok": 8,
+        "budget_exhausted": 3
+      },
+      "log_patterns": {
+        "ok": 1,
+        "budget_exhausted": 1
+      },
+      "search_logs": {
+        "budget_exhausted": 1
+      }
+    },
+    "calls": [
+      "ev_1:log_volume:ok:{\"window\":{\"end\":\"2026-11-19T19:05:18.624Z\",\"start\":\"2026-11-19T19:03:03.332Z\"}}",
+      "ev_2:query_metric:ok:{\"metric\":\"latency_p95\",\"window\":{\"end\":\"2026-11-19T19:05:18.624Z\",\"start\":\"2026-11-19T19:03:03.332Z\"}}",
+      "ev_3:query_metric:ok:{\"metric\":\"latency_p95\",\"window\":{\"end\":\"2026-11-19T19:03:03.332Z\",\"start\":\"2026-11-19T19:00:48.040Z\"}}",
+      "ev_4:query_metric:ok:{\"metric\":\"pool_wait_p95\",\"window\":{\"end\":\"2026-11-19T19:05:18.624Z\",\"start\":\"2026-11-19T19:03:03.332Z\"}}",
+      "ev_5:query_metric:ok:{\"metric\":\"pool_used\",\"window\":{\"end\":\"2026-11-19T19:05:18.624Z\",\"start\":\"2026-11-19T19:03:03.332Z\"}}",
+      "ev_6:query_metric:ok:{\"metric\":\"pool_pending\",\"window\":{\"end\":\"2026-11-19T19:05:18.624Z\",\"start\":\"2026-11-19T19:03:03.332Z\"}}",
+      "ev_7:query_metric:ok:{\"metric\":\"eventloop_utilization\",\"window\":{\"end\":\"2026-11-19T19:05:18.624Z\",\"start\":\"2026-11-19T19:03:03.332Z\"}}",
+      "ev_8:query_metric:ok:{\"metric\":\"db_operation_p95\",\"window\":{\"end\":\"2026-11-19T19:05:18.624Z\",\"start\":\"2026-11-19T19:03:03.332Z\"}}",
+      "ev_9:query_metric:ok:{\"metric\":\"request_rate\",\"window\":{\"end\":\"2026-11-19T19:05:18.624Z\",\"start\":\"2026-11-19T19:03:03.332Z\"}}",
+      "ev_10:log_patterns:ok:{\"window\":{\"end\":\"2026-11-19T19:05:18.624Z\",\"start\":\"2026-11-19T19:03:03.332Z\"},\"severity\":\"warn\"}",
+      "ev_11:query_metric:budget_exhausted:{\"metric\":\"pool_max\",\"window\":\"incident\"}",
+      "ev_12:query_metric:budget_exhausted:{\"metric\":\"pool_timeout_rate\",\"window\":\"incident\"}",
+      "ev_13:query_metric:budget_exhausted:{\"metric\":\"pool_idle\",\"window\":\"incident\"}",
+      "ev_14:search_logs:budget_exhausted:\"{\\\"window\\\": incident, \\\"severity\\\": \\\"error\\\", \\\"match\\\": null, \\\"limit\\\": 20}\"",
+      "ev_15:log_patterns:budget_exhausted:{\"window\":\"incident\",\"severity\":\"info\"}"
+    ]
+  },
+  "detection_to_report_s": 34.693,
+  "llm_calls": {
+    "attempts": 6,
+    "errors": 0,
+    "by_stage": {
+      "investigate": 4,
+      "report": 2
+    },
+    "input_tokens": 41386,
+    "output_tokens": 8895,
+    "total_tokens": 50281,
+    "latency_ms_total": 34213
+  }
+}

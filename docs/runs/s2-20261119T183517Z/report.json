@@ -1,0 +1,526 @@
+{
+  "investigation_id": "a3227f65-7d39-48cd-aa67-fa1565665a37",
+  "report": {
+    "gaps": [
+      "query_metric calls past the reserved limit returned budget_exhausted (ev_10), so CPU utilization and DB-side query latency were not queried.",
+      "A further log_patterns call returned budget_exhausted (ev_13), so patterns over a later window and non-sampled aggregation of error lines were not checked.",
+      "No database-level metrics (active queries, lock waits, replication lag) or downstream dependency latency were queried.",
+      "Log volume was sampled with a 60 s step over a short window; behavior after 18:47:48 was not checked.",
+      "No deployment or configuration change history around 18:47:32 was checked."
+    ],
+    "status": "probable_cause",
+    "summary": "Latency on demo-service jumped from a flat baseline within seconds, coinciding exactly with the database connection pool reaching its hard ceiling: all pool slots became used, waiters queued, and per-request connection wait rose sharply. Error logs appear a few seconds later reporting connection timeouts on /products and /orders returning HTTP 500, while request rate stayed flat and even dipped. Most probable cause: shared DB connection pool exhaustion, which queued requests, stalled the event loop and drove the p95 latency SLO breach.",
+    "timeline": [
+      {
+        "at": "2026-11-19T18:45:32.247Z",
+        "event": "Baseline: p95 latency 0.009468 s, pool_used 0, pool_pending 0, request rate 29.597 req/s.",
+        "evidence_ids": [
+          "ev_2",
+          "ev_5",
+          "ev_4",
+          "ev_9"
+        ]
+      },
+      {
+        "at": "2026-11-19T18:47:32.247Z",
+        "event": "Onset: pool_used jumps to 10 (at pool_max), pool_pending 36, p95 pool wait 0.883 s, event-loop delay p99 0.400 s, p95 latency 1.750 s.",
+        "evidence_ids": [
+          "ev_5",
+          "ev_8",
+          "ev_4",
+          "ev_6",
+          "ev_7",
+          "ev_2"
+        ]
+      },
+      {
+        "at": "2026-11-19T18:47:36.511Z",
+        "event": "First 'timeout exceeded when trying to connect' error log on /products (version 1.0.1).",
+        "evidence_ids": [
+          "ev_11",
+          "ev_12"
+        ]
+      },
+      {
+        "at": "2026-11-19T18:47:44.630Z",
+        "event": "Last of 5 connection-timeout 500s logged on /products and /orders.",
+        "evidence_ids": [
+          "ev_11",
+          "ev_12"
+        ]
+      },
+      {
+        "at": "2026-11-19T18:47:47.247Z",
+        "event": "Peak p95 latency 2.360 s with pool_pending 47 and p95 pool wait 1.870 s; http-latency-p95 rule fired.",
+        "evidence_ids": [
+          "ev_2",
+          "ev_4",
+          "ev_6"
+        ]
+      }
+    ],
+    "hypotheses": [
+      {
+        "id": "hyp_1",
+        "category": "db_pool_exhaustion",
+        "statement": "Exhaustion of the shared database connection pool caused the incident: all {pool_used_max} of {pool_max_max} connections were in use at 18:47:32 with {pending_max} requests waiting (obs_2, obs_3), p95 connection wait rose to {wait_max} s (obs_4) and event-loop delay p99 to {eld_max} s (obs_5), pushing p95 latency to {lat_max} s (obs_1) and then producing 'timeout exceeded when trying to connect' 500s (obs_7, obs_8); request rate did not rise (obs_6).",
+        "confidence": "high",
+        "supporting_observation_ids": [
+          "obs_1",
+          "obs_2",
+          "obs_3",
+          "obs_4",
+          "obs_5",
+          "obs_7",
+          "obs_8"
+        ],
+        "contradicting_observation_ids": []
+      },
+      {
+        "id": "hyp_2",
+        "category": "cpu_saturation",
+        "statement": "A CPU saturation / event-loop stall in demo-service caused the incident by delaying request handling, visible as event-loop delay p99 of {eld_max} s (obs_5) at the same time as the latency jump to {lat_max} s (obs_1); the stall begins simultaneously with the pool saturation and connection wait rather than before it (obs_2, obs_3, obs_4), so it is more consistent with a downstream effect of the pool.",
+        "confidence": "low",
+        "supporting_observation_ids": [
+          "obs_5",
+          "obs_1"
+        ],
+        "contradicting_observation_ids": [
+          "obs_2",
+          "obs_3",
+          "obs_4"
+        ]
+      },
+      {
+        "id": "hyp_3",
+        "category": "other",
+        "statement": "A traffic surge caused the incident by overwhelming the service: request rate peaked at {req_max} req/s in the window (obs_6).",
+        "confidence": "low",
+        "supporting_observation_ids": [
+          "obs_6"
+        ],
+        "contradicting_observation_ids": [
+          "obs_2",
+          "obs_3",
+          "obs_4",
+          "obs_1"
+        ]
+      }
+    ],
+    "observations": [
+      {
+        "id": "obs_1",
+        "values": [
+          {
+            "key": "lat_base_min",
+            "field": "min",
+            "value": 0.00922052845528455,
+            "evidence_id": "ev_3"
+          },
+          {
+            "key": "lat_base_max",
+            "field": "max",
+            "value": 0.0096787037037037,
+            "evidence_id": "ev_3"
+          },
+          {
+            "key": "lat_first_jump",
+            "field": "series@2026-11-19T18:47:32.247Z",
+            "value": 1.7496340595669155,
+            "evidence_id": "ev_2"
+          },
+          {
+            "key": "lat_max",
+            "field": "max",
+            "value": 2.3600304388429674,
+            "evidence_id": "ev_2"
+          }
+        ],
+        "statement": "p95 latency was flat near {lat_base_min} s during the baseline window and stayed flat through 18:47:17, then jumped to {lat_first_jump} s at 18:47:32 and {lat_max} s at 18:47:47.",
+        "evidence_ids": [
+          "ev_2",
+          "ev_3"
+        ]
+      },
+      {
+        "id": "obs_2",
+        "values": [
+          {
+            "key": "pool_used_max",
+            "field": "max",
+            "value": 10,
+            "evidence_id": "ev_5"
+          },
+          {
+            "key": "pool_max_max",
+            "field": "max",
+            "value": 10,
+            "evidence_id": "ev_8"
+          }
+        ],
+        "statement": "pool_used was 0 for the whole window until 18:47:32, when it reached {pool_used_max} connections, against a constant pool_max of {pool_max_max}.",
+        "evidence_ids": [
+          "ev_5",
+          "ev_8"
+        ]
+      },
+      {
+        "id": "obs_3",
+        "values": [
+          {
+            "key": "pending_first_jump",
+            "field": "series@2026-11-19T18:47:32.247Z",
+            "value": 36,
+            "evidence_id": "ev_4"
+          },
+          {
+            "key": "pending_max",
+            "field": "max",
+            "value": 47,
+            "evidence_id": "ev_4"
+          }
+        ],
+        "statement": "pool_pending (requests waiting for a connection) went from 0 to {pending_first_jump} at 18:47:32 and then {pending_max} at 18:47:47, showing requests queueing for the pool.",
+        "evidence_ids": [
+          "ev_4"
+        ]
+      },
+      {
+        "id": "obs_4",
+        "values": [
+          {
+            "key": "wait_base_min",
+            "field": "min",
+            "value": 0.0009535141800246609,
+            "evidence_id": "ev_6"
+          },
+          {
+            "key": "wait_first_jump",
+            "field": "series@2026-11-19T18:47:32.247Z",
+            "value": 0.8831625611312273,
+            "evidence_id": "ev_6"
+          },
+          {
+            "key": "wait_max",
+            "field": "max",
+            "value": 1.8700181890858947,
+            "evidence_id": "ev_6"
+          }
+        ],
+        "statement": "p95 connection wait rose from ~{wait_base_min} s to {wait_first_jump} s at 18:47:32 and {wait_max} s at 18:47:47.",
+        "evidence_ids": [
+          "ev_6"
+        ]
+      },
+      {
+        "id": "obs_5",
+        "values": [
+          {
+            "key": "eld_base_first",
+            "field": "first",
+            "value": 0.012746751,
+            "evidence_id": "ev_7"
+          },
+          {
+            "key": "eld_max",
+            "field": "max",
+            "value": 0.399507455,
+            "evidence_id": "ev_7"
+          },
+          {
+            "key": "eld_last",
+            "field": "last",
+            "value": 0.308019199,
+            "evidence_id": "ev_7"
+          }
+        ],
+        "statement": "Event-loop delay p99 spiked from a baseline near {eld_base_first} s to {eld_max} s at 18:47:32 and {eld_last} s at 18:47:47, coincident with pool saturation.",
+        "evidence_ids": [
+          "ev_7"
+        ]
+      },
+      {
+        "id": "obs_6",
+        "values": [
+          {
+            "key": "req_min",
+            "field": "min",
+            "value": 28.284851915119397,
+            "evidence_id": "ev_9"
+          },
+          {
+            "key": "req_max",
+            "field": "max",
+            "value": 29.59677126131695,
+            "evidence_id": "ev_9"
+          }
+        ],
+        "statement": "Request rate stayed in a narrow band between {req_min} and {req_max} req/s and dipped at the onset, so no traffic surge accompanied the latency jump.",
+        "evidence_ids": [
+          "ev_9"
+        ]
+      },
+      {
+        "id": "obs_7",
+        "values": [
+          {
+            "key": "p1_count",
+            "field": "p1.count",
+            "value": 5,
+            "evidence_id": "ev_11"
+          }
+        ],
+        "statement": "The only error log pattern in the window is 'request failed' with exception 'timeout exceeded when trying to connect', {p1_count} occurrences between 18:47:36.511Z and 18:47:44.630Z on service version 1.0.1.",
+        "evidence_ids": [
+          "ev_11"
+        ]
+      },
+      {
+        "id": "obs_8",
+        "values": [
+          {
+            "key": "log_status",
+            "field": "l1.status",
+            "value": 500,
+            "evidence_id": "ev_12"
+          }
+        ],
+        "statement": "Sample error log lines show HTTP status {log_status} with 'timeout exceeded when trying to connect' on routes /products and /orders, first at 18:47:36.511Z, version 1.0.1.",
+        "evidence_ids": [
+          "ev_12"
+        ]
+      },
+      {
+        "id": "obs_9",
+        "values": [
+          {
+            "key": "err_sum",
+            "field": "error.sum",
+            "value": 5,
+            "evidence_id": "ev_1"
+          },
+          {
+            "key": "warn_min",
+            "field": "warn.min",
+            "value": 5,
+            "evidence_id": "ev_1"
+          },
+          {
+            "key": "warn_max",
+            "field": "warn.max",
+            "value": 11,
+            "evidence_id": "ev_1"
+          },
+          {
+            "key": "info_min",
+            "field": "info.min",
+            "value": 1232,
+            "evidence_id": "ev_1"
+          },
+          {
+            "key": "info_max",
+            "field": "info.max",
+            "value": 1777,
+            "evidence_id": "ev_1"
+          }
+        ],
+        "statement": "Log volume by severity shows error lines only at the end of the window ({err_sum} error lines), steady warn volume ({warn_min}-{warn_max} per minute) and roughly flat info volume ({info_min}-{info_max} per minute).",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      }
+    ],
+    "recommendations": [
+      {
+        "risk": "low",
+        "action": "Inspect for long-running or blocking database queries and leaked connection holders on the /products and /orders routes around 18:47:32 using DB session/connection-holder instrumentation.",
+        "rationale": "The pool was pinned at its ceiling with requests queued (hyp_1); a blocking query or missing connection release would explain all slots being held while request rate stayed flat.",
+        "hypothesis_id": "hyp_1"
+      },
+      {
+        "risk": "medium",
+        "action": "Review pool sizing (pool_max) against normal concurrency and consider raising it or adding a bounded wait-timeout with fast-fail to protect latency.",
+        "rationale": "Requests queued behind a pool_max of 10 connections until they timed out (hyp_1); more headroom or faster failure would limit latency propagation.",
+        "hypothesis_id": "hyp_1"
+      },
+      {
+        "risk": "low",
+        "action": "Add alerting on pool_used/pool_max ratio, pool_pending and pool_wait_p95 so pool saturation is paged before the latency SLO is breached.",
+        "rationale": "Pool saturation preceded the error logs and the SLO breach (hyp_1), so it is a leading indicator.",
+        "hypothesis_id": "hyp_1"
+      },
+      {
+        "risk": "low",
+        "action": "Capture CPU profile and event-loop blocking traces during the next occurrence to confirm whether the event-loop stall is purely pool-induced or has an independent CPU component.",
+        "rationale": "Event-loop delay p99 reached 0.400 s, which hyp_2 treats as a possible independent cause; profiling would separate the two.",
+        "hypothesis_id": "hyp_2"
+      }
+    ]
+  },
+  "validation": "failed",
+  "violations": [
+    {
+      "path": "observations.0.values",
+      "rule": "V3",
+      "message": "value key \"lat_base_max\" is not used in the statement"
+    },
+    {
+      "path": "observations.1.statement",
+      "rule": "V3",
+      "message": "unbound quantity \"0\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "observations.2.statement",
+      "rule": "V3",
+      "message": "unbound quantity \"0\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "hypotheses.0.statement",
+      "rule": "V3",
+      "message": "unbound quantity \"500s\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.0.event",
+      "rule": "V3",
+      "message": "unbound quantity \"0.009468\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.0.event",
+      "rule": "V3",
+      "message": "unbound quantity \"0\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.0.event",
+      "rule": "V3",
+      "message": "unbound quantity \"0\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.0.event",
+      "rule": "V3",
+      "message": "unbound quantity \"29.597\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.1.event",
+      "rule": "V3",
+      "message": "unbound quantity \"10\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.1.event",
+      "rule": "V3",
+      "message": "unbound quantity \"36\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.1.event",
+      "rule": "V3",
+      "message": "unbound quantity \"0.883\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.1.event",
+      "rule": "V3",
+      "message": "unbound quantity \"0.400\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.1.event",
+      "rule": "V3",
+      "message": "unbound quantity \"1.750\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.2.event",
+      "rule": "V3",
+      "message": "unbound quantity \"1.0.1)\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.3.event",
+      "rule": "V3",
+      "message": "unbound quantity \"5\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.3.event",
+      "rule": "V3",
+      "message": "unbound quantity \"500s\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.4.event",
+      "rule": "V3",
+      "message": "unbound quantity \"2.360\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.4.event",
+      "rule": "V3",
+      "message": "unbound quantity \"47\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.4.event",
+      "rule": "V3",
+      "message": "unbound quantity \"1.870\" — use a {key} placeholder bound in values"
+    }
+  ],
+  "warnings": [
+    {
+      "path": "observations.0.statement",
+      "rule": "W-time",
+      "message": "time literal \"18:47:17\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.0.statement",
+      "rule": "W-time",
+      "message": "time literal \"18:47:32\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.0.statement",
+      "rule": "W-time",
+      "message": "time literal \"18:47:47\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.1.statement",
+      "rule": "W-time",
+      "message": "time literal \"18:47:32\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.2.statement",
+      "rule": "W-time",
+      "message": "time literal \"18:47:32\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.2.statement",
+      "rule": "W-time",
+      "message": "time literal \"18:47:47\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.3.statement",
+      "rule": "W-time",
+      "message": "time literal \"18:47:32\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.3.statement",
+      "rule": "W-time",
+      "message": "time literal \"18:47:47\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.4.statement",
+      "rule": "W-time",
+      "message": "time literal \"18:47:32\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.4.statement",
+      "rule": "W-time",
+      "message": "time literal \"18:47:47\" — times belong in the timeline"
+    },
+    {
+      "path": "hypotheses.0.statement",
+      "rule": "W-time",
+      "message": "time literal \"18:47:32\" — times belong in the timeline"
+    },
+    {
+      "path": "recommendations.1",
+      "rule": "W-rec",
+      "message": "quantity \"10\" in a proposal"
+    },
+    {
+      "path": "recommendations.3",
+      "rule": "W-rec",
+      "message": "quantity \"0.400\" in a proposal"
+    }
+  ],
+  "repair_attempted": true
+}

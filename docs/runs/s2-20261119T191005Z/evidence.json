@@ -1,0 +1,988 @@
+[
+  {
+    "id": "ev_1",
+    "investigation_id": "9db4dd6d-d262-4071-8859-f663e0749076",
+    "tool": "log_volume",
+    "source": "loki",
+    "args": {
+      "window": {
+        "end": "2026-11-19T19:22:50.160Z",
+        "start": "2026-11-19T19:20:34.571Z"
+      }
+    },
+    "rendered_query": "sum by (severity_text) (count_over_time({service_name=\"demo-service\"}[1m]))",
+    "window": {
+      "start": "2026-11-19T19:20:34.571Z",
+      "end": "2026-11-19T19:22:50.160Z"
+    },
+    "status": "ok",
+    "error": null,
+    "result": {
+      "error": null,
+      "status": "ok",
+      "step_s": 60,
+      "window": {
+        "end": "2026-11-19T19:22:50.160Z",
+        "start": "2026-11-19T19:20:34.571Z"
+      },
+      "by_severity": {
+        "info": {
+          "stats": {
+            "avg": 1623.5,
+            "max": 1743,
+            "min": 1274,
+            "sum": 6494,
+            "last": 1274,
+            "first": 1739,
+            "points": 4
+          },
+          "series": [
+            [
+              "2026-11-19T19:20:00.000Z",
+              1739
+            ],
+            [
+              "2026-11-19T19:21:00.000Z",
+              1743
+            ],
+            [
+              "2026-11-19T19:22:00.000Z",
+              1738
+            ],
+            [
+              "2026-11-19T19:23:00.000Z",
+              1274
+            ]
+          ]
+        },
+        "warn": {
+          "stats": {
+            "avg": 8.25,
+            "max": 10,
+            "min": 7,
+            "sum": 33,
+            "last": 7,
+            "first": 7,
+            "points": 4
+          },
+          "series": [
+            [
+              "2026-11-19T19:20:00.000Z",
+              7
+            ],
+            [
+              "2026-11-19T19:21:00.000Z",
+              10
+            ],
+            [
+              "2026-11-19T19:22:00.000Z",
+              9
+            ],
+            [
+              "2026-11-19T19:23:00.000Z",
+              7
+            ]
+          ]
+        }
+      },
+      "evidence_id": "ev_1"
+    },
+    "stats": {
+      "info.avg": 1623.5,
+      "info.max": 1743,
+      "info.min": 1274,
+      "info.sum": 6494,
+      "warn.avg": 8.25,
+      "warn.max": 10,
+      "warn.min": 7,
+      "warn.sum": 33,
+      "info.last": 1274,
+      "total.sum": 6527,
+      "warn.last": 7,
+      "info.first": 1739,
+      "warn.first": 7,
+      "info.points": 4,
+      "warn.points": 4
+    },
+    "duration_ms": 46,
+    "created_at": "2026-11-19T19:22:51.978Z"
+  },
+  {
+    "id": "ev_2",
+    "investigation_id": "9db4dd6d-d262-4071-8859-f663e0749076",
+    "tool": "query_metric",
+    "source": "prometheus",
+    "args": {
+      "metric": "latency_p95",
+      "window": {
+        "end": "2026-11-19T19:22:50.160Z",
+        "start": "2026-11-19T19:20:34.571Z"
+      }
+    },
+    "rendered_query": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{service_name=\"demo-service\"}[1m])))",
+    "window": {
+      "start": "2026-11-19T19:20:34.571Z",
+      "end": "2026-11-19T19:22:50.160Z"
+    },
+    "status": "ok",
+    "error": null,
+    "result": {
+      "unit": "s",
+      "error": null,
+      "stats": {
+        "avg": 0.4680974060222768,
+        "max": 2.28279770021449,
+        "min": 0.008953125,
+        "last": 2.28279770021449,
+        "first": 0.008953125,
+        "points": 10
+      },
+      "max_at": "2026-11-19T19:22:49.571Z",
+      "metric": "latency_p95",
+      "series": [
+        [
+          "2026-11-19T19:20:34.571Z",
+          0.008953125
+        ],
+        [
+          "2026-11-19T19:20:49.571Z",
+          0.008958510638297874
+        ],
+        [
+          "2026-11-19T19:21:04.571Z",
+          0.008972103004291848
+        ],
+        [
+          "2026-11-19T19:21:19.571Z",
+          0.009199019607843134
+        ],
+        [
+          "2026-11-19T19:21:34.571Z",
+          0.009151162790697675
+        ],
+        [
+          "2026-11-19T19:21:49.571Z",
+          0.009090466926070037
+        ],
+        [
+          "2026-11-19T19:22:04.571Z",
+          0.009072761194029853
+        ],
+        [
+          "2026-11-19T19:22:19.571Z",
+          0.4389503347498711
+        ],
+        [
+          "2026-11-19T19:22:34.571Z",
+          1.8958288760971762
+        ],
+        [
+          "2026-11-19T19:22:49.571Z",
+          2.28279770021449
+        ]
+      ],
+      "status": "ok",
+      "step_s": 15,
+      "window": {
+        "end": "2026-11-19T19:22:50.160Z",
+        "start": "2026-11-19T19:20:34.571Z"
+      },
+      "evidence_id": "ev_2"
+    },
+    "stats": {
+      "avg": 0.4680974060222768,
+      "max": 2.28279770021449,
+      "min": 0.008953125,
+      "last": 2.28279770021449,
+      "first": 0.008953125,
+      "points": 10
+    },
+    "duration_ms": 4,
+    "created_at": "2026-11-19T19:22:51.987Z"
+  },
+  {
+    "id": "ev_3",
+    "investigation_id": "9db4dd6d-d262-4071-8859-f663e0749076",
+    "tool": "query_metric",
+    "source": "prometheus",
+    "args": {
+      "metric": "latency_p95",
+      "window": {
+        "end": "2026-11-19T19:20:34.571Z",
+        "start": "2026-11-19T19:18:18.982Z"
+      }
+    },
+    "rendered_query": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{service_name=\"demo-service\"}[1m])))",
+    "window": {
+      "start": "2026-11-19T19:18:18.982Z",
+      "end": "2026-11-19T19:20:34.571Z"
+    },
+    "status": "ok",
+    "error": null,
+    "result": {
+      "unit": "s",
+      "error": null,
+      "stats": {
+        "avg": 0.009006573731424574,
+        "max": 0.009117579908675797,
+        "min": 0.00889055793991416,
+        "last": 0.008953125,
+        "first": 0.009049086757990864,
+        "points": 10
+      },
+      "max_at": "2026-11-19T19:18:33.982Z",
+      "metric": "latency_p95",
+      "series": [
+        [
+          "2026-11-19T19:18:18.982Z",
+          0.009049086757990864
+        ],
+        [
+          "2026-11-19T19:18:33.982Z",
+          0.009117579908675797
+        ],
+        [
+          "2026-11-19T19:18:48.982Z",
+          0.009012135922330093
+        ],
+        [
+          "2026-11-19T19:19:03.982Z",
+          0.00901497695852534
+        ],
+        [
+          "2026-11-19T19:19:18.982Z",
+          0.009042735042735043
+        ],
+        [
+          "2026-11-19T19:19:33.982Z",
+          0.008981927710843374
+        ],
+        [
+          "2026-11-19T19:19:48.982Z",
+          0.008986170212765956
+        ],
+        [
+          "2026-11-19T19:20:03.982Z",
+          0.009017441860465113
+        ],
+        [
+          "2026-11-19T19:20:18.982Z",
+          0.00889055793991416
+        ],
+        [
+          "2026-11-19T19:20:33.982Z",
+          0.008953125
+        ]
+      ],
+      "status": "ok",
+      "step_s": 15,
+      "window": {
+        "end": "2026-11-19T19:20:34.571Z",
+        "start": "2026-11-19T19:18:18.982Z"
+      },
+      "evidence_id": "ev_3"
+    },
+    "stats": {
+      "avg": 0.009006573731424574,
+      "max": 0.009117579908675797,
+      "min": 0.00889055793991416,
+      "last": 0.008953125,
+      "first": 0.009049086757990864,
+      "points": 10
+    },
+    "duration_ms": 2,
+    "created_at": "2026-11-19T19:22:51.990Z"
+  },
+  {
+    "id": "ev_4",
+    "investigation_id": "9db4dd6d-d262-4071-8859-f663e0749076",
+    "tool": "query_metric",
+    "source": "prometheus",
+    "args": {
+      "metric": "error_ratio_5xx",
+      "window": {
+        "end": "2026-11-19T19:22:50.160Z",
+        "start": "2026-11-19T19:20:34.571Z"
+      }
+    },
+    "rendered_query": "(sum(rate(http_server_request_duration_seconds_count{service_name=\"demo-service\",http_response_status_code=~\"5..\"}[1m])) or vector(0)) / sum(rate(http_server_request_duration_seconds_count{service_name=\"demo-service\"}[1m]))",
+    "window": {
+      "start": "2026-11-19T19:20:34.571Z",
+      "end": "2026-11-19T19:22:50.160Z"
+    },
+    "status": "ok",
+    "error": null,
+    "result": {
+      "unit": "ratio",
+      "error": null,
+      "stats": {
+        "avg": 0,
+        "max": 0,
+        "min": 0,
+        "last": 0,
+        "first": 0,
+        "points": 10
+      },
+      "max_at": "2026-11-19T19:20:34.571Z",
+      "metric": "error_ratio_5xx",
+      "series": [
+        [
+          "2026-11-19T19:20:34.571Z",
+          0
+        ],
+        [
+          "2026-11-19T19:20:49.571Z",
+          0
+        ],
+        [
+          "2026-11-19T19:21:04.571Z",
+          0
+        ],
+        [
+          "2026-11-19T19:21:19.571Z",
+          0
+        ],
+        [
+          "2026-11-19T19:21:34.571Z",
+          0
+        ],
+        [
+          "2026-11-19T19:21:49.571Z",
+          0
+        ],
+        [
+          "2026-11-19T19:22:04.571Z",
+          0
+        ],
+        [
+          "2026-11-19T19:22:19.571Z",
+          0
+        ],
+        [
+          "2026-11-19T19:22:34.571Z",
+          0
+        ],
+        [
+          "2026-11-19T19:22:49.571Z",
+          0
+        ]
+      ],
+      "status": "ok",
+      "step_s": 15,
+      "window": {
+        "end": "2026-11-19T19:22:50.160Z",
+        "start": "2026-11-19T19:20:34.571Z"
+      },
+      "evidence_id": "ev_4"
+    },
+    "stats": {
+      "avg": 0,
+      "max": 0,
+      "min": 0,
+      "last": 0,
+      "first": 0,
+      "points": 10
+    },
+    "duration_ms": 2,
+    "created_at": "2026-11-19T19:22:51.993Z"
+  },
+  {
+    "id": "ev_5",
+    "investigation_id": "9db4dd6d-d262-4071-8859-f663e0749076",
+    "tool": "query_metric",
+    "source": "prometheus",
+    "args": {
+      "metric": "pool_pending",
+      "window": {
+        "end": "2026-11-19T19:22:50.160Z",
+        "start": "2026-11-19T19:20:34.571Z"
+      }
+    },
+    "rendered_query": "sum(last_over_time(db_client_connection_pending_requests{service_name=\"demo-service\"}[15s]))",
+    "window": {
+      "start": "2026-11-19T19:20:34.571Z",
+      "end": "2026-11-19T19:22:50.160Z"
+    },
+    "status": "ok",
+    "error": null,
+    "result": {
+      "unit": "requests",
+      "error": null,
+      "stats": {
+        "avg": 7,
+        "max": 35,
+        "min": 0,
+        "last": 35,
+        "first": 0,
+        "points": 10
+      },
+      "max_at": "2026-11-19T19:22:34.571Z",
+      "metric": "pool_pending",
+      "series": [
+        [
+          "2026-11-19T19:20:34.571Z",
+          0
+        ],
+        [
+          "2026-11-19T19:20:49.571Z",
+          0
+        ],
+        [
+          "2026-11-19T19:21:04.571Z",
+          0
+        ],
+        [
+          "2026-11-19T19:21:19.571Z",
+          0
+        ],
+        [
+          "2026-11-19T19:21:34.571Z",
+          0
+        ],
+        [
+          "2026-11-19T19:21:49.571Z",
+          0
+        ],
+        [
+          "2026-11-19T19:22:04.571Z",
+          0
+        ],
+        [
+          "2026-11-19T19:22:19.571Z",
+          0
+        ],
+        [
+          "2026-11-19T19:22:34.571Z",
+          35
+        ],
+        [
+          "2026-11-19T19:22:49.571Z",
+          35
+        ]
+      ],
+      "status": "ok",
+      "step_s": 15,
+      "window": {
+        "end": "2026-11-19T19:22:50.160Z",
+        "start": "2026-11-19T19:20:34.571Z"
+      },
+      "evidence_id": "ev_5"
+    },
+    "stats": {
+      "avg": 7,
+      "max": 35,
+      "min": 0,
+      "last": 35,
+      "first": 0,
+      "points": 10
+    },
+    "duration_ms": 3,
+    "created_at": "2026-11-19T19:22:53.172Z"
+  },
+  {
+    "id": "ev_6",
+    "investigation_id": "9db4dd6d-d262-4071-8859-f663e0749076",
+    "tool": "query_metric",
+    "source": "prometheus",
+    "args": {
+      "metric": "pool_pending",
+      "window": {
+        "end": "2026-11-19T19:20:34.571Z",
+        "start": "2026-11-19T19:18:18.982Z"
+      }
+    },
+    "rendered_query": "sum(last_over_time(db_client_connection_pending_requests{service_name=\"demo-service\"}[15s]))",
+    "window": {
+      "start": "2026-11-19T19:18:18.982Z",
+      "end": "2026-11-19T19:20:34.571Z"
+    },
+    "status": "ok",
+    "error": null,
+    "result": {
+      "unit": "requests",
+      "error": null,
+      "stats": {
+        "avg": 0,
+        "max": 0,
+        "min": 0,
+        "last": 0,
+        "first": 0,
+        "points": 10
+      },
+      "max_at": "2026-11-19T19:18:18.982Z",
+      "metric": "pool_pending",
+      "series": [
+        [
+          "2026-11-19T19:18:18.982Z",
+          0
+        ],
+        [
+          "2026-11-19T19:18:33.982Z",
+          0
+        ],
+        [
+          "2026-11-19T19:18:48.982Z",
+          0
+        ],
+        [
+          "2026-11-19T19:19:03.982Z",
+          0
+        ],
+        [
+          "2026-11-19T19:19:18.982Z",
+          0
+        ],
+        [
+          "2026-11-19T19:19:33.982Z",
+          0
+        ],
+        [
+          "2026-11-19T19:19:48.982Z",
+          0
+        ],
+        [
+          "2026-11-19T19:20:03.982Z",
+          0
+        ],
+        [
+          "2026-11-19T19:20:18.982Z",
+          0
+        ],
+        [
+          "2026-11-19T19:20:33.982Z",
+          0
+        ]
+      ],
+      "status": "ok",
+      "step_s": 15,
+      "window": {
+        "end": "2026-11-19T19:20:34.571Z",
+        "start": "2026-11-19T19:18:18.982Z"
+      },
+      "evidence_id": "ev_6"
+    },
+    "stats": {
+      "avg": 0,
+      "max": 0,
+      "min": 0,
+      "last": 0,
+      "first": 0,
+      "points": 10
+    },
+    "duration_ms": 1,
+    "created_at": "2026-11-19T19:22:53.175Z"
+  },
+  {
+    "id": "ev_7",
+    "investigation_id": "9db4dd6d-d262-4071-8859-f663e0749076",
+    "tool": "query_metric",
+    "source": "prometheus",
+    "args": {
+      "metric": "pool_used",
+      "window": {
+        "end": "2026-11-19T19:22:50.160Z",
+        "start": "2026-11-19T19:20:34.571Z"
+      }
+    },
+    "rendered_query": "sum(last_over_time(db_client_connection_count{service_name=\"demo-service\",db_client_connection_state=\"used\"}[15s]))",
+    "window": {
+      "start": "2026-11-19T19:20:34.571Z",
+      "end": "2026-11-19T19:22:50.160Z"
+    },
+    "status": "ok",
+    "error": null,
+    "result": {
+      "unit": "connections",
+      "error": null,
+      "stats": {
+        "avg": 2.9,
+        "max": 10,
+        "min": 0,
+        "last": 10,
+        "first": 1,
+        "points": 10
+      },
+      "max_at": "2026-11-19T19:22:34.571Z",
+      "metric": "pool_used",
+      "series": [
+        [
+          "2026-11-19T19:20:34.571Z",
+          1
+        ],
+        [
+          "2026-11-19T19:20:49.571Z",
+          0
+        ],
+        [
+          "2026-11-19T19:21:04.571Z",
+          0
+        ],
+        [
+          "2026-11-19T19:21:19.571Z",
+          1
+        ],
+        [
+          "2026-11-19T19:21:34.571Z",
+          0
+        ],
+        [
+          "2026-11-19T19:21:49.571Z",
+          0
+        ],
+        [
+          "2026-11-19T19:22:04.571Z",
+          0
+        ],
+        [
+          "2026-11-19T19:22:19.571Z",
+          7
+        ],
+        [
+          "2026-11-19T19:22:34.571Z",
+          10
+        ],
+        [
+          "2026-11-19T19:22:49.571Z",
+          10
+        ]
+      ],
+      "status": "ok",
+      "step_s": 15,
+      "window": {
+        "end": "2026-11-19T19:22:50.160Z",
+        "start": "2026-11-19T19:20:34.571Z"
+      },
+      "evidence_id": "ev_7"
+    },
+    "stats": {
+      "avg": 2.9,
+      "max": 10,
+      "min": 0,
+      "last": 10,
+      "first": 1,
+      "points": 10
+    },
+    "duration_ms": 2,
+    "created_at": "2026-11-19T19:22:53.179Z"
+  },
+  {
+    "id": "ev_8",
+    "investigation_id": "9db4dd6d-d262-4071-8859-f663e0749076",
+    "tool": "query_metric",
+    "source": "prometheus",
+    "args": {
+      "metric": "eventloop_utilization",
+      "window": {
+        "end": "2026-11-19T19:22:50.160Z",
+        "start": "2026-11-19T19:20:34.571Z"
+      }
+    },
+    "rendered_query": "max(last_over_time(nodejs_eventloop_utilization_ratio{service_name=\"demo-service\"}[15s]))",
+    "window": {
+      "start": "2026-11-19T19:20:34.571Z",
+      "end": "2026-11-19T19:22:50.160Z"
+    },
+    "status": "ok",
+    "error": null,
+    "result": {
+      "unit": "ratio",
+      "error": null,
+      "stats": {
+        "avg": 0.3392516406415794,
+        "max": 1,
+        "min": 0.05281755054390345,
+        "last": 1,
+        "first": 0.06979847111209841,
+        "points": 10
+      },
+      "max_at": "2026-11-19T19:22:34.571Z",
+      "metric": "eventloop_utilization",
+      "series": [
+        [
+          "2026-11-19T19:20:34.571Z",
+          0.06979847111209841
+        ],
+        [
+          "2026-11-19T19:20:49.571Z",
+          0.06447611894495131
+        ],
+        [
+          "2026-11-19T19:21:04.571Z",
+          0.05281755054390345
+        ],
+        [
+          "2026-11-19T19:21:19.571Z",
+          0.06432893095900234
+        ],
+        [
+          "2026-11-19T19:21:34.571Z",
+          0.06629924900338965
+        ],
+        [
+          "2026-11-19T19:21:49.571Z",
+          0.05770896389296053
+        ],
+        [
+          "2026-11-19T19:22:04.571Z",
+          0.058639732674441
+        ],
+        [
+          "2026-11-19T19:22:19.571Z",
+          0.9584473892850478
+        ],
+        [
+          "2026-11-19T19:22:34.571Z",
+          1
+        ],
+        [
+          "2026-11-19T19:22:49.571Z",
+          1
+        ]
+      ],
+      "status": "ok",
+      "step_s": 15,
+      "window": {
+        "end": "2026-11-19T19:22:50.160Z",
+        "start": "2026-11-19T19:20:34.571Z"
+      },
+      "evidence_id": "ev_8"
+    },
+    "stats": {
+      "avg": 0.3392516406415794,
+      "max": 1,
+      "min": 0.05281755054390345,
+      "last": 1,
+      "first": 0.06979847111209841,
+      "points": 10
+    },
+    "duration_ms": 2,
+    "created_at": "2026-11-19T19:22:53.182Z"
+  },
+  {
+    "id": "ev_9",
+    "investigation_id": "9db4dd6d-d262-4071-8859-f663e0749076",
+    "tool": "query_metric",
+    "source": "prometheus",
+    "args": {
+      "metric": "pool_max",
+      "window": {
+        "end": "2026-11-19T19:22:50.160Z",
+        "start": "2026-11-19T19:20:34.571Z"
+      }
+    },
+    "rendered_query": "max(last_over_time(db_client_connection_max{service_name=\"demo-service\"}[15s]))",
+    "window": {
+      "start": "2026-11-19T19:20:34.571Z",
+      "end": "2026-11-19T19:22:50.160Z"
+    },
+    "status": "ok",
+    "error": null,
+    "result": {
+      "unit": "connections",
+      "error": null,
+      "stats": {
+        "avg": 10,
+        "max": 10,
+        "min": 10,
+        "last": 10,
+        "first": 10,
+        "points": 10
+      },
+      "max_at": "2026-11-19T19:20:34.571Z",
+      "metric": "pool_max",
+      "series": [
+        [
+          "2026-11-19T19:20:34.571Z",
+          10
+        ],
+        [
+          "2026-11-19T19:20:49.571Z",
+          10
+        ],
+        [
+          "2026-11-19T19:21:04.571Z",
+          10
+        ],
+        [
+          "2026-11-19T19:21:19.571Z",
+          10
+        ],
+        [
+          "2026-11-19T19:21:34.571Z",
+          10
+        ],
+        [
+          "2026-11-19T19:21:49.571Z",
+          10
+        ],
+        [
+          "2026-11-19T19:22:04.571Z",
+          10
+        ],
+        [
+          "2026-11-19T19:22:19.571Z",
+          10
+        ],
+        [
+          "2026-11-19T19:22:34.571Z",
+          10
+        ],
+        [
+          "2026-11-19T19:22:49.571Z",
+          10
+        ]
+      ],
+      "status": "ok",
+      "step_s": 15,
+      "window": {
+        "end": "2026-11-19T19:22:50.160Z",
+        "start": "2026-11-19T19:20:34.571Z"
+      },
+      "evidence_id": "ev_9"
+    },
+    "stats": {
+      "avg": 10,
+      "max": 10,
+      "min": 10,
+      "last": 10,
+      "first": 10,
+      "points": 10
+    },
+    "duration_ms": 8,
+    "created_at": "2026-11-19T19:22:54.395Z"
+  },
+  {
+    "id": "ev_10",
+    "investigation_id": "9db4dd6d-d262-4071-8859-f663e0749076",
+    "tool": "query_metric",
+    "source": "prometheus",
+    "args": {
+      "metric": "pool_wait_p95",
+      "window": "incident"
+    },
+    "rendered_query": null,
+    "window": null,
+    "status": "budget_exhausted",
+    "error": "budget_exhausted: query_metric limit reached (8 of 12 calls); the remaining calls are reserved for log tools (log_volume, log_patterns, search_logs)",
+    "result": {
+      "error": "budget_exhausted: query_metric limit reached (8 of 12 calls); the remaining calls are reserved for log tools (log_volume, log_patterns, search_logs)",
+      "status": "budget_exhausted",
+      "evidence_id": "ev_10"
+    },
+    "stats": {},
+    "duration_ms": 0,
+    "created_at": "2026-11-19T19:22:54.398Z"
+  },
+  {
+    "id": "ev_11",
+    "investigation_id": "9db4dd6d-d262-4071-8859-f663e0749076",
+    "tool": "query_metric",
+    "source": "prometheus",
+    "args": {
+      "metric": "db_operation_p95",
+      "window": "incident"
+    },
+    "rendered_query": null,
+    "window": null,
+    "status": "budget_exhausted",
+    "error": "budget_exhausted: query_metric limit reached (8 of 12 calls); the remaining calls are reserved for log tools (log_volume, log_patterns, search_logs)",
+    "result": {
+      "error": "budget_exhausted: query_metric limit reached (8 of 12 calls); the remaining calls are reserved for log tools (log_volume, log_patterns, search_logs)",
+      "status": "budget_exhausted",
+      "evidence_id": "ev_11"
+    },
+    "stats": {},
+    "duration_ms": 0,
+    "created_at": "2026-11-19T19:22:54.400Z"
+  },
+  {
+    "id": "ev_12",
+    "investigation_id": "9db4dd6d-d262-4071-8859-f663e0749076",
+    "tool": "query_metric",
+    "source": "prometheus",
+    "args": {
+      "metric": "request_rate",
+      "window": "incident"
+    },
+    "rendered_query": null,
+    "window": null,
+    "status": "budget_exhausted",
+    "error": "budget_exhausted: query_metric limit reached (8 of 12 calls); the remaining calls are reserved for log tools (log_volume, log_patterns, search_logs)",
+    "result": {
+      "error": "budget_exhausted: query_metric limit reached (8 of 12 calls); the remaining calls are reserved for log tools (log_volume, log_patterns, search_logs)",
+      "status": "budget_exhausted",
+      "evidence_id": "ev_12"
+    },
+    "stats": {},
+    "duration_ms": 0,
+    "created_at": "2026-11-19T19:22:54.401Z"
+  },
+  {
+    "id": "ev_13",
+    "investigation_id": "9db4dd6d-d262-4071-8859-f663e0749076",
+    "tool": "log_patterns",
+    "source": "loki",
+    "args": {
+      "window": "incident",
+      "severity": "warn"
+    },
+    "rendered_query": null,
+    "window": null,
+    "status": "budget_exhausted",
+    "error": "budget_exhausted: the tool budget is used up; write your report now",
+    "result": {
+      "error": "budget_exhausted: the tool budget is used up; write your report now",
+      "status": "budget_exhausted",
+      "evidence_id": "ev_13"
+    },
+    "stats": {},
+    "duration_ms": 0,
+    "created_at": "2026-11-19T19:22:55.923Z"
+  },
+  {
+    "id": "ev_14",
+    "investigation_id": "9db4dd6d-d262-4071-8859-f663e0749076",
+    "tool": "search_logs",
+    "source": "loki",
+    "args": {
+      "limit": 20,
+      "match": null,
+      "window": "incident",
+      "severity": "warn"
+    },
+    "rendered_query": null,
+    "window": null,
+    "status": "budget_exhausted",
+    "error": "budget_exhausted: the tool budget is used up; write your report now",
+    "result": {
+      "error": "budget_exhausted: the tool budget is used up; write your report now",
+      "status": "budget_exhausted",
+      "evidence_id": "ev_14"
+    },
+    "stats": {},
+    "duration_ms": 0,
+    "created_at": "2026-11-19T19:22:55.927Z"
+  },
+  {
+    "id": "ev_15",
+    "investigation_id": "9db4dd6d-d262-4071-8859-f663e0749076",
+    "tool": "log_patterns",
+    "source": "loki",
+    "args": {
+      "window": "baseline",
+      "severity": "warn"
+    },
+    "rendered_query": null,
+    "window": null,
+    "status": "budget_exhausted",
+    "error": "budget_exhausted: the tool budget is used up; write your report now",
+    "result": {
+      "error": "budget_exhausted: the tool budget is used up; write your report now",
+      "status": "budget_exhausted",
+      "evidence_id": "ev_15"
+    },
+    "stats": {},
+    "duration_ms": 0,
+    "created_at": "2026-11-19T19:22:55.928Z"
+  }
+]

@@ -1,0 +1,375 @@
+{
+  "investigation_id": "f72edea2-2d35-4288-acba-d4d29f3bd16b",
+  "report": {
+    "gaps": [
+      "Why connection demand rose at ~17:48Z (traffic/concurrency growth vs. a 1.0.1 workload change) is not established; no request-rate or concurrency metric was queried.",
+      "A baseline error-pattern query to compare pre-incident error lines was not completed (ev_13 log_patterns budget_exhausted).",
+      "A further metric query, likely a baseline comparison metric, was cut off by the query limit (ev_12 query_metric budget_exhausted).",
+      "An additional search_logs query, e.g. for first-error context or other routes, was cut off (ev_14 search_logs budget_exhausted).",
+      "Per-route latency and error breakdown, and whether routes other than /orders were affected, were not checked.",
+      "Downstream dependency health beside the database (other clients, network) was not checked.",
+      "The log_volume window ends at 17:49:23Z with a 17:50 minute bucket, so error volume after 17:50Z and the point of recovery were not observed."
+    ],
+    "status": "probable_cause",
+    "summary": "The demo-service DB connection pool saturated: pool_used climbed to the hard maximum while pending checkout requests and connect timeouts spiked and error logs show \"timeout exceeded when trying to connect\". p95 latency and 5xx ratio rose only after the pool was already saturated, while database operation latency stayed flat. Pool exhaustion is the most probable cause; why connection demand rose is not established.",
+    "timeline": [
+      {
+        "at": "2026-11-19T17:48:22.887Z",
+        "event": "pool_used begins climbing from its baseline of at most {pu_base_max} connections, reaching {pu_mid} connections.",
+        "evidence_ids": [
+          "ev_5",
+          "ev_9"
+        ]
+      },
+      {
+        "at": "2026-11-19T17:49:06.878Z",
+        "event": "First \"request failed\" / \"timeout exceeded when trying to connect\" error log line appears.",
+        "evidence_ids": [
+          "ev_10"
+        ]
+      },
+      {
+        "at": "2026-11-19T17:49:07.887Z",
+        "event": "pool_used pins at the {pmax_val}-connection ceiling, pool_pending jumps to {pend_max} and pool_timeout_rate appears at {ptrate_first} timeouts/s.",
+        "evidence_ids": [
+          "ev_5",
+          "ev_6",
+          "ev_4",
+          "ev_7"
+        ]
+      },
+      {
+        "at": "2026-11-19T17:49:07.887Z",
+        "event": "p95 latency jumps to {lat_jump} s and the 5xx ratio to {err_jump}, from values near zero in the preceding samples.",
+        "evidence_ids": [
+          "ev_2",
+          "ev_3"
+        ]
+      },
+      {
+        "at": "2026-11-19T17:49:22.887Z",
+        "event": "p95 latency peaks at {lat_max} s, 5xx ratio at {err_ratio_max}, and pool_timeout_rate at {ptrate_max} timeouts/s.",
+        "evidence_ids": [
+          "ev_2",
+          "ev_3",
+          "ev_7"
+        ]
+      },
+      {
+        "at": "2026-11-19T17:49:23.740Z",
+        "event": "Last sampled connect-timeout error line; log_patterns counts {err_count} such lines.",
+        "evidence_ids": [
+          "ev_10"
+        ]
+      }
+    ],
+    "hypotheses": [
+      {
+        "id": "hyp_1",
+        "category": "db_pool_exhaustion",
+        "statement": "Exhaustion of the demo-service database connection pool caused the incident: all {pmax_val} connections were checked out, {pend_max} requests queued for a checkout and connect timeouts ran at up to {ptrate_max} per second, producing \"timeout exceeded when trying to connect\" errors, a p95 latency of {lat_max} s and a 5xx ratio of {err_ratio_max}.",
+        "confidence": "high",
+        "supporting_observation_ids": [
+          "obs_1",
+          "obs_2",
+          "obs_3",
+          "obs_4",
+          "obs_5",
+          "obs_6",
+          "obs_7",
+          "obs_9"
+        ],
+        "contradicting_observation_ids": []
+      },
+      {
+        "id": "hyp_2",
+        "category": "dependency_latency",
+        "statement": "Increased database operation latency caused the latency spike and 5xx errors.",
+        "confidence": "low",
+        "supporting_observation_ids": [
+          "obs_1",
+          "obs_2"
+        ],
+        "contradicting_observation_ids": [
+          "obs_8"
+        ]
+      },
+      {
+        "id": "hyp_3",
+        "category": "other",
+        "statement": "A change in the 1.0.1 service version increased connection demand, driving the pool into saturation and the resulting latency and error spike.",
+        "confidence": "low",
+        "supporting_observation_ids": [
+          "obs_7",
+          "obs_3"
+        ],
+        "contradicting_observation_ids": []
+      },
+      {
+        "id": "hyp_4",
+        "category": "other",
+        "statement": "Application-level 409 order rejections on /orders drove the 5xx error ratio and latency.",
+        "confidence": "low",
+        "supporting_observation_ids": [
+          "obs_2"
+        ],
+        "contradicting_observation_ids": [
+          "obs_10"
+        ]
+      }
+    ],
+    "observations": [
+      {
+        "id": "obs_1",
+        "values": [
+          {
+            "key": "lat_base",
+            "field": "series@2026-11-19T17:48:52.887Z",
+            "value": 0.009257304968385898,
+            "evidence_id": "ev_2"
+          },
+          {
+            "key": "lat_max",
+            "field": "max",
+            "value": 2.3583343807297212,
+            "evidence_id": "ev_2"
+          }
+        ],
+        "statement": "p95 latency was flat near {lat_base} s through the first eight samples and then jumped to {lat_max} s at 2026-11-19T17:49:22.887Z.",
+        "evidence_ids": [
+          "ev_2"
+        ]
+      },
+      {
+        "id": "obs_2",
+        "values": [
+          {
+            "key": "err_ratio_min",
+            "field": "min",
+            "value": 0,
+            "evidence_id": "ev_3"
+          },
+          {
+            "key": "err_ratio_max",
+            "field": "max",
+            "value": 0.5294156788804925,
+            "evidence_id": "ev_3"
+          }
+        ],
+        "statement": "The 5xx error ratio was {err_ratio_min} until 17:49:07.887Z and then reached {err_ratio_max} by 17:49:22.887Z.",
+        "evidence_ids": [
+          "ev_3"
+        ]
+      },
+      {
+        "id": "obs_3",
+        "values": [
+          {
+            "key": "pu_base_max",
+            "field": "max",
+            "value": 1,
+            "evidence_id": "ev_9"
+          },
+          {
+            "key": "pu_max",
+            "field": "max",
+            "value": 10,
+            "evidence_id": "ev_5"
+          },
+          {
+            "key": "pu_mid",
+            "field": "series@2026-11-19T17:48:22.887Z",
+            "value": 5,
+            "evidence_id": "ev_5"
+          }
+        ],
+        "statement": "pool_used climbed from a baseline window maximum of {pu_base_max} connections (17:44:52-17:47:07Z) through {pu_mid} connections at 17:48:22Z to {pu_max} connections at 17:49:07.887Z.",
+        "evidence_ids": [
+          "ev_9",
+          "ev_5"
+        ]
+      },
+      {
+        "id": "obs_4",
+        "values": [
+          {
+            "key": "pmax_val",
+            "field": "max",
+            "value": 10,
+            "evidence_id": "ev_6"
+          },
+          {
+            "key": "pmax_min",
+            "field": "min",
+            "value": 10,
+            "evidence_id": "ev_6"
+          }
+        ],
+        "statement": "The pool ceiling pool_max was constant at {pmax_val} connections (minimum {pmax_min}) for the whole incident window, so used connections reached the hard limit.",
+        "evidence_ids": [
+          "ev_6"
+        ]
+      },
+      {
+        "id": "obs_5",
+        "values": [
+          {
+            "key": "pend_min",
+            "field": "min",
+            "value": 0,
+            "evidence_id": "ev_4"
+          },
+          {
+            "key": "pend_max",
+            "field": "max",
+            "value": 59,
+            "evidence_id": "ev_4"
+          }
+        ],
+        "statement": "pool_pending jumped from its pre-spike value of {pend_min} to {pend_max} waiting requests at 17:49:07.887Z and stayed there.",
+        "evidence_ids": [
+          "ev_4"
+        ]
+      },
+      {
+        "id": "obs_6",
+        "values": [
+          {
+            "key": "ptrate_first",
+            "field": "first",
+            "value": 7.775759090757591,
+            "evidence_id": "ev_7"
+          },
+          {
+            "key": "ptrate_max",
+            "field": "max",
+            "value": 15.175855632441369,
+            "evidence_id": "ev_7"
+          }
+        ],
+        "statement": "pool_timeout_rate rose from {ptrate_first} timeouts/s at 17:49:07.887Z to {ptrate_max} timeouts/s at 17:49:22.887Z.",
+        "evidence_ids": [
+          "ev_7"
+        ]
+      },
+      {
+        "id": "obs_7",
+        "values": [
+          {
+            "key": "err_count",
+            "field": "p1.count",
+            "value": 500,
+            "evidence_id": "ev_10"
+          }
+        ],
+        "statement": "The dominant error pattern in the incident window is \"request failed\" with exception \"timeout exceeded when trying to connect\", {err_count} sampled lines from 17:49:06.878Z to 17:49:23.740Z, service version 1.0.1.",
+        "evidence_ids": [
+          "ev_10"
+        ]
+      },
+      {
+        "id": "obs_8",
+        "values": [
+          {
+            "key": "db_p95_min",
+            "field": "min",
+            "value": 0.004766959940439466,
+            "evidence_id": "ev_8"
+          },
+          {
+            "key": "db_p95_max",
+            "field": "max",
+            "value": 0.004791398423364047,
+            "evidence_id": "ev_8"
+          }
+        ],
+        "statement": "Database operation p95 latency stayed flat between {db_p95_min} s and {db_p95_max} s across the entire window, including after the pool saturated.",
+        "evidence_ids": [
+          "ev_8"
+        ]
+      },
+      {
+        "id": "obs_9",
+        "values": [
+          {
+            "key": "err_log_first",
+            "field": "error.first",
+            "value": 245,
+            "evidence_id": "ev_1"
+          },
+          {
+            "key": "err_log_max",
+            "field": "error.max",
+            "value": 745,
+            "evidence_id": "ev_1"
+          }
+        ],
+        "statement": "Error-severity log volume rose from {err_log_first} lines in the 17:49 minute bucket to {err_log_max} lines in the 17:50 bucket, with no error lines in the earlier buckets.",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      {
+        "id": "obs_10",
+        "values": [
+          {
+            "key": "warn_status",
+            "field": "l1.status",
+            "value": 409,
+            "evidence_id": "ev_11"
+          }
+        ],
+        "statement": "\"order rejected\" 409 warn lines on /orders occur throughout the window from both version 1.0.0 and 1.0.1, a low-rate background pattern (first returned line status {warn_status}).",
+        "evidence_ids": [
+          "ev_11"
+        ]
+      }
+    ],
+    "recommendations": [
+      {
+        "risk": "medium",
+        "action": "Raise the DB connection pool ceiling and add headroom alerting on pool_used/pool_max and pool_timeout_rate.",
+        "rationale": "hyp_1: pool_used pinned at the hard pool_max ceiling while pool_pending and timeout rate spiked, so the pool size is the binding constraint.",
+        "hypothesis_id": "hyp_1"
+      },
+      {
+        "risk": "low",
+        "action": "Add per-request connection-checkout time measurement and instrument acquisition wait, so saturation is visible before p95 latency and 5xx breach SLOs.",
+        "rationale": "hyp_1: latency and error ratio only moved after the pool was already full, delaying detection.",
+        "hypothesis_id": "hyp_1"
+      },
+      {
+        "risk": "low",
+        "action": "Review what changed in the 1.0.1 rollout (query patterns, concurrency, connection lifecycle) and compare connection demand against the 1.0.0 baseline.",
+        "rationale": "hyp_3: every incident error line carries version 1.0.1 and pool demand rose inside the window, but the cause of the demand increase is unconfirmed.",
+        "hypothesis_id": "hyp_3"
+      },
+      {
+        "risk": "low",
+        "action": "Track db_operation_p95 as a standing dependency SLI and alert on deviation from its flat baseline.",
+        "rationale": "hyp_2: database operation latency stayed flat, so this dependency signal is a cheap way to keep ruling out the database as the root cause.",
+        "hypothesis_id": "hyp_2"
+      }
+    ]
+  },
+  "validation": "passed",
+  "violations": [],
+  "warnings": [
+    {
+      "path": "observations.0.statement",
+      "rule": "W-time",
+      "message": "time literal \"2026-11-19T17:49:22.887Z\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.8.statement",
+      "rule": "W-time",
+      "message": "time literal \"17:49\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.8.statement",
+      "rule": "W-time",
+      "message": "time literal \"17:50\" — times belong in the timeline"
+    }
+  ],
+  "repair_attempted": true
+}

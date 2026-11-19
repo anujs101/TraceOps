@@ -1,0 +1,415 @@
+{
+  "investigation_id": "9db4dd6d-d262-4071-8859-f663e0749076",
+  "report": {
+    "gaps": [
+      "query_metric calls for pool wait p95, pool timeout rate, DB operation p95 and request rate were cut off with budget_exhausted (ev_10, ev_11, ev_12), so the trigger that first pinned the event loop is unconfirmed.",
+      "log_patterns over the incident window returned budget_exhausted (ev_13, ev_15), so warn-level log patterns naming a blocking call were not examined.",
+      "search_logs for error/exception details returned budget_exhausted (ev_14); only aggregate log volume by severity (ev_1) is available.",
+      "Node/process CPU and memory metrics were not queried at all, so CPU limits vs. busy-loop vs. memory pressure within the event-loop saturation could not be separated.",
+      "No deployment, config-change or traffic-routing events were checked for the period preceding 19:22:19Z.",
+      "Whether pool saturation is upstream of the event loop was not settled: a pool_timeout_rate above zero or a DB latency spike would have contradicted the event-loop-first ordering but neither was retrieved."
+    ],
+    "status": "probable_cause",
+    "summary": "Latency p95 on demo-service rose from a millisecond-scale baseline to multi-second values starting 19:22:19Z, with no 5xx errors and no error logs. Event-loop utilization pinning at 1.0 is the first resource signal to move and precedes pool saturation and request queueing by one sample, so event-loop saturation most probably starved pool turnover; pool exhaustion is downstream. Metrics for pool wait, DB latency and request rate could not be read before the budget ran out, so the trigger is unconfirmed.",
+    "timeline": [
+      {
+        "at": "2026-11-19T19:20:34.571Z",
+        "event": "Baseline: latency_p95 at {lat_first} s and eventloop_utilization near 0.07, pool_pending 0.",
+        "evidence_ids": [
+          "ev_2",
+          "ev_8",
+          "ev_5"
+        ]
+      },
+      {
+        "at": "2026-11-19T19:22:19.571Z",
+        "event": "eventloop_utilization jumps to {el_at_onset}; latency_p95 rises to 0.4389503347498711 s; pool_used climbs to 7 connections.",
+        "evidence_ids": [
+          "ev_8",
+          "ev_2",
+          "ev_7"
+        ]
+      },
+      {
+        "at": "2026-11-19T19:22:34.571Z",
+        "event": "Event loop reaches 1.0 utilization, pool_used hits {pool_used_last} connections (pool_max {pool_max}) and pool_pending reaches {pend_max}; latency_p95 at 1.8958288760971762 s.",
+        "evidence_ids": [
+          "ev_8",
+          "ev_7",
+          "ev_9",
+          "ev_5",
+          "ev_2"
+        ]
+      },
+      {
+        "at": "2026-11-19T19:22:49.571Z",
+        "event": "latency_p95 peaks at {lat_max} s and the http-latency-p95 rule fires; error_ratio_5xx remains {err_max}.",
+        "evidence_ids": [
+          "ev_2",
+          "ev_4"
+        ]
+      }
+    ],
+    "hypotheses": [
+      {
+        "id": "hyp_1",
+        "category": "cpu_saturation",
+        "statement": "Event-loop saturation in demo-service pinned eventloop_utilization at {el_max} from 19:22:34 onward, stalling request handling so that p95 latency rose to {lat_max} s while no errors were produced.",
+        "confidence": "high",
+        "supporting_observation_ids": [
+          "obs_1",
+          "obs_2",
+          "obs_3",
+          "obs_4",
+          "obs_7",
+          "obs_8"
+        ],
+        "contradicting_observation_ids": []
+      },
+      {
+        "id": "hyp_2",
+        "category": "db_pool_exhaustion",
+        "statement": "Exhaustion of the fixed-size connection pool (pool_used reaching pool_max of {pool_max} connections with {pend_max} pending requests) caused the latency spike to {lat_max} s.",
+        "confidence": "low",
+        "supporting_observation_ids": [
+          "obs_5",
+          "obs_6",
+          "obs_2"
+        ],
+        "contradicting_observation_ids": [
+          "obs_3",
+          "obs_7",
+          "obs_8"
+        ]
+      },
+      {
+        "id": "hyp_3",
+        "category": "dependency_latency",
+        "statement": "A surge in downstream/database response time starved the event loop and filled the pool, driving p95 latency to {lat_max} s with queued work of {pend_max} pending requests.",
+        "confidence": "low",
+        "supporting_observation_ids": [
+          "obs_2",
+          "obs_6",
+          "obs_3"
+        ],
+        "contradicting_observation_ids": [
+          "obs_7",
+          "obs_8"
+        ]
+      }
+    ],
+    "observations": [
+      {
+        "id": "obs_1",
+        "values": [
+          {
+            "key": "lat_base",
+            "field": "max",
+            "value": 0.009117579908675797,
+            "evidence_id": "ev_3"
+          }
+        ],
+        "statement": "latency_p95 was flat near 9 ms through the pre-incident baseline window, with a maximum of {lat_base} s.",
+        "evidence_ids": [
+          "ev_3"
+        ]
+      },
+      {
+        "id": "obs_2",
+        "values": [
+          {
+            "key": "lat_first",
+            "field": "first",
+            "value": 0.008953125,
+            "evidence_id": "ev_2"
+          },
+          {
+            "key": "lat_max",
+            "field": "max",
+            "value": 2.28279770021449,
+            "evidence_id": "ev_2"
+          }
+        ],
+        "statement": "In the incident window latency_p95 rose from a first sample of {lat_first} s to a maximum of {lat_max} s at 19:22:49.571Z, with intermediate samples of 0.4389503347498711 s at 19:22:19 and 1.8958288760971762 s at 19:22:34.",
+        "evidence_ids": [
+          "ev_2"
+        ]
+      },
+      {
+        "id": "obs_3",
+        "values": [
+          {
+            "key": "el_at_onset",
+            "field": "series@2026-11-19T19:22:19.571Z",
+            "value": 0.9584473892850478,
+            "evidence_id": "ev_8"
+          },
+          {
+            "key": "el_max",
+            "field": "max",
+            "value": 1,
+            "evidence_id": "ev_8"
+          }
+        ],
+        "statement": "eventloop_utilization rose abruptly from ~0.06 to {el_at_onset} at the 19:22:19.571Z sample and then saturated at {el_max} (ratio 1.0) from 19:22:34.571Z onward, with max_at 19:22:34.571Z.",
+        "evidence_ids": [
+          "ev_8"
+        ]
+      },
+      {
+        "id": "obs_4",
+        "values": [
+          {
+            "key": "el_min",
+            "field": "min",
+            "value": 0.05281755054390345,
+            "evidence_id": "ev_8"
+          }
+        ],
+        "statement": "Before 19:22:19 eventloop_utilization stayed between {el_min} and about 0.07, i.e. far from saturation.",
+        "evidence_ids": [
+          "ev_8"
+        ]
+      },
+      {
+        "id": "obs_5",
+        "values": [
+          {
+            "key": "pool_used_last",
+            "field": "last",
+            "value": 10,
+            "evidence_id": "ev_7"
+          },
+          {
+            "key": "pool_max",
+            "field": "max",
+            "value": 10,
+            "evidence_id": "ev_9"
+          }
+        ],
+        "statement": "pool_used was 0-1 connections until 19:22:04.571Z and then reached {pool_used_last} connections at 19:22:34.571Z, against a fixed pool_max of {pool_max} connections.",
+        "evidence_ids": [
+          "ev_7",
+          "ev_9"
+        ]
+      },
+      {
+        "id": "obs_6",
+        "values": [
+          {
+            "key": "pend_base",
+            "field": "max",
+            "value": 0,
+            "evidence_id": "ev_6"
+          },
+          {
+            "key": "pend_max",
+            "field": "max",
+            "value": 35,
+            "evidence_id": "ev_5"
+          }
+        ],
+        "statement": "pool_pending was 0 for the whole baseline window (max {pend_base}) but reached {pend_max} waiting requests in the incident window at 19:22:34.571Z.",
+        "evidence_ids": [
+          "ev_6",
+          "ev_5"
+        ]
+      },
+      {
+        "id": "obs_7",
+        "values": [
+          {
+            "key": "err_max",
+            "field": "max",
+            "value": 0,
+            "evidence_id": "ev_4"
+          }
+        ],
+        "statement": "error_ratio_5xx stayed exactly at {err_max} for all 10 samples of the incident window.",
+        "evidence_ids": [
+          "ev_4"
+        ]
+      },
+      {
+        "id": "obs_8",
+        "values": [
+          {
+            "key": "warn_min",
+            "field": "warn.min",
+            "value": 7,
+            "evidence_id": "ev_1"
+          },
+          {
+            "key": "warn_max",
+            "field": "warn.max",
+            "value": 10,
+            "evidence_id": "ev_1"
+          },
+          {
+            "key": "info_min",
+            "field": "info.min",
+            "value": 1274,
+            "evidence_id": "ev_1"
+          },
+          {
+            "key": "info_max",
+            "field": "info.max",
+            "value": 1743,
+            "evidence_id": "ev_1"
+          }
+        ],
+        "statement": "Log volume in the incident window shows only info and warn severities: warn ranged {warn_min} to {warn_max} lines per minute (sum 33) while info ranged {info_min} to {info_max} lines per minute, with no error severity present.",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      }
+    ],
+    "recommendations": [
+      {
+        "risk": "low",
+        "action": "Profile the demo-service event loop during the 19:22:19-19:22:49Z window to identify the synchronous/CPU-heavy code path that pinned utilization at 1.0 (long stack traces, blocking calls, or large synchronous JSON/CPU work).",
+        "rationale": "hyp_1 attributes the incident to event-loop saturation that began one sample before pool saturation; naming the blocking call is required to fix the root cause.",
+        "hypothesis_id": "hyp_1"
+      },
+      {
+        "risk": "low",
+        "action": "Add event-loop lag/utilization alerting with an earlier threshold than the p95 rule so saturation is paged before latency breaches the SLO.",
+        "rationale": "eventloop_utilization moved to {el_at_onset} at 19:22:19, roughly 30 s before detection at 19:22:49.",
+        "hypothesis_id": "hyp_1"
+      },
+      {
+        "risk": "medium",
+        "action": "Instrument and alert on pool wait time and pool pending depth, and evaluate whether pool_max of {pool_max} connections is adequate for demo-service.",
+        "rationale": "hyp_2 cannot be fully excluded because pool_wait_p95 and pool_timeout_rate were never read; pool depth and pending counts would distinguish a genuine pool bottleneck from a downstream effect.",
+        "hypothesis_id": "hyp_2"
+      },
+      {
+        "risk": "low",
+        "action": "Query db_operation_p95 and request_rate for the 19:20-19:23Z window to determine whether a slow query or a traffic surge initiated the stall.",
+        "rationale": "hyp_3 (dependency latency or traffic-driven stall) is untested since those metrics were not retrieved before the budget ran out.",
+        "hypothesis_id": "hyp_3"
+      }
+    ]
+  },
+  "validation": "failed",
+  "violations": [
+    {
+      "path": "observations.0.statement",
+      "rule": "V3",
+      "message": "unbound quantity \"9\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "observations.1.statement",
+      "rule": "V3",
+      "message": "unbound quantity \"0.4389503347498711\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "observations.1.statement",
+      "rule": "V3",
+      "message": "unbound quantity \"1.8958288760971762\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "observations.2.statement",
+      "rule": "V3",
+      "message": "unbound quantity \"~0.06\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "observations.2.statement",
+      "rule": "V3",
+      "message": "unbound quantity \"1.0\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "observations.3.statement",
+      "rule": "V3",
+      "message": "unbound quantity \"0.07\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "observations.4.statement",
+      "rule": "V3",
+      "message": "unbound quantity \"0-1\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "observations.5.statement",
+      "rule": "V3",
+      "message": "unbound quantity \"0\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "observations.6.statement",
+      "rule": "V3",
+      "message": "unbound quantity \"10\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "observations.7.statement",
+      "rule": "V3",
+      "message": "unbound quantity \"33\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "summary",
+      "rule": "V3",
+      "message": "unbound quantity \"1.0\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.0.event",
+      "rule": "V3",
+      "message": "unbound quantity \"0.07\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.0.event",
+      "rule": "V3",
+      "message": "unbound quantity \"0\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.1.event",
+      "rule": "V3",
+      "message": "unbound quantity \"0.4389503347498711\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.1.event",
+      "rule": "V3",
+      "message": "unbound quantity \"7\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.2.event",
+      "rule": "V3",
+      "message": "unbound quantity \"1.0\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.2.event",
+      "rule": "V3",
+      "message": "unbound quantity \"1.8958288760971762\" — use a {key} placeholder bound in values"
+    }
+  ],
+  "warnings": [
+    {
+      "path": "observations.1.statement",
+      "rule": "W-time",
+      "message": "time literal \"19:22:19\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.1.statement",
+      "rule": "W-time",
+      "message": "time literal \"19:22:34\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.3.statement",
+      "rule": "W-time",
+      "message": "time literal \"19:22:19\" — times belong in the timeline"
+    },
+    {
+      "path": "hypotheses.0.statement",
+      "rule": "W-time",
+      "message": "time literal \"19:22:34\" — times belong in the timeline"
+    },
+    {
+      "path": "recommendations.0",
+      "rule": "W-rec",
+      "message": "quantity \"1.0\" in a proposal"
+    },
+    {
+      "path": "recommendations.1",
+      "rule": "W-rec",
+      "message": "quantity \"30\" in a proposal"
+    }
+  ],
+  "repair_attempted": true
+}

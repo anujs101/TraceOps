@@ -1,0 +1,409 @@
+{
+  "investigation_id": "294ed38a-3d83-480b-b236-51b5b757b48f",
+  "report": {
+    "gaps": [
+      "db_operation_p95 / DB-side query latency for the incident window was not obtained: query_metric hit the call budget (ev_10).",
+      "search_logs for the incident window could not be run: budget exhausted (ev_13, ev_14).",
+      "log_patterns over the baseline window 18:04:54.478Z–18:07:10.166Z returned empty, so pre-incident error patterns could not be compared (ev_12).",
+      "Not checked: deployment/change events, caller-side traffic and retry metrics, and host/container CPU and memory utilisation.",
+      "Not checked: whether the pool exhaustion continued past 18:09:25 (no metrics queried after the detection window)."
+    ],
+    "status": "probable_cause",
+    "summary": "The demo-service DB connection pool saturated at its hard cap, requests began queueing for a connection, and the resulting acquire timeouts surfaced as a spike of 5xx responses and p95 HTTP latency, firing both the latency and error-ratio rules. Saturation and queueing preceded any HTTP error or latency degradation, and the only error log pattern is connection-acquire timeouts, so pool exhaustion is the most probable cause; the demand ramp that consumed the pool and DB-side operation latency remain unchecked.",
+    "timeline": [
+      {
+        "at": "2026-11-19T18:07:10.166Z",
+        "event": "Pool usage starts at {used_first} connections and begins climbing; p95 latency still at baseline {lat_base} s.",
+        "evidence_ids": [
+          "ev_4",
+          "ev_2"
+        ]
+      },
+      {
+        "at": "2026-11-19T18:08:55.166Z",
+        "event": "Pool usage reaches the ceiling of {used_max} connections; pending requests jump to {pending_max} and p95 connection wait rises to {wait_mid} s.",
+        "evidence_ids": [
+          "ev_4",
+          "ev_5",
+          "ev_6",
+          "ev_7"
+        ]
+      },
+      {
+        "at": "2026-11-19T18:09:08.821Z",
+        "event": "First sampled error log: 'request failed' / 'timeout exceeded when trying to connect' from version 1.0.1.",
+        "evidence_ids": [
+          "ev_11"
+        ]
+      },
+      {
+        "at": "2026-11-19T18:09:10.166Z",
+        "event": "Connection-acquire timeouts appear at {to_first} timeouts/s; 5xx ratio reaches {err_at_0910} and p95 latency jumps to {lat_at_0910} s.",
+        "evidence_ids": [
+          "ev_8",
+          "ev_3",
+          "ev_2"
+        ]
+      },
+      {
+        "at": "2026-11-19T18:09:25.166Z",
+        "event": "Peak degradation: p95 latency {lat_max} s, 5xx ratio {err_max}, pool wait p95 {wait_max} s, timeouts at {to_max} timeouts/s, pool used {used_max} against pool_max {pmax}.",
+        "evidence_ids": [
+          "ev_2",
+          "ev_3",
+          "ev_7",
+          "ev_8",
+          "ev_4",
+          "ev_5"
+        ]
+      }
+    ],
+    "hypotheses": [
+      {
+        "id": "hyp_1",
+        "category": "db_pool_exhaustion",
+        "statement": "Exhaustion of the hard-capped DB connection pool (pool_max {pmax}) caused the incident: demand drove pool usage to {used_max} connections, up to {pending_max} requests queued for a connection with p95 wait of {wait_max} s, and connection-acquire timeouts at {to_max} timeouts/s produced the 5xx ratio of {err_max} and p95 latency of {lat_max} s.",
+        "confidence": "high",
+        "supporting_observation_ids": [
+          "obs_1",
+          "obs_2",
+          "obs_3",
+          "obs_4",
+          "obs_5",
+          "obs_6",
+          "obs_7",
+          "obs_8",
+          "obs_9",
+          "obs_10"
+        ],
+        "contradicting_observation_ids": []
+      },
+      {
+        "id": "hyp_2",
+        "category": "dependency_latency",
+        "statement": "Slowness of the database dependency elevated per-query time, so each connection was held longer and the connection pool was consumed, with client-visible p95 latency reaching {lat_max} s and 5xx ratio {err_max}.",
+        "confidence": "low",
+        "supporting_observation_ids": [
+          "obs_7",
+          "obs_8",
+          "obs_5"
+        ],
+        "contradicting_observation_ids": [
+          "obs_4",
+          "obs_5",
+          "obs_9"
+        ]
+      },
+      {
+        "id": "hyp_3",
+        "category": "other",
+        "statement": "A surge in incoming request demand (rather than per-query slowness) consumed the pool: pending requests reached {pending_max} while pool usage was pinned at {used_max} against a cap of {pmax}.",
+        "confidence": "medium",
+        "supporting_observation_ids": [
+          "obs_1",
+          "obs_2",
+          "obs_4",
+          "obs_5"
+        ],
+        "contradicting_observation_ids": []
+      }
+    ],
+    "observations": [
+      {
+        "id": "obs_1",
+        "values": [
+          {
+            "key": "used_first",
+            "field": "first",
+            "value": 0,
+            "evidence_id": "ev_4"
+          },
+          {
+            "key": "used_max",
+            "field": "max",
+            "value": 10,
+            "evidence_id": "ev_4"
+          }
+        ],
+        "statement": "Pool usage climbed monotonically from {used_first} to {used_max} connections and hit the pool ceiling by the end of the window.",
+        "evidence_ids": [
+          "ev_4"
+        ]
+      },
+      {
+        "id": "obs_2",
+        "values": [
+          {
+            "key": "pmax",
+            "field": "max",
+            "value": 10,
+            "evidence_id": "ev_5"
+          }
+        ],
+        "statement": "The pool ceiling pool_max was flat at {pmax} connections for every step of the incident window, so the pool was hard-capped, not resized.",
+        "evidence_ids": [
+          "ev_5"
+        ]
+      },
+      {
+        "id": "obs_3",
+        "values": [
+          {
+            "key": "used_base_max",
+            "field": "max",
+            "value": 1,
+            "evidence_id": "ev_9"
+          }
+        ],
+        "statement": "In the baseline window before the incident, pool usage was at most {used_base_max} connections.",
+        "evidence_ids": [
+          "ev_9"
+        ]
+      },
+      {
+        "id": "obs_4",
+        "values": [
+          {
+            "key": "pending_min",
+            "field": "min",
+            "value": 0,
+            "evidence_id": "ev_6"
+          },
+          {
+            "key": "pending_max",
+            "field": "max",
+            "value": 59,
+            "evidence_id": "ev_6"
+          }
+        ],
+        "statement": "Requests waiting for a connection jumped from {pending_min} to {pending_max} requests at 18:08:55 and stayed there.",
+        "evidence_ids": [
+          "ev_6"
+        ]
+      },
+      {
+        "id": "obs_5",
+        "values": [
+          {
+            "key": "wait_min",
+            "field": "min",
+            "value": 0.0009523384615384616,
+            "evidence_id": "ev_7"
+          },
+          {
+            "key": "wait_mid",
+            "field": "series@2026-11-19T18:08:55.166Z",
+            "value": 0.25000000000000866,
+            "evidence_id": "ev_7"
+          },
+          {
+            "key": "wait_max",
+            "field": "max",
+            "value": 2.454959630911188,
+            "evidence_id": "ev_7"
+          }
+        ],
+        "statement": "p95 connection wait climbed from a {wait_min} s baseline to {wait_mid} s at 18:08:55 and then {wait_max} s at 18:09:25.",
+        "evidence_ids": [
+          "ev_7"
+        ]
+      },
+      {
+        "id": "obs_6",
+        "values": [
+          {
+            "key": "to_first",
+            "field": "first",
+            "value": 9.775400000000001,
+            "evidence_id": "ev_8"
+          },
+          {
+            "key": "to_max",
+            "field": "max",
+            "value": 17.078163274187155,
+            "evidence_id": "ev_8"
+          }
+        ],
+        "statement": "Connection-acquire timeout rate went from {to_first} timeouts/s at 18:09:10 to {to_max} timeouts/s at 18:09:25.",
+        "evidence_ids": [
+          "ev_8"
+        ]
+      },
+      {
+        "id": "obs_7",
+        "values": [
+          {
+            "key": "err_early",
+            "field": "first",
+            "value": 0,
+            "evidence_id": "ev_3"
+          },
+          {
+            "key": "err_at_0910",
+            "field": "series@2026-11-19T18:09:10.166Z",
+            "value": 0.3387204544889875,
+            "evidence_id": "ev_3"
+          },
+          {
+            "key": "err_max",
+            "field": "max",
+            "value": 0.6089260556549415,
+            "evidence_id": "ev_3"
+          }
+        ],
+        "statement": "The 5xx ratio was {err_early} at 18:07:10 and rose to {err_at_0910} at 18:09:10, then {err_max} at 18:09:25.",
+        "evidence_ids": [
+          "ev_3"
+        ]
+      },
+      {
+        "id": "obs_8",
+        "values": [
+          {
+            "key": "lat_base",
+            "field": "series@2026-11-19T18:08:55.166Z",
+            "value": 0.009688144329896908,
+            "evidence_id": "ev_2"
+          },
+          {
+            "key": "lat_at_0910",
+            "field": "series@2026-11-19T18:09:10.166Z",
+            "value": 2.278578473764895,
+            "evidence_id": "ev_2"
+          },
+          {
+            "key": "lat_max",
+            "field": "max",
+            "value": 2.376832335710561,
+            "evidence_id": "ev_2"
+          }
+        ],
+        "statement": "HTTP p95 latency held near {lat_base} s through 18:08:55 and then broke to {lat_at_0910} s at 18:09:10 and {lat_max} s at 18:09:25.",
+        "evidence_ids": [
+          "ev_2"
+        ]
+      },
+      {
+        "id": "obs_9",
+        "values": [
+          {
+            "key": "p1_count",
+            "field": "p1.count",
+            "value": 500,
+            "evidence_id": "ev_11"
+          }
+        ],
+        "statement": "The only error log pattern in the window was 'request failed' with exception 'timeout exceeded when trying to connect', {p1_count} sampled lines between 18:09:08.821Z and 18:09:25.841Z, all from service version 1.0.1.",
+        "evidence_ids": [
+          "ev_11"
+        ]
+      },
+      {
+        "id": "obs_10",
+        "values": [
+          {
+            "key": "err_vol_first",
+            "field": "error.first",
+            "value": 289,
+            "evidence_id": "ev_1"
+          },
+          {
+            "key": "err_vol_last",
+            "field": "error.last",
+            "value": 816,
+            "evidence_id": "ev_1"
+          }
+        ],
+        "statement": "Error log volume only appears in the 18:09 minute bucket, starting at {err_vol_first} and rising to {err_vol_last} in the following bucket, while warn and info volumes stay low and flat.",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      }
+    ],
+    "recommendations": [
+      {
+        "risk": "medium",
+        "action": "Raise pool_max above {pmax} connections (and verify the database can serve the higher concurrency) or add admission control/queueing in front of DB calls so acquire waits do not become HTTP errors.",
+        "rationale": "Pool usage was pinned at the hard cap of {pmax} with up to {pending_max} waiting requests and timeouts at {to_max} timeouts/s, so headroom or bounded queueing would prevent acquire timeouts from surfacing as 5xx.",
+        "hypothesis_id": "hyp_1"
+      },
+      {
+        "risk": "low",
+        "action": "Investigate the demand ramp between 18:07:10 and 18:08:55 that consumed the pool, including retry storms or a traffic burst on the callers of demo-service.",
+        "rationale": "Pending requests reached {pending_max} while pool usage climbed to {used_max}, which points at a surge in concurrent work rather than an isolated slow query.",
+        "hypothesis_id": "hyp_3"
+      },
+      {
+        "risk": "low",
+        "action": "Query db_operation_p95 and DB-side latency for the same window to rule out per-query slowness holding connections.",
+        "rationale": "The dependency-latency hypothesis (hyp_2) could not be tested because the metric query hit the budget limit (ev_10); per-query latency data would confirm or dismiss it.",
+        "hypothesis_id": "hyp_2"
+      }
+    ]
+  },
+  "validation": "passed",
+  "violations": [],
+  "warnings": [
+    {
+      "path": "observations.3.statement",
+      "rule": "W-time",
+      "message": "time literal \"18:08:55\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.4.statement",
+      "rule": "W-time",
+      "message": "time literal \"18:08:55\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.4.statement",
+      "rule": "W-time",
+      "message": "time literal \"18:09:25\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.5.statement",
+      "rule": "W-time",
+      "message": "time literal \"18:09:10\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.5.statement",
+      "rule": "W-time",
+      "message": "time literal \"18:09:25\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.6.statement",
+      "rule": "W-time",
+      "message": "time literal \"18:07:10\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.6.statement",
+      "rule": "W-time",
+      "message": "time literal \"18:09:10\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.6.statement",
+      "rule": "W-time",
+      "message": "time literal \"18:09:25\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.7.statement",
+      "rule": "W-time",
+      "message": "time literal \"18:08:55\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.7.statement",
+      "rule": "W-time",
+      "message": "time literal \"18:09:10\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.7.statement",
+      "rule": "W-time",
+      "message": "time literal \"18:09:25\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.9.statement",
+      "rule": "W-time",
+      "message": "time literal \"18:09\" — times belong in the timeline"
+    }
+  ],
+  "repair_attempted": true
+}
