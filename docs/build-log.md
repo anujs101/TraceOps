@@ -16,3 +16,6 @@
 - 11:45 | D | had mapped failed-after-repair → failed; contract says completed + validation:'failed' | corrected per persistence.md §2 | contract > plan
 - 11:45 | ops | root cause of missing vitest binding: my Wave 1 instruction ran `npm install` per worktree, rewriting the lockfile (npm/cli#4828) | D restored lockfile from HEAD + `npm ci`; use `npm ci` in worktrees | operator error; `npm ci` never rewrites the lockfile
 - 11:46 | C,D | sessions paused for approval between steps | told both to run to completion, stop only on stop conditions / before Groq spend | operator was the bottleneck
+- 11:48 | B | DONE: 270/270 tests (174 new), S1+S2 fixture replay, contracts unchanged, handoff written | none | —
+- 11:48 | B | found: runToolLoop rejects malformed-JSON args before run → no evidence row, breaks "one row per call" | assigned to main session (src/llm unowned), Wave 2, low priority | Groq strict mode makes it rare; validator only checks cited evidence
+- 11:49 | B | review | contract-guardian from main (Opus) + /code-review in B worktree after /clear (Opus) | independent context for review; review early while C/D build
