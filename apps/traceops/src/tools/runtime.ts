@@ -60,7 +60,8 @@ function reason(err: z.ZodError): string {
 export function createRuntime(ctx: ToolContext, baseDeps: Pick<BackendDeps, 'fetch' | 'timeoutMs'> = {}) {
   const windows: InvestigationWindows = deriveWindows(ctx.incident.started_at, ctx.investigationStart);
   const service = ctx.incident.service;
-  let calls = 0;
+  let calls = 0; // every call, for ev_N numbering
+  let counted = 0; // calls charged to the budget (v1.6: metric-share refusals are not charged)
   let metricCalls = 0;
   // tools.md §1 (v1.5): query_metric may use at most this many of the calls; the rest are for log tools.
   // A budget no larger than the reserve (tests) has no reservation.
@@ -82,14 +83,17 @@ export function createRuntime(ctx: ToolContext, baseDeps: Pick<BackendDeps, 'fet
     const rejected = (args: unknown, window: Window | null, status: 'error' | 'budget_exhausted', error: string) =>
       record({ args, rendered_query: null, window, status, error, result: early(id, status, error), stats: {} });
 
-    // 1. budget (tools.md §1)
-    if (n > ctx.budget.maxToolCalls || Date.now() > ctx.budget.deadline) {
+    // 1. budget (tools.md §1). Checked and charged synchronously, so parallel calls see a consistent count.
+    if (counted >= ctx.budget.maxToolCalls || Date.now() > ctx.budget.deadline) {
       return rejected(raw, null, 'budget_exhausted', 'budget_exhausted: the tool budget is used up; write your report now');
     }
-    if (def.name === 'query_metric' && ++metricCalls > metricCap) {
+    // v1.5 metric share; v1.6: the refusal is recorded but not charged, so the log reserve survives
+    if (def.name === 'query_metric' && metricCalls >= metricCap) {
       return rejected(raw, null, 'budget_exhausted',
-        `budget_exhausted: query_metric limit reached (${metricCap} of ${ctx.budget.maxToolCalls} calls); the remaining calls are reserved for log tools (log_volume, log_patterns, search_logs)`);
+        `budget_exhausted: query_metric limit reached (${metricCap} of ${ctx.budget.maxToolCalls} calls); the remaining calls are reserved for log tools (log_volume, log_patterns, search_logs). This refused call did not use up a call.`);
     }
+    counted++;
+    if (def.name === 'query_metric') metricCalls++;
 
     // 1b. JSON-string input (tools.md §1, v1.5): decoded once; only an object result is used
     const input = decodeOnce(raw);
