@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { ISO_UTC_MS } from '@traceops/contracts';
-import { CLAIM_SQL, autoJobKey, claimJob, completeJob, enqueueJob, failJob, heartbeat } from '../../src/queue/index.ts';
+import { CLAIM_SQL, autoJobKey, claimJob, completeJob, enqueueJob, failJob, heartbeat, markDead } from '../../src/queue/index.ts';
 import { DB_URL, createTestDb, seedIncident, seedJob, type TestDb } from '../db/helpers.ts';
 
 describe.skipIf(!DB_URL)('queue against real Postgres (persistence.md §2)', () => {
@@ -140,43 +140,59 @@ describe.skipIf(!DB_URL)('queue against real Postgres (persistence.md §2)', () 
       const id = await seedJob(db.pool, incidentId);
       await claimJob(db.pool);
       await db.pool.query(`UPDATE investigation_jobs SET lease_until = now() + interval '10 seconds' WHERE id = $1`, [id]);
-      expect(await heartbeat(db.pool, id)).toBe(true);
+      expect(await heartbeat(db.pool, id, 1)).toBe(true);
       expect(secs((await row(id)).lease_left)).toBeGreaterThan(290);
-      await completeJob(db.pool, id);
-      expect(await heartbeat(db.pool, id)).toBe(false);
-      expect(await heartbeat(db.pool, randomUUID())).toBe(false);
+      await completeJob(db.pool, id, 1);
+      expect(await heartbeat(db.pool, id, 1)).toBe(false);
+      expect(await heartbeat(db.pool, randomUUID(), 1)).toBe(false);
     });
 
     it('complete → done, lease cleared; only from running', async () => {
       const id = await seedJob(db.pool, incidentId);
-      expect(await completeJob(db.pool, id)).toBe(false); // still queued
+      expect(await completeJob(db.pool, id, 1)).toBe(false); // still queued
       await claimJob(db.pool);
-      expect(await completeJob(db.pool, id)).toBe(true);
+      expect(await completeJob(db.pool, id, 1)).toBe(true);
       expect(await row(id)).toMatchObject({ status: 'done', lease_until: null });
     });
 
     it('fail: queued again while attempts < max_attempts, dead after the 2nd attempt', async () => {
       const id = await seedJob(db.pool, incidentId);
       await claimJob(db.pool);
-      expect(await failJob(db.pool, id, 'groq 503')).toBe('queued');
+      expect(await failJob(db.pool, id, 1, 'groq 503')).toBe('queued');
       expect(await row(id)).toMatchObject({ status: 'queued', attempts: 1, last_error: 'groq 503', lease_until: null });
       const second = await claimJob(db.pool);
       expect(second).toMatchObject({ id, attempts: 2 });
-      expect(await failJob(db.pool, id, 'groq 503 again')).toBe('dead');
+      expect(await failJob(db.pool, id, 2, 'groq 503 again')).toBe('dead');
       expect(await row(id)).toMatchObject({ status: 'dead', attempts: 2, last_error: 'groq 503 again' });
       expect(await claimJob(db.pool)).toBeNull(); // dead is never claimed
     });
 
     it('fail on a job that is not running changes nothing', async () => {
       const id = await seedJob(db.pool, incidentId);
-      expect(await failJob(db.pool, id, 'x')).toBeNull();
+      expect(await failJob(db.pool, id, 1, 'x')).toBeNull();
       expect(await row(id)).toMatchObject({ status: 'queued', last_error: null });
+    });
+
+    it('follow-ups are tied to the claim: a stale claimer cannot heartbeat, complete or fail a reclaimed job', async () => {
+      const id = await seedJob(db.pool, incidentId);
+      const a = await claimJob(db.pool); // attempt 1
+      await expire(id, 1);
+      const b = await claimJob(db.pool); // reclaimed: attempt 2
+      expect([a!.attempts, b!.attempts]).toEqual([1, 2]);
+      expect(await heartbeat(db.pool, id, 1)).toBe(false);
+      expect(await completeJob(db.pool, id, 1)).toBe(false);
+      expect(await failJob(db.pool, id, 1, 'stale')).toBeNull();
+      expect(await markDead(db.pool, id, 1, 'stale')).toBe(false);
+      expect(await row(id)).toMatchObject({ status: 'running', attempts: 2, last_error: null });
+      expect(await heartbeat(db.pool, id, 2)).toBe(true);
+      expect(await completeJob(db.pool, id, 2)).toBe(true);
+      expect((await row(id)).status).toBe('done');
     });
 
     it('last_error is truncated, not rejected', async () => {
       const id = await seedJob(db.pool, incidentId);
       await claimJob(db.pool);
-      await failJob(db.pool, id, 'e'.repeat(5000));
+      await failJob(db.pool, id, 1, 'e'.repeat(5000));
       expect((await row(id)).last_error).toHaveLength(1000);
     });
   });

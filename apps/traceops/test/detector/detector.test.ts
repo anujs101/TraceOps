@@ -180,6 +180,64 @@ describe.skipIf(!DB_URL)('detector against real Postgres (fixture-backed Prometh
     });
   });
 
+  describe('owed open survives a failed write; trigger/severity merge (review fix)', () => {
+    /** An IncidentManager whose openOrUpdate throws while `failing` is set (real DB otherwise). */
+    const flaky = () => {
+      const mgr = new IncidentManager(db.pool) as IncidentManager & { failing: boolean };
+      const real = mgr.openOrUpdate.bind(mgr);
+      mgr.failing = true;
+      mgr.openOrUpdate = async (req) => { if (mgr.failing) throw new Error('db down'); return real(req); };
+      return mgr;
+    };
+
+    it('write fails at the fire tick, rule is already recovering when it is retried: opens with detected_at = fire tick', async () => {
+      const mgr = flaky(); const prom = new FixtureProm(); const d = make(prom, mgr);
+      await drive(d, prom, [BL, BL]); // fires at tick 1; write fails
+      expect(await store.listIncidents()).toEqual([]);
+      mgr.failing = false;
+      await drive(d, prom, [OKS], 2); // rule is now recovering(1): no longer firing
+      expect(d.phaseOf('http-latency-p95').phase).toBe('recovering');
+      const [inc] = await store.listIncidents();
+      expect(inc).toMatchObject({ status: 'open', severity: 'warning', started_at: iso(0), detected_at: iso(1) });
+      expect(inc!.trigger.map((t) => t.rule_id)).toEqual(['http-latency-p95']);
+      expect(await jobs()).toHaveLength(1);
+    });
+
+    it('group fully recovers before any write succeeds: it opens (fire tick) and then resolves', async () => {
+      const mgr = flaky(); const prom = new FixtureProm(); const d = make(prom, mgr);
+      await drive(d, prom, [BL, BL, OKS, OKS, OKS]); // still failing; recovering(3)
+      expect(await store.listIncidents()).toEqual([]);
+      mgr.failing = false;
+      await drive(d, prom, [OKS], 5); // 4th OK → ok
+      const [inc] = await store.listIncidents();
+      expect(inc).toMatchObject({ status: 'resolved', detected_at: iso(1), started_at: iso(0), resolved_at: iso(5) });
+      expect(await jobs()).toHaveLength(1);
+    });
+
+    it('a rule that recovers and re-fires while its sibling keeps firing never loses a trigger or downgrades severity', async () => {
+      const prom = new FixtureProm(); const d = make(prom);
+      await drive(d, prom, [['breach', 'breach'], ['breach', 'breach']]); // critical
+      await drive(d, prom, [['ok', 'breach'], ['ok', 'breach']], 2); // latency recovering
+      await drive(d, prom, [['breach', 'breach'], ['breach', 'breach']], 4); // latency back to firing
+      const [inc] = await store.listIncidents();
+      expect(inc!.severity).toBe('critical');
+      expect(inc!.trigger.map((t) => t.rule_id).sort()).toEqual(['http-error-ratio', 'http-latency-p95']);
+    });
+
+    it('after a restart, seeded recovering(0) rules do not count as fired: a lone firing rule neither downgrades nor drops the stored trigger', async () => {
+      const id = await seedIncident(db.pool, { service: 'demo-service', group: 'http-slo', severity: 'critical' });
+      const before = (await store.getIncident(id))!.trigger;
+      const prom = new FixtureProm(); const d = make(prom);
+      await d.seedFromOpenIncidents();
+      await drive(d, prom, [BL]); // latency breaches straight back to firing; error ratio never fires
+      const inc = (await store.getIncident(id))!;
+      expect(inc.severity).toBe('critical'); // not downgraded to warning
+      const ids = inc.trigger.map((t) => t.rule_id);
+      expect(ids).toContain('http-latency-p95');
+      for (const t of before) expect(ids).toContain(t.rule_id);
+    });
+  });
+
   describe('restart: state is rebuilt by re-evaluating', () => {
     it('with an open incident, a fresh detector needs resolve_after OKs (not 1) to resolve it', async () => {
       const id = await seedIncident(db.pool, { service: 'demo-service', group: 'http-slo' });

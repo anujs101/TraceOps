@@ -1,6 +1,6 @@
 import type pg from 'pg';
 import { toIsoUtcMs, type RuleConfig } from '@traceops/contracts';
-import { IncidentManager, type OpenResult, type TriggerEntry } from './incidents.ts';
+import { IncidentManager, type OpenRequest, type OpenResult, type TriggerEntry } from './incidents.ts';
 import { queryInstant, type FetchLike, type InstantResult } from './prom-client.ts';
 import { breaches, OK, step, type Observation, type RulePhase } from './state-machine.ts';
 
@@ -19,7 +19,13 @@ export type DetectorOptions = {
   log?: LogFn;
 };
 
-type RuleRuntime = { phase: RulePhase; lastBreach: { observed: number; at: string } | null };
+type RuleRuntime = { phase: RulePhase };
+/**
+ * What "fired" means (detection.md §5): reached `firing` during this episode (open → resolve).
+ * Rules seeded `recovering(0)` after a restart are not in it until they actually fire.
+ */
+type Episode = { fired: Map<string, TriggerEntry>; startedAt: string; detectedAt: string };
+type Owed = { open: boolean; resolve: boolean };
 
 const groupKey = (r: Pick<Rule, 'service' | 'group'>) => `${r.service}:${r.group}`;
 
@@ -35,7 +41,8 @@ export class Detector {
   private readonly runtime = new Map<string, RuleRuntime>();
   private readonly byGroup = new Map<string, Rule[]>();
   /** DB work that failed or is owed; retried on the next tick (the state machine will not re-emit the transition). */
-  private readonly owed = new Map<string, 'open' | 'resolve'>();
+  private readonly owed = new Map<string, Owed>();
+  private readonly episodes = new Map<string, Episode>();
   private readonly missing = new Map<string, number>();
   private timer: NodeJS.Timeout | null = null;
   private inflight: Promise<void> | null = null;
@@ -47,7 +54,7 @@ export class Detector {
     this.now = o.now ?? (() => new Date());
     this.log = o.log ?? ((level, msg, f) => console[level === 'info' ? 'log' : level](`[detector] ${msg}`, f ?? ''));
     for (const r of this.cfg.rules) {
-      this.runtime.set(r.id, { phase: OK, lastBreach: null });
+      this.runtime.set(r.id, { phase: OK });
       const g = this.byGroup.get(groupKey(r)) ?? [];
       g.push(r);
       this.byGroup.set(groupKey(r), g);
@@ -88,49 +95,67 @@ export class Detector {
       }
       const { state, transition } = step(rt.phase, obs, this.cfg.evaluation, atIso);
       rt.phase = state;
-      if (obs === 'breach' && res.kind === 'value') rt.lastBreach = { observed: res.value, at: atIso };
       if (transition !== 'none') this.log('info', 'rule transition', { rule: rule.id, transition, observed: res.kind === 'value' ? res.value : null });
       const key = groupKey(rule);
-      if (transition === 'to_firing') this.owed.set(key, 'open');
-      else if (transition === 'to_ok' && !this.owed.has(key)) this.owed.set(key, 'resolve');
+      if (transition === 'to_firing' && res.kind === 'value') {
+        this.recordFired(rule, state as { since: string }, res.value, atIso);
+        this.owe(key).open = true;
+      } else if (transition === 'to_ok') this.owe(key).resolve = true;
     }
 
     for (const key of [...this.owed.keys()]) await this.settle(key, atIso);
   }
 
+  private owe(key: string): Owed {
+    let o = this.owed.get(key);
+    if (!o) this.owed.set(key, (o = { open: false, resolve: false }));
+    return o;
+  }
+
+  private recordFired(rule: Rule, st: { since: string }, observed: number, atIso: string): void {
+    const key = groupKey(rule);
+    const ep = this.episodes.get(key) ?? { fired: new Map(), startedAt: st.since, detectedAt: atIso };
+    ep.fired.set(rule.id, { rule_id: rule.id, query: rule.query, threshold: rule.threshold, observed, at: atIso });
+    if (st.since < ep.startedAt) ep.startedAt = st.since;
+    this.episodes.set(key, ep); // detectedAt stays the tick that first reached fire_after
+  }
+
+  /**
+   * Pay what is owed for one group. An owed open is written from the episode (not from the rules'
+   * current phases), so it survives the rule having moved on to recovering/ok before the write
+   * succeeded: such a group opens (detected_at = the fire tick) and then resolves.
+   * A flag is cleared only after its write succeeds; on a throw both stay for the next tick.
+   */
   private async settle(key: string, atIso: string): Promise<void> {
     const rules = this.byGroup.get(key)!;
     const owed = this.owed.get(key)!;
-    const firing = rules.filter((r) => this.runtime.get(r.id)!.phase.phase === 'firing');
     const allOk = rules.every((r) => this.runtime.get(r.id)!.phase.phase === 'ok');
-    // an owed open whose rules have all recovered meanwhile (failed write, then recovery) must resolve instead
-    const want = owed === 'open' && firing.length === 0 && allOk ? 'resolve' : owed;
     try {
-      if (want === 'open' && firing.length > 0) {
-        const res = await this.incidents.openOrUpdate(this.openRequest(rules, firing, atIso));
-        this.logOpen(key, res);
-      } else if (want === 'resolve' && allOk) {
-        const id = await this.incidents.resolve(rules[0]!.service, rules[0]!.group, atIso);
-        if (id) this.log('info', 'incident resolved', { group: key, incident: id });
+      const ep = this.episodes.get(key);
+      if (owed.open) {
+        if (ep) this.logOpen(key, await this.incidents.openOrUpdate(this.openRequest(rules, ep)));
+        owed.open = false;
       }
-      this.owed.delete(key); // done, or no longer applicable
+      if (owed.resolve) {
+        if (allOk) {
+          const id = await this.incidents.resolve(rules[0]!.service, rules[0]!.group, atIso);
+          if (id) this.log('info', 'incident resolved', { group: key, incident: id });
+          this.episodes.delete(key);
+        }
+        owed.resolve = false; // not all ok: the rule that is still active will owe it again when it recovers
+      }
+      this.owed.delete(key);
     } catch (e) {
       this.log('error', 'incident write failed; will retry next tick', { group: key, error: e instanceof Error ? e.message : String(e) });
     }
   }
 
-  private openRequest(rules: Rule[], firing: Rule[], atIso: string) {
-    const trigger: TriggerEntry[] = firing.map((r) => {
-      const b = this.runtime.get(r.id)!.lastBreach!;
-      return { rule_id: r.id, query: r.query, threshold: r.threshold, observed: b.observed, at: b.at };
-    });
-    const startedAt = firing
-      .map((r) => (this.runtime.get(r.id)!.phase as { since: string }).since)
-      .reduce((a, b) => (a < b ? a : b));
+  private openRequest(rules: Rule[], ep: Episode): OpenRequest {
     return {
       service: rules[0]!.service, group: rules[0]!.group,
-      severity: (firing.length === rules.length ? 'critical' : 'warning') as 'critical' | 'warning', // critical if every rule fired
-      startedAt, detectedAt: atIso, trigger, reopenWindowS: this.cfg.evaluation.reopen_window_s,
+      severity: ep.fired.size === rules.length ? 'critical' : 'warning', // critical if every rule in the group fired
+      startedAt: ep.startedAt, detectedAt: ep.detectedAt, trigger: [...ep.fired.values()],
+      reopenWindowS: this.cfg.evaluation.reopen_window_s,
     };
   }
 
@@ -149,7 +174,7 @@ export class Detector {
   async start(): Promise<void> {
     if (!this.stopped) return;
     this.stopped = false;
-    await this.seedFromOpenIncidents();
+    try { await this.seedFromOpenIncidents(); } catch (e) { this.stopped = true; throw e; } // allow a retry
     const loop = () => {
       if (this.stopped) return;
       const t0 = Date.now();

@@ -54,4 +54,26 @@ describe('queryInstant (fixture-backed Prometheus)', () => {
     const r = await queryInstant(URL_, 'latency_p95', 'demo-service', 5, async () => ({ ok: true, status: 200, json: async () => body }));
     expect(r).toMatchObject({ kind: 'missing', reason: 'ambiguous' });
   });
+
+  const sampleBody = async () => {
+    const one = new FixtureProm();
+    one.set('ok', 'ok');
+    return (await (await one.fetch('http://x/?query=' + encodeURIComponent(renderPromql('latency_p95', 'demo-service')))).json()) as any;
+  };
+  const answer = (body: unknown) => async () => ({ ok: true, status: 200, json: async () => body });
+
+  it.each([[null], [0], [undefined], ['']])('a non-string / empty sample %j is missing data, never 0', async (raw) => {
+    const body = await sampleBody();
+    body.data.result[0].value[1] = raw;
+    const r = await queryInstant(URL_, 'latency_p95', 'demo-service', 5, answer(body));
+    expect(r).toMatchObject({ kind: 'missing', reason: 'nan' });
+  });
+
+  it('a timeout while reading the body is missing(timeout), not "http 200"', async () => {
+    const hangingBody = async (_u: string, init?: { signal?: AbortSignal }) => ({
+      ok: true, status: 200,
+      json: () => new Promise<unknown>((_, rej) => init?.signal?.addEventListener('abort', () => rej(new Error('aborted')))),
+    });
+    expect(await queryInstant(URL_, 'latency_p95', 'demo-service', 0.05, hangingBody)).toEqual({ kind: 'missing', reason: 'timeout' });
+  });
 });

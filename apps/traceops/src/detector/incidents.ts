@@ -1,14 +1,16 @@
 import { createHash, randomUUID } from 'node:crypto';
 import type pg from 'pg';
+import type { Incident } from '@traceops/contracts';
 import { withTransaction, type Queryable } from '../db/pool.ts';
 import { autoJobKey, enqueueJob } from '../queue/enqueue.ts';
 
-export type TriggerEntry = { rule_id: string; query: string; threshold: number; observed: number; at: string };
+export type TriggerEntry = Incident['trigger'][number];
+export type Severity = Incident['severity'];
 
 export type OpenRequest = {
   service: string;
   group: string;
-  severity: 'critical' | 'warning';
+  severity: Severity;
   /** first breaching evaluation (earliest `since` among firing rules) */
   startedAt: string;
   /** the evaluation at which fire_after was reached */
@@ -25,6 +27,14 @@ export type EnqueueFn = (q: Queryable, incidentId: string, key: string) => Promi
 export const fingerprintOf = (service: string, group: string): string =>
   createHash('sha256').update(`${service}:${group}`).digest('hex');
 
+/** Existing entries keep their order; an entry for the same rule_id is replaced in place; new rules are appended. */
+export function mergeTrigger(existing: TriggerEntry[], incoming: TriggerEntry[]): TriggerEntry[] {
+  const byId = new Map(incoming.map((t) => [t.rule_id, t]));
+  const kept = existing.map((t) => byId.get(t.rule_id) ?? t);
+  const seen = new Set(existing.map((t) => t.rule_id));
+  return [...kept, ...incoming.filter((t) => !seen.has(t.rule_id))];
+}
+
 export class IncidentManager {
   constructor(private readonly pool: pg.Pool, private readonly enqueue: EnqueueFn = enqueueJob) {}
 
@@ -38,8 +48,13 @@ export class IncidentManager {
     const fp = fingerprintOf(req.service, req.group);
     const trigger = JSON.stringify(req.trigger);
     return withTransaction(this.pool, async (c) => {
+      // The open row is locked: merge into what it has (detection.md §4) instead of overwriting it.
+      // Trigger entries merge by rule_id (the new observation wins); severity never downgrades while open.
       const update = async (id: string): Promise<OpenResult> => {
-        await c.query('UPDATE incidents SET "trigger" = $2::jsonb, severity = $3 WHERE id = $1', [id, trigger, req.severity]);
+        const cur = (await c.query('SELECT "trigger", severity FROM incidents WHERE id = $1', [id])).rows[0];
+        const merged = mergeTrigger(cur.trigger as TriggerEntry[], req.trigger);
+        const severity: Severity = cur.severity === 'critical' || req.severity === 'critical' ? 'critical' : 'warning';
+        await c.query('UPDATE incidents SET "trigger" = $2::jsonb, severity = $3 WHERE id = $1', [id, JSON.stringify(merged), severity]);
         return { action: 'updated', incidentId: id, jobId: null };
       };
 

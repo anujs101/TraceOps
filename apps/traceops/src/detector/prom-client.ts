@@ -19,7 +19,9 @@ export async function queryInstant(
   const timer = setTimeout(() => ctl.abort(), timeoutS * 1000);
   try {
     const res = await fetchFn(url, { signal: ctl.signal });
-    const body: any = await res.json().catch(() => null);
+    // An abort while reading the body must surface as a timeout (outer catch), so only
+    // non-abort parse failures are swallowed here.
+    const body: any = await res.json().catch((e) => { if (ctl.signal.aborted) throw e; return null; });
     if (!res.ok || body?.status !== 'success') {
       return { kind: 'missing', reason: 'error', detail: String(body?.error ?? `http ${res.status}`).slice(0, 200) };
     }
@@ -27,8 +29,11 @@ export async function queryInstant(
     if (body.data?.resultType !== 'vector' || !Array.isArray(result)) return { kind: 'missing', reason: 'error', detail: 'unexpected resultType' };
     if (result.length === 0) return { kind: 'missing', reason: 'empty' };
     if (result.length > 1) return { kind: 'missing', reason: 'ambiguous', detail: `${result.length} series` };
-    const value = Number(result[0]?.value?.[1]);
-    if (!Number.isFinite(value)) return { kind: 'missing', reason: 'nan', detail: String(result[0]?.value?.[1]) };
+    // Prometheus sample values are strings. Anything else (null, number, absent) is missing data:
+    // Number(null) === 0 would be a fake observation that could resolve an incident.
+    const raw: unknown = result[0]?.value?.[1];
+    const value = typeof raw === 'string' && raw.trim() !== '' ? Number(raw) : NaN;
+    if (!Number.isFinite(value)) return { kind: 'missing', reason: 'nan', detail: String(raw) };
     return { kind: 'value', value };
   } catch (e) {
     return ctl.signal.aborted

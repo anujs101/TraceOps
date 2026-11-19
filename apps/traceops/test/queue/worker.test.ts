@@ -19,8 +19,8 @@ describe.skipIf(!DB_URL)('worker loop against real Postgres', () => {
   });
 
   const quiet = () => {};
-  const mk = (handler: (j: Job) => Promise<void>, o: { pollMs?: number; heartbeatMs?: number } = {}) =>
-    new Worker({ pool: db.pool, handler, pollMs: 20, log: quiet, ...o });
+  const mk = (handler: (j: Job) => Promise<void>, o: { pollMs?: number; heartbeatMs?: number; retryBaseMs?: number } = {}) =>
+    new Worker({ pool: db.pool, handler, pollMs: 20, retryBaseMs: 1, log: quiet, ...o });
   const row = async (id: string) => (await db.pool.query('SELECT *, lease_until - now() AS lease_left FROM investigation_jobs WHERE id = $1', [id])).rows[0];
   const status = async (id: string) => (await row(id)).status;
   const left = (i: any) => (i.minutes ?? 0) * 60 + (i.seconds ?? 0);
@@ -94,6 +94,52 @@ describe.skipIf(!DB_URL)('worker loop against real Postgres', () => {
     }, { heartbeatMs: 20 });
     await w.runOnce();
     expect(during).toBeGreaterThan(290);
+  });
+
+  /** A pool whose first `n` UPDATEs matching `needle` throw; everything else hits the real database. */
+  const flaky = (needle: string, n: number) => {
+    let left = n;
+    const pool: any = Object.create(db.pool);
+    pool.query = (text: any, ...rest: any[]) =>
+      typeof text === 'string' && text.includes(needle) && left-- > 0 ? Promise.reject(new Error('db blip')) : (db.pool.query as any)(text, ...rest);
+    return pool;
+  };
+  const mkOn = (pool: any, handler: (j: Job) => Promise<void>, log: (l: string, m: string) => void = quiet) =>
+    new Worker({ pool, handler, pollMs: 20, retryBaseMs: 1, log });
+
+  it('completeJob throwing transiently is retried: the succeeded job is done, not re-run', async () => {
+    const id = await seedJob(db.pool, incidentId);
+    let calls = 0;
+    const w = mkOn(flaky(`SET status = 'done'`, 2), async () => { calls++; });
+    expect(await w.runOnce()).toBe('done');
+    expect(await status(id)).toBe('done');
+    expect(calls).toBe(1);
+  });
+
+  it('completeJob failing 3× logs loudly and does not reject; the job is left to its lease', async () => {
+    const id = await seedJob(db.pool, incidentId);
+    const errors: string[] = [];
+    const w = mkOn(flaky(`SET status = 'done'`, 99), async () => {}, (l, m) => { if (l === 'error') errors.push(m); });
+    await expect(w.runOnce()).resolves.toBe('done');
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toMatch(/completeJob failed 3×.*RE-RUN/);
+    expect(await status(id)).toBe('running');
+  });
+
+  it('failJob throwing transiently is retried and the job is requeued', async () => {
+    const id = await seedJob(db.pool, incidentId);
+    const w = mkOn(flaky(`THEN 'queued'`, 1), async () => { throw new Error('infra'); });
+    expect(await w.runOnce()).toBe('requeued');
+    expect(await row(id)).toMatchObject({ status: 'queued', last_error: 'infra' });
+  });
+
+  it('stop() during an idle poll returns promptly even with a long pollMs', async () => {
+    const w = new Worker({ pool: db.pool, handler: async () => {}, pollMs: 5000, log: quiet });
+    w.start();
+    await sleep(50);
+    const t0 = Date.now();
+    await w.stop();
+    expect(Date.now() - t0).toBeLessThan(1000);
   });
 
   it('start() picks up jobs enqueued later; stop() waits for the job in flight and then stops claiming', async () => {
