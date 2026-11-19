@@ -54,24 +54,29 @@ export function createApp({ acquire, log, fault, cpuIter }: AppDeps) {
     try {
       const { productId, qty = 1 } = req.body ?? {};
       const client = await acquire();
-      const { rows } = await client.query('SELECT stock FROM products WHERE id = $1', [productId]);
-      if (!rows[0] || rows[0].stock < qty) {
-        log.warn({ route: '/orders', status: 409 }, 'order rejected');
-        res.status(409).json({ error: 'insufficient stock' });
-        // FAULT=pool_leak: this early return skips release(). The injected defect; nothing logs it.
-        if (fault !== 'pool_leak') client.release();
-        return;
-      }
+      // Every path after acquire() releases in `finally`, with exactly one exception: the 409
+      // path under FAULT=pool_leak (S1's injected defect; nothing logs it). An error anywhere,
+      // including the stock check, always releases, so no fault leaks by accident.
+      let leak = false;
       try {
-        await client.query('BEGIN');
-        await client.query('INSERT INTO orders(product_id, qty) VALUES ($1, $2)', [productId, qty]);
-        await client.query('COMMIT');
-        res.status(201).json({ ok: true });
-      } catch (e) {
-        await client.query('ROLLBACK').catch(() => {});
-        throw e;
+        const { rows } = await client.query('SELECT stock FROM products WHERE id = $1', [productId]);
+        if (!rows[0] || rows[0].stock < qty) {
+          log.warn({ route: '/orders', status: 409 }, 'order rejected');
+          res.status(409).json({ error: 'insufficient stock' });
+          leak = fault === 'pool_leak';
+          return;
+        }
+        try {
+          await client.query('BEGIN');
+          await client.query('INSERT INTO orders(product_id, qty) VALUES ($1, $2)', [productId, qty]);
+          await client.query('COMMIT');
+          res.status(201).json({ ok: true });
+        } catch (e) {
+          await client.query('ROLLBACK').catch(() => {});
+          throw e;
+        }
       } finally {
-        client.release();
+        if (!leak) client.release();
       }
     } catch (err) {
       next(err);
