@@ -36,3 +36,4 @@
 - 12:13 | C | review fixes done f9b7c72: 206/206, 0 skipped | start Wave 2: merge C first | merge order C→B→A→D
 - 12:28 | main | C merge f947b3c: NOT VERIFIED — pg/yaml missing because lockfile deliberately not committed on branches; 5 test files failed to load | clean lockfile regen after each dep-adding merge (C, A), not once at the end | can't verify a merge whose deps aren't installed
 - 12:28 | main | flagged C's post-review commit f9b7c72 wasn't guardian-reviewed | guardian on f9b7c72 in background, merges continue | close review gap without blocking
+- 12:48 | ops | LLM provider: switching Groq free → DeepSeek official API ($2 prepaid) | added session E for adapter; report stage via forced strict tool call since DeepSeek lacks json_schema response_format | legit fix for 8K TPM; uses the provider interface as designed
