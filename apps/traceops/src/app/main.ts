@@ -1,13 +1,12 @@
 /**
  * TraceOps process entry point (Wave 2): migrate → detector loop → worker loop → read API on :4000.
- *   npm start -w @traceops/app
+ *   npm run start:env -w @traceops/app     # env from the repo-root .env (tsx --env-file)
+ *   npm start -w @traceops/app             # env from the shell only
  *
  * Env (environment.md §4): TRACEOPS_DATABASE_URL, PROMETHEUS_URL, LOKI_URL, LLM_PROVIDER and the
- * provider's variables, optional TRACEOPS_REOPEN_WINDOW_S (evaluation only). The repo-root `.env`
- * is loaded into the environment if present; its values are never printed.
+ * provider's variables, optional TRACEOPS_REOPEN_WINDOW_S (evaluation only). This process never
+ * reads .env itself and never prints env values.
  */
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
 import type { Server } from 'node:http';
 import { createPool } from '../db/pool.ts';
 import { migrate } from '../db/migrate.ts';
@@ -20,10 +19,6 @@ import { investigate } from '../investigator/investigate.ts';
 import { startApi } from '../api/server.ts';
 import { loadAppConfig, redactDbUrl } from './config.ts';
 import { makeJobHandler } from './handler.ts';
-
-const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
-const envFile = join(ROOT, '.env');
-if (existsSync(envFile)) process.loadEnvFile(envFile); // values loaded, never printed
 
 const log = (scope: string) => (level: 'info' | 'warn' | 'error', msg: string, fields?: Record<string, unknown>) =>
   console[level === 'info' ? 'log' : level](`${new Date().toISOString()} [${scope}] ${msg}${fields ? ' ' + JSON.stringify(fields) : ''}`);

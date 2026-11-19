@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "smoke:groq": "tsx scripts/groq-smoke.ts",
     "migrate": "tsx src/db/migrate.ts",
-    "start": "tsx src/app/main.ts"
+    "start": "tsx src/app/main.ts",
+    "start:env": "tsx --env-file=../../.env src/app/main.ts"
   },
   "keywords": [],
   "author": "",
