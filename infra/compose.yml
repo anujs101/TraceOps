@@ -1,0 +1,27 @@
+# Local stack for TraceOps (environment.md §2). demo-service, the load generator
+# and TraceOps run as host Node processes; only the backends live here.
+name: traceops
+services:
+  lgtm:
+    image: grafana/otel-lgtm:0.40.0
+    ports:
+      - "3000:3000"   # Grafana (debugging only)
+      - "4318:4318"   # OTLP HTTP in
+      - "9090:9090"   # Prometheus HTTP API
+      - "3100:3100"   # Loki HTTP API (not published by the upstream image)
+    mem_limit: 2g
+  postgres:
+    image: postgres:18.6
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
