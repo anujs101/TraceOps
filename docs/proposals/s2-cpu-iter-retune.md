@@ -1,6 +1,6 @@
 # Proposal: retune S2 `CPU_ITER` from 300000 to 400000 (contracts v1.4)
 
-**Status:** accepted by the operator 2026-11-19 (calibrate, pick the smallest value meeting the criteria, apply via contract-change).
+**Status:** APPLIED in fcef575 (contracts v1.4). Accepted by the operator 2026-11-19 (calibrate, pick the smallest value meeting the criteria, apply via contract-change).
 
 ## Problem
 `scenario-db-pool.md` fixes S2 at `CPU_ITER=300000`. On the current laptop that value no longer drives S2 into its intended state unless something else loads the machine:
