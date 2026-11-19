@@ -62,6 +62,39 @@ describe('POST /orders insufficient stock (409)', () => {
   });
 });
 
+describe('POST /orders: no accidental leak path', () => {
+  /** A client whose stock check throws (e.g. a DB error), counting release() calls. */
+  function throwingClient() {
+    const state = { released: 0 };
+    const client = {
+      query: async (sql: string) => {
+        if (/SELECT stock/.test(sql)) throw new Error('connection terminated unexpectedly');
+        return { rows: [] };
+      },
+      release: () => { state.released++; },
+    } as unknown as PoolClient;
+    return { client, state };
+  }
+
+  it.each<Fault>(['none', 'cpu_burn', 'pool_leak'])('stock-check query throws under FAULT=%s → 500 and the client is released', async (fault) => {
+    const { client, state } = throwingClient();
+    const { order, lines } = await start(fault, async () => client);
+    expect((await order(1)).status).toBe(500);
+    expect(state.released).toBe(1);
+    expect(lines.some((l) => l.msg === 'request failed' && l.obj.status === 500)).toBe(true);
+  });
+
+  it('the only leak is the 409 path under pool_leak; under none the 409 releases', async () => {
+    const leak = fakeClient(0);
+    expect((await (await start('pool_leak', async () => leak.client)).order(1)).status).toBe(409);
+    expect(leak.state.released).toBe(0);
+    server?.close();
+    const ok = fakeClient(0);
+    expect((await (await start('none', async () => ok.client)).order(1)).status).toBe(409);
+    expect(ok.state.released).toBe(1);
+  });
+});
+
 describe('error handler', () => {
   it('turns an acquire failure into 500 + `request failed` with err passed as `err`', async () => {
     const failure = new Error('timeout exceeded when trying to connect');
