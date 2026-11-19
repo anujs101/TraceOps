@@ -1,0 +1,277 @@
+{
+  "run": "S2 live end to end, first run (Contracts v1.3; prompts after fix/investigator-prompt + fix/s1-hygiene; /orders leak fix)",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "run_start": "2026-11-19T11:15:34.000Z",
+  "pre_run_data_change": "incident d9d57f65 (S1 run 2) was still open (pre-v1.3 error_ratio_5xx could never resolve); marked resolved at S1 run 2 end (2026-11-19T10:48:24Z) by one SQL UPDATE before this run. Last manual cleanup; /s1-run now waits for a normal resolve. No code changed during the run.",
+  "machine_load": {
+    "before": "16:45  up 2 days,  2:06, 1 user, load averages: 14.87 7.70 5.14",
+    "after": "16:56  up 2 days,  2:17, 1 user, load averages: 1.96 4.03 4.69",
+    "note": "1-min load ~14.7 at start, mostly Spotlight indexing (mds_stores ~110% CPU); S2 is CPU-sensitive (scenario-db-pool.md \"Known sensitivity\")."
+  },
+  "validity_gate": {
+    "scenario": "S2",
+    "times": {
+      "tBaselineStart": "2026-11-19T11:15:41.000Z",
+      "tDeploy": "2026-11-19T11:17:11.000Z",
+      "tDrop": "2026-11-19T11:25:12.000Z",
+      "tEnd": "2026-11-19T11:26:12.000Z"
+    },
+    "signal_summary": {
+      "baseline_clean": true,
+      "latency_alert_fired": true,
+      "pool_used_max": 10,
+      "pool_max": 10,
+      "pool_used_at_max_seconds": 70,
+      "pool_timeouts_increase": 0,
+      "eventloop_utilization_max": 1,
+      "pool_used_after_load_drop": null
+    },
+    "scenarioValid": {
+      "valid": true,
+      "reasons": []
+    }
+  },
+  "incident": {
+    "id": "e48bf589-28dc-4cf6-952f-40813527b01a",
+    "service": "demo-service",
+    "group": "http-slo",
+    "severity": "warning",
+    "status": "resolved",
+    "started_at": "2026-11-19T11:21:49.237Z",
+    "detected_at": "2026-11-19T11:22:04.239Z",
+    "resolved_at": "2026-11-19T11:23:49.247Z",
+    "reopen_count": 0,
+    "trigger": [
+      {
+        "rule_id": "http-latency-p95",
+        "query": "latency_p95",
+        "threshold": 1,
+        "observed": 2.1447313157940178,
+        "at": "2026-11-19T11:22:04.239Z"
+      }
+    ]
+  },
+  "incident_resolution": "resolved normally by the detector at 2026-11-19T11:23:49.247Z (latency rule to_recovering 11:23:04, to_ok 11:23:49), i.e. while cpu_burn was still active at 30 rps (load drop at 11:25:12Z): p95 fell back to ~0.48-0.50 s for 4 ticks. Only the latency rule fired; error_ratio_5xx evaluated ok throughout (v1.3), matching README VERIFY item 3.",
+  "investigation": {
+    "id": "4a2e78f0-4d7b-4b52-995d-0c516690fa5e",
+    "trigger": "auto",
+    "status": "completed",
+    "model": "deepseek-flash",
+    "started_at": "2026-11-19T11:22:05.698Z",
+    "finished_at": "2026-11-19T11:22:39.698Z",
+    "tool_calls": 15,
+    "error": null
+  },
+  "report": {
+    "status": "probable_cause",
+    "top_hypothesis": {
+      "category": "db_pool_exhaustion",
+      "confidence": "medium"
+    },
+    "hypotheses": [
+      {
+        "id": "hyp_1",
+        "category": "db_pool_exhaustion",
+        "confidence": "medium"
+      },
+      {
+        "id": "hyp_2",
+        "category": "dependency_latency",
+        "confidence": "medium"
+      },
+      {
+        "id": "hyp_3",
+        "category": "cpu_saturation",
+        "confidence": "low"
+      },
+      {
+        "id": "hyp_4",
+        "category": "other",
+        "confidence": "low"
+      }
+    ],
+    "validation": "failed",
+    "repair_attempted": true,
+    "violations": [
+      {
+        "path": "observations.7.evidence_ids",
+        "rule": "V1",
+        "message": "ev_7 is unknown or not status ok"
+      },
+      {
+        "path": "observations.8.evidence_ids",
+        "rule": "V1",
+        "message": "ev_11 is unknown or not status ok"
+      },
+      {
+        "path": "observations.8.evidence_ids",
+        "rule": "V1",
+        "message": "ev_12 is unknown or not status ok"
+      },
+      {
+        "path": "observations.8.evidence_ids",
+        "rule": "V1",
+        "message": "ev_8 is unknown or not status ok"
+      },
+      {
+        "path": "observations.8.evidence_ids",
+        "rule": "V1",
+        "message": "ev_13 is unknown or not status ok"
+      },
+      {
+        "path": "observations.8.evidence_ids",
+        "rule": "V1",
+        "message": "ev_14 is unknown or not status ok"
+      },
+      {
+        "path": "observations.8.evidence_ids",
+        "rule": "V1",
+        "message": "ev_15 is unknown or not status ok"
+      },
+      {
+        "path": "hypotheses.0.statement",
+        "rule": "V3",
+        "message": "placeholder {db_hmax} has no value"
+      },
+      {
+        "path": "hypotheses.0.statement",
+        "rule": "V3",
+        "message": "placeholder {hp_max} has no value"
+      },
+      {
+        "path": "hypotheses.0.statement",
+        "rule": "V3",
+        "message": "placeholder {hp_pending} has no value"
+      },
+      {
+        "path": "hypotheses.0.statement",
+        "rule": "V3",
+        "message": "placeholder {hp_lat} has no value"
+      },
+      {
+        "path": "hypotheses.1.statement",
+        "rule": "V3",
+        "message": "placeholder {hd_lat} has no value"
+      },
+      {
+        "path": "hypotheses.2.statement",
+        "rule": "V3",
+        "message": "placeholder {hc_el} has no value"
+      }
+    ],
+    "warnings": [
+      {
+        "path": "observations.1.statement",
+        "rule": "W-time",
+        "message": "time literal \"2026-11-19T11:21:19.237Z\" — times belong in the timeline"
+      },
+      {
+        "path": "observations.1.statement",
+        "rule": "W-time",
+        "message": "time literal \"2026-11-19T11:21:49.237Z\" — times belong in the timeline"
+      },
+      {
+        "path": "observations.3.statement",
+        "rule": "W-time",
+        "message": "time literal \"2026-11-19T11:22:04.237Z\" — times belong in the timeline"
+      },
+      {
+        "path": "observations.3.statement",
+        "rule": "W-time",
+        "message": "time literal \"2026-11-19T11:21:34.237Z\" — times belong in the timeline"
+      },
+      {
+        "path": "observations.4.statement",
+        "rule": "W-time",
+        "message": "time literal \"2026-11-19T11:21:19.237Z\" — times belong in the timeline"
+      },
+      {
+        "path": "observations.4.statement",
+        "rule": "W-time",
+        "message": "time literal \"2026-11-19T11:21:49.237Z\" — times belong in the timeline"
+      },
+      {
+        "path": "observations.5.statement",
+        "rule": "W-time",
+        "message": "time literal \"2026-11-19T11:22:04.237Z\" — times belong in the timeline"
+      },
+      {
+        "path": "observations.6.statement",
+        "rule": "W-time",
+        "message": "time literal \"2026-11-19T11:21:49.237Z\" — times belong in the timeline"
+      },
+      {
+        "path": "recommendations.0",
+        "rule": "W-rec",
+        "message": "quantity \"11:21–11:22\" in a proposal"
+      },
+      {
+        "path": "recommendations.0",
+        "rule": "W-rec",
+        "message": "quantity \"10\" in a proposal"
+      },
+      {
+        "path": "recommendations.0",
+        "rule": "W-rec",
+        "message": "quantity \"27\" in a proposal"
+      },
+      {
+        "path": "recommendations.3",
+        "rule": "W-rec",
+        "message": "quantity \"1.0\" in a proposal"
+      }
+    ],
+    "note": "only the final attempt is persisted (docs/proposals/report-attempt-violations.md)"
+  },
+  "grade": {
+    "outcome": "invalid",
+    "pass": false,
+    "if_validation_had_passed": {
+      "outcome": "misattributed",
+      "pass": false
+    },
+    "basis": "gradeRun rules (packages/contracts/src/grading.ts): S2 truth cpu_saturation, decoy db_pool_exhaustion, pass = correct|safe; a failed validation grades invalid. The top hypothesis is the decoy."
+  },
+  "evidence": {
+    "rows": 15,
+    "by_tool_and_status": {
+      "query_metric": {
+        "ok": 8,
+        "empty": 1
+      },
+      "log_patterns": {
+        "error": 1,
+        "empty": 2,
+        "budget_exhausted": 1
+      },
+      "log_volume": {
+        "budget_exhausted": 1
+      },
+      "search_logs": {
+        "budget_exhausted": 1
+      }
+    },
+    "tools_used_ok": [
+      "query_metric"
+    ]
+  },
+  "detection_to_report_s": 35.5,
+  "detection_to_report_note": "detected_at → investigation finished_at (reports has no created_at)",
+  "llm_calls": {
+    "attempts": 7,
+    "errors": 0,
+    "by_stage": {
+      "investigate": 5,
+      "report": 2
+    },
+    "input_tokens": 42483,
+    "output_tokens": 7704,
+    "total_tokens": 50187,
+    "latency_ms_total": 33405,
+    "cost_estimate_usd": {
+      "value": 0.01099,
+      "basis": "deepseek-flash off-peak list price (api-docs.deepseek.com/quick_start/pricing, read 2026-11-19): $0.15/M input cache-miss, $0.60/M output; cache_read_tokens not reported, so all input priced as cache miss (upper bound)."
+    }
+  }
+}

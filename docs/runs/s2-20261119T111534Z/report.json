@@ -1,0 +1,478 @@
+{
+  "investigation_id": "4a2e78f0-4d7b-4b52-995d-0c516690fa5e",
+  "report": {
+    "gaps": [
+      "Log pattern queries returned error (ev_8, invalid input) or budget_exhausted (ev_13); log volume (ev_14) and log search (ev_15) were never completed, so error/exception content in the incident window was not examined.",
+      "pool_timeout_rate returned empty (ev_7); no pool wait or queue-duration metric was queried.",
+      "No database-side evidence was gathered: slow query logs, lock waits, DB host CPU/IO and network latency between service and DB were not checked.",
+      "No CPU or memory metrics for the service or its hosts were queried; only event-loop utilization was examined.",
+      "The window after 2026-11-19T11:22:05Z was not queried, so recovery time and duration of the saturation are unknown.",
+      "No deployment, config change or traffic-source breakdown was checked for the 11:21 UTC period."
+    ],
+    "status": "probable_cause",
+    "summary": "demo-service p95 latency rose well above baseline while request rate stayed flat, coinciding with a step up in DB operation latency, the connection pool reaching its fixed ceiling with queued waiters, and the event loop saturating. The ordering (DB slowness, then pool queueing, then request latency) points to database-side latency growth exhausting a small fixed connection pool as the most probable cause. No error log patterns were evidenced, so this is a contention/latency incident, not a functional failure. Some log queries were cut off by budget exhaustion.",
+    "timeline": [
+      {
+        "at": "2026-11-19T11:19:49.237Z",
+        "event": "Incident window opens: p95 latency {tl_lat_start} s, DB operation p95 {tl_db_start} s, pool_pending {tl_pending_start}, pool_used {tl_used_start}.",
+        "evidence_ids": [
+          "ev_1",
+          "ev_5",
+          "ev_4",
+          "ev_6"
+        ]
+      },
+      {
+        "at": "2026-11-19T11:21:19.237Z",
+        "event": "DB operation p95 steps up to {tl_db_mid} s, event loop utilization reaches {tl_el_mid}, pool_used hits its ceiling of {tl_used_mid} connections and p95 latency starts climbing ({tl_lat_mid} s).",
+        "evidence_ids": [
+          "ev_5",
+          "ev_10",
+          "ev_6",
+          "ev_1"
+        ]
+      },
+      {
+        "at": "2026-11-19T11:21:34.237Z",
+        "event": "DB operation p95 at {tl_db_34} s and p95 latency at {tl_lat_34} s.",
+        "evidence_ids": [
+          "ev_5",
+          "ev_1"
+        ]
+      },
+      {
+        "at": "2026-11-19T11:21:49.237Z",
+        "event": "Event loop utilization saturated at {tl_el_49}, pool_used at ceiling with pool_pending {tl_pending_49}, and p95 latency at {tl_lat_49} s.",
+        "evidence_ids": [
+          "ev_10",
+          "ev_6",
+          "ev_4",
+          "ev_1"
+        ]
+      },
+      {
+        "at": "2026-11-19T11:22:04.237Z",
+        "event": "Detection: p95 latency peaks at {tl_lat_peak} s, pool_pending peaks at {tl_pending_peak}, DB operation p95 at {tl_db_peak} s, request_rate {tl_req_end} req/s.",
+        "evidence_ids": [
+          "ev_1",
+          "ev_4",
+          "ev_5",
+          "ev_3"
+        ]
+      }
+    ],
+    "hypotheses": [
+      {
+        "id": "hyp_1",
+        "category": "db_pool_exhaustion",
+        "statement": "Growing database operation latency (db_operation_p95 reaching {db_hmax} s) combined with a fixed pool ceiling of {hp_max} connections saturated the connection pool, and queued waiters (pool_pending up to {hp_pending}) stretched request latency to {hp_lat} s.",
+        "confidence": "medium",
+        "supporting_observation_ids": [
+          "obs_4",
+          "obs_5",
+          "obs_6",
+          "obs_1",
+          "obs_2",
+          "obs_7"
+        ],
+        "contradicting_observation_ids": [
+          "obs_8"
+        ]
+      },
+      {
+        "id": "hyp_2",
+        "category": "dependency_latency",
+        "statement": "Increased latency of the downstream database dependency caused request latency to rise to {hd_lat} s independently of pool queueing.",
+        "confidence": "medium",
+        "supporting_observation_ids": [
+          "obs_4",
+          "obs_1",
+          "obs_2"
+        ],
+        "contradicting_observation_ids": [
+          "obs_3"
+        ]
+      },
+      {
+        "id": "hyp_3",
+        "category": "cpu_saturation",
+        "statement": "CPU/event-loop saturation on the service (eventloop_utilization reaching {hc_el}) caused the latency increase.",
+        "confidence": "low",
+        "supporting_observation_ids": [
+          "obs_7",
+          "obs_1"
+        ],
+        "contradicting_observation_ids": [
+          "obs_4",
+          "obs_5",
+          "obs_6"
+        ]
+      },
+      {
+        "id": "hyp_4",
+        "category": "other",
+        "statement": "A traffic surge drove the latency increase.",
+        "confidence": "low",
+        "supporting_observation_ids": [
+          "obs_1"
+        ],
+        "contradicting_observation_ids": [
+          "obs_3"
+        ]
+      }
+    ],
+    "observations": [
+      {
+        "id": "obs_1",
+        "values": [
+          {
+            "key": "lat_base",
+            "field": "max",
+            "value": 0.19123134328358202,
+            "evidence_id": "ev_2"
+          },
+          {
+            "key": "lat_base_avg",
+            "field": "avg",
+            "value": 0.11207033551134815,
+            "evidence_id": "ev_2"
+          },
+          {
+            "key": "lat_max",
+            "field": "max",
+            "value": 2.144777218555282,
+            "evidence_id": "ev_1"
+          }
+        ],
+        "statement": "p95 request latency rose from a baseline peak of {lat_base} s (baseline avg {lat_base_avg} s) to {lat_max} s during the incident window, exceeding the rule threshold.",
+        "evidence_ids": [
+          "ev_2",
+          "ev_1"
+        ]
+      },
+      {
+        "id": "obs_2",
+        "values": [
+          {
+            "key": "lat_early",
+            "field": "series@2026-11-19T11:19:49.237Z",
+            "value": 0.07344005847953215,
+            "evidence_id": "ev_1"
+          },
+          {
+            "key": "lat_rise",
+            "field": "series@2026-11-19T11:21:19.237Z",
+            "value": 0.21740157480314962,
+            "evidence_id": "ev_1"
+          },
+          {
+            "key": "lat_late",
+            "field": "series@2026-11-19T11:21:49.237Z",
+            "value": 1.61116932988853,
+            "evidence_id": "ev_1"
+          }
+        ],
+        "statement": "The latency ramp began mid-window: p95 was {lat_early} s at the start of the incident window and {lat_rise} s at 2026-11-19T11:21:19.237Z, then {lat_late} s at 2026-11-19T11:21:49.237Z.",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      {
+        "id": "obs_3",
+        "values": [
+          {
+            "key": "req_min",
+            "field": "min",
+            "value": 26.949356240394827,
+            "evidence_id": "ev_3"
+          },
+          {
+            "key": "req_max",
+            "field": "max",
+            "value": 29.847230024827383,
+            "evidence_id": "ev_3"
+          }
+        ],
+        "statement": "Traffic was flat: request_rate stayed between {req_min} and {req_max} req/s across the incident window, so there was no load spike.",
+        "evidence_ids": [
+          "ev_3"
+        ]
+      },
+      {
+        "id": "obs_4",
+        "values": [
+          {
+            "key": "db_first",
+            "field": "first",
+            "value": 0.0441169853768279,
+            "evidence_id": "ev_5"
+          },
+          {
+            "key": "db_max",
+            "field": "max",
+            "value": 0.490599739243807,
+            "evidence_id": "ev_5"
+          },
+          {
+            "key": "db_mid",
+            "field": "series@2026-11-19T11:21:34.237Z",
+            "value": 0.43482876712328744,
+            "evidence_id": "ev_5"
+          }
+        ],
+        "statement": "DB operation p95 latency rose from {db_first} s at the start of the window to {db_max} s at 2026-11-19T11:22:04.237Z, with the step occurring by 2026-11-19T11:21:34.237Z ({db_mid} s); this is the earliest resource-level degradation.",
+        "evidence_ids": [
+          "ev_5"
+        ]
+      },
+      {
+        "id": "obs_5",
+        "values": [
+          {
+            "key": "pool_max",
+            "field": "max",
+            "value": 10,
+            "evidence_id": "ev_9"
+          },
+          {
+            "key": "pool_used_first",
+            "field": "first",
+            "value": 2,
+            "evidence_id": "ev_6"
+          },
+          {
+            "key": "pool_used_max",
+            "field": "max",
+            "value": 10,
+            "evidence_id": "ev_6"
+          }
+        ],
+        "statement": "The connection pool ceiling is a constant {pool_max} connections, and pool_used climbed from {pool_used_first} to its ceiling of {pool_used_max} connections (reaching it at 2026-11-19T11:21:19.237Z and again from 2026-11-19T11:21:49.237Z onward).",
+        "evidence_ids": [
+          "ev_9",
+          "ev_6"
+        ]
+      },
+      {
+        "id": "obs_6",
+        "values": [
+          {
+            "key": "pending_min",
+            "field": "min",
+            "value": 0,
+            "evidence_id": "ev_4"
+          },
+          {
+            "key": "pending_max",
+            "field": "max",
+            "value": 27,
+            "evidence_id": "ev_4"
+          }
+        ],
+        "statement": "Requests queued for connections: pool_pending was {pending_min} through the first part of the window and climbed to {pending_max} pending requests by 2026-11-19T11:22:04.237Z.",
+        "evidence_ids": [
+          "ev_4"
+        ]
+      },
+      {
+        "id": "obs_7",
+        "values": [
+          {
+            "key": "el_first",
+            "field": "first",
+            "value": 0.8028105966256808,
+            "evidence_id": "ev_10"
+          },
+          {
+            "key": "el_max",
+            "field": "max",
+            "value": 1,
+            "evidence_id": "ev_10"
+          }
+        ],
+        "statement": "Event loop utilization rose from {el_first} at the start of the window to {el_max}, its maximum, at 2026-11-19T11:21:49.237Z.",
+        "evidence_ids": [
+          "ev_10"
+        ]
+      },
+      {
+        "id": "obs_8",
+        "values": [],
+        "statement": "The pool_timeout_rate metric query returned an empty result for the incident window (ev_7), so no hard pool timeouts are evidenced at detection time.",
+        "evidence_ids": [
+          "ev_7"
+        ]
+      },
+      {
+        "id": "obs_9",
+        "values": [],
+        "statement": "Log pattern queries over the incident window and the preceding baseline window returned empty results with zero sampled lines (ev_11, ev_12), so no error log patterns are evidenced; a further log pattern call failed with invalid input (ev_8) and later log calls were cut off by budget exhaustion (ev_13, ev_14, ev_15).",
+        "evidence_ids": [
+          "ev_11",
+          "ev_12",
+          "ev_8",
+          "ev_13",
+          "ev_14",
+          "ev_15"
+        ]
+      }
+    ],
+    "recommendations": [
+      {
+        "risk": "low",
+        "action": "Inspect DB-side slow queries and lock waits for the 11:21–11:22 UTC window, and review whether the fixed pool size of 10 connections is undersized for the observed concurrency.",
+        "rationale": "DB operation p95 rose before the pool saturated and pool_pending then queued up to 27 requests against a 10-connection ceiling (hyp_1, hyp_2).",
+        "hypothesis_id": "hyp_1"
+      },
+      {
+        "risk": "low",
+        "action": "Add pool wait/queue-time instrumentation and re-query pool_timeout_rate with a broader window, since the previous query returned empty.",
+        "rationale": "Queueing is the mechanism linking DB slowness to request latency; the timeout signal is currently unevidenced (hyp_1, obs_8).",
+        "hypothesis_id": "hyp_1"
+      },
+      {
+        "risk": "low",
+        "action": "Complete loki log-pattern and log-volume queries for the incident window, including error/severity filtering.",
+        "rationale": "Log calls were cut short by budget exhaustion, so absence of error patterns is not yet established (ev_13, ev_14, ev_15).",
+        "hypothesis_id": "hyp_1"
+      },
+      {
+        "risk": "medium",
+        "action": "Capture CPU/event-loop profiles during future incidents to separate event-loop saturation caused by blocked DB calls from CPU-bound application work.",
+        "rationale": "Event loop utilization reached 1.0, but it follows the DB and pool signals rather than preceding them (hyp_3).",
+        "hypothesis_id": "hyp_3"
+      }
+    ]
+  },
+  "validation": "failed",
+  "violations": [
+    {
+      "path": "observations.7.evidence_ids",
+      "rule": "V1",
+      "message": "ev_7 is unknown or not status ok"
+    },
+    {
+      "path": "observations.8.evidence_ids",
+      "rule": "V1",
+      "message": "ev_11 is unknown or not status ok"
+    },
+    {
+      "path": "observations.8.evidence_ids",
+      "rule": "V1",
+      "message": "ev_12 is unknown or not status ok"
+    },
+    {
+      "path": "observations.8.evidence_ids",
+      "rule": "V1",
+      "message": "ev_8 is unknown or not status ok"
+    },
+    {
+      "path": "observations.8.evidence_ids",
+      "rule": "V1",
+      "message": "ev_13 is unknown or not status ok"
+    },
+    {
+      "path": "observations.8.evidence_ids",
+      "rule": "V1",
+      "message": "ev_14 is unknown or not status ok"
+    },
+    {
+      "path": "observations.8.evidence_ids",
+      "rule": "V1",
+      "message": "ev_15 is unknown or not status ok"
+    },
+    {
+      "path": "hypotheses.0.statement",
+      "rule": "V3",
+      "message": "placeholder {db_hmax} has no value"
+    },
+    {
+      "path": "hypotheses.0.statement",
+      "rule": "V3",
+      "message": "placeholder {hp_max} has no value"
+    },
+    {
+      "path": "hypotheses.0.statement",
+      "rule": "V3",
+      "message": "placeholder {hp_pending} has no value"
+    },
+    {
+      "path": "hypotheses.0.statement",
+      "rule": "V3",
+      "message": "placeholder {hp_lat} has no value"
+    },
+    {
+      "path": "hypotheses.1.statement",
+      "rule": "V3",
+      "message": "placeholder {hd_lat} has no value"
+    },
+    {
+      "path": "hypotheses.2.statement",
+      "rule": "V3",
+      "message": "placeholder {hc_el} has no value"
+    }
+  ],
+  "warnings": [
+    {
+      "path": "observations.1.statement",
+      "rule": "W-time",
+      "message": "time literal \"2026-11-19T11:21:19.237Z\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.1.statement",
+      "rule": "W-time",
+      "message": "time literal \"2026-11-19T11:21:49.237Z\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.3.statement",
+      "rule": "W-time",
+      "message": "time literal \"2026-11-19T11:22:04.237Z\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.3.statement",
+      "rule": "W-time",
+      "message": "time literal \"2026-11-19T11:21:34.237Z\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.4.statement",
+      "rule": "W-time",
+      "message": "time literal \"2026-11-19T11:21:19.237Z\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.4.statement",
+      "rule": "W-time",
+      "message": "time literal \"2026-11-19T11:21:49.237Z\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.5.statement",
+      "rule": "W-time",
+      "message": "time literal \"2026-11-19T11:22:04.237Z\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.6.statement",
+      "rule": "W-time",
+      "message": "time literal \"2026-11-19T11:21:49.237Z\" — times belong in the timeline"
+    },
+    {
+      "path": "recommendations.0",
+      "rule": "W-rec",
+      "message": "quantity \"11:21–11:22\" in a proposal"
+    },
+    {
+      "path": "recommendations.0",
+      "rule": "W-rec",
+      "message": "quantity \"10\" in a proposal"
+    },
+    {
+      "path": "recommendations.0",
+      "rule": "W-rec",
+      "message": "quantity \"27\" in a proposal"
+    },
+    {
+      "path": "recommendations.3",
+      "rule": "W-rec",
+      "message": "quantity \"1.0\" in a proposal"
+    }
+  ],
+  "repair_attempted": true
+}
