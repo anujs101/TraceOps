@@ -158,6 +158,18 @@ export class PgInvestigationStore implements InvestigationStore {
       [id, f.status, f.toolCalls, f.error]);
   }
 
+  /**
+   * On a job claim: an investigation of this job still `running` belongs to a worker that lost
+   * its lease or crashed. Close it as failed('worker_lost') before a new attempt starts
+   * (persistence.md §3: running → failed). Returns how many rows were closed.
+   */
+  async failRunningForJob(jobId: string): Promise<number> {
+    const r = await this.pool.query(
+      `UPDATE investigations SET status = 'failed', error = 'worker_lost', finished_at = now()
+       WHERE job_id = $1 AND status = 'running'`, [jobId]);
+    return r.rowCount ?? 0;
+  }
+
   /** One llm_calls row per provider attempt, via toLlmCallRow(). */
   async insertLlmCall(rec: LlmCallRecord): Promise<LlmCall> {
     const c = toLlmCallRow(rec);

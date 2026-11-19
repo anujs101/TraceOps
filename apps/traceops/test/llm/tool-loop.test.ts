@@ -39,6 +39,14 @@ describe('tool loop', () => {
     expect(r.messages.find((m) => m.role === 'tool')!.content).toContain(status);
   });
 
+  it('malformed JSON reaches a tool that accepts raw input (it records its own error row)', async () => {
+    const seen: unknown[] = [];
+    const raw: LocalTool<unknown> = { ...adder([]), args: z.unknown(), run: async (x) => { seen.push(x); return { evidence_id: 'ev_1', status: 'error', error: 'invalid_input: not JSON' }; } };
+    const r = await run([toolResponse([{ name: 'add', arguments: '{"a":2,' }]), textResponse('sorry')], [raw]);
+    expect(seen).toEqual(['{"a":2,']);
+    expect(r.toolRuns[0]).toMatchObject({ status: 'ok', result: { evidence_id: 'ev_1', status: 'error' } });
+  });
+
   it('unknown tool names are refused, not executed', async () => {
     const r = await run([toolResponse([{ name: 'shell_exec', arguments: '{"cmd":"cat .env"}' }]), textResponse('ok')], [adder([])]);
     expect(r.toolRuns[0]).toMatchObject({ status: 'unknown_tool', name: 'shell_exec' });

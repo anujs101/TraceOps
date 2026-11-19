@@ -76,7 +76,11 @@ async function executeOne(tc: ToolCall, byName: Map<string, LocalTool<any>>, ove
   try {
     parsed = JSON.parse(tc.argumentsJson || '{}');
   } catch {
-    return { ...base, status: 'invalid_args', result: 'arguments are not valid JSON' };
+    // A tool whose `args` accepts raw input (the investigator wraps tools with z.unknown()) gets
+    // the raw string, so its own run() records the invalid_input evidence row (tools.md §1:
+    // every call, including rejected ones, becomes an evidence row). Otherwise refuse here.
+    if (!tool.args.safeParse(tc.argumentsJson).success) return { ...base, status: 'invalid_args', result: 'arguments are not valid JSON' };
+    parsed = tc.argumentsJson;
   }
   const checked = tool.args.safeParse(parsed);
   if (!checked.success) return { ...base, status: 'invalid_args', result: checked.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ').slice(0, 300) };
