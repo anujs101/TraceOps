@@ -1,8 +1,8 @@
 # Handoff: session/F-ui (full UI redesign of apps/web/)
 
 ## Done and verified
-- Commits `4447f69`…`96bf614`, steps (a)–(f): tokens and format, investigation page with verdict and drawer, incident list, incident page, states, light polish.
-- `/verify` 17:12: typecheck passes in all 4 workspaces; tests contracts 114/114, demo-service 16/16, app 483 + 79 skipped, web 43/43.
+- Commits `4447f69`…`96bf614`, steps (a)–(f), plus `94c2756`: a pinned unvalidated strip, added after the real-app check.
+- `/verify` 17:31: typecheck passes in all 4 workspaces; tests contracts 114/114, demo-service 16/16, app 483 + 79 skipped, web 43/43.
 - Web tests:
   - every number is clickable (each `num-*` opens the drawer, the claim matches, the exact stored value is shown);
   - the unvalidated banner and its violations stay visible with every `<details>` closed;
@@ -13,12 +13,17 @@
 - `/contract-check`: CONTRACTS UNCHANGED. Outside `apps/web/` only the build log and one proposal changed.
 - Screenshots, viewed: 4 before/after pairs plus light 1440 and dark 390, in `~/TraceOps-video/screens/`. Every capture had 0 px horizontal overflow.
 
+- Real app on :4000, with Postgres holding S1 runs 1 and 2 and S2. I ran Vite with no `VITE_API_TARGET`, i.e. its default target, and made GET requests only. Screens are in `~/TraceOps-video/screens/real-*.png`. Seen:
+  - S2 is Unvalidated with 13 violations, and its V3 placeholders are flagged;
+  - the S2 baseline line is drawn (ev_2, avg 112 ms);
+  - ratio, ms and s units render correctly.
+- That check found that 13 violations made the sticky banner cover half the screen. Fixed in `94c2756`.
+
 ## Done, not verified
-- Against the real app on :4000 with S1 + S2 in Postgres: not run. Nothing was listening on 4000, and starting `src/app/main.ts` also starts the detector and worker and needs `.env`.
 - Keyboard focus return after closing the drawer, and contrast ratios: implemented but not measured.
 
 ## Not done
-- No S2 run directory exists in `docs/runs/`, so the dev API (4100) serves the S1 runs plus the fixtures only.
+- No S2 run directory exists in `docs/runs/`, so the dev API (4100) has no S2. S2 was seen only through the real app.
 
 ## Deviations and proposals
 - [validator-timeline-placeholders.md](../proposals/validator-timeline-placeholders.md): V3 doesn't check `{key}` in timeline events. The recorded S1 run passed with `{pool_used_early}` and `{pool_used_mid}` unbound. The UI marks them unbound.
