@@ -9,7 +9,7 @@ import { PgInvestigationStore } from '../../src/db/store.ts';
 import { Worker } from '../../src/queue/worker.ts';
 import { LlmError, RecordingProvider } from '../../src/llm/index.ts';
 import { makeInvestigate } from '../../src/investigator/investigate.ts';
-import { jobTrigger, llmErrorKind, makeJobHandler, shouldRetry } from '../../src/app/handler.ts';
+import { jobTrigger, makeJobHandler, shouldRetry } from '../../src/app/handler.ts';
 import { logPatternsOutput, queryMetricOutput } from '../../scripts/lib/fixture-evidence.ts';
 import { fixtureCreateTools, INVESTIGATION_START, S1_INCIDENT, ScriptedProvider, type Step } from '../investigator/fakes.ts';
 import { DB_URL, createTestDb, seedJob, type TestDb } from '../db/helpers.ts';
@@ -45,8 +45,6 @@ describe('handler: pure rules', () => {
   });
   it('retry only infrastructure failures (persistence.md §2)', () => {
     const o = (status: 'completed' | 'failed' | 'cancelled', error: string | null) => ({ status, error, toolCalls: 0, report: null });
-    expect(llmErrorKind('llm_rate_limit: slow down')).toBe('rate_limit');
-    expect(llmErrorKind('llm_nonsense: x')).toBeNull();
     expect(shouldRetry(o('failed', 'llm_rate_limit: slow down'))).toBe(true);
     expect(shouldRetry(o('failed', 'llm_server: 502'))).toBe(true);
     expect(shouldRetry(o('failed', 'connection terminated unexpectedly'))).toBe(true); // DB / tool layer

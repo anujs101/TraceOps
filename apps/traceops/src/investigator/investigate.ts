@@ -14,7 +14,7 @@
  * The outcome is then decided by the report like any other run.
  */
 import { z } from 'zod';
-import type { Evidence } from '@traceops/contracts';
+import { LLM_ERROR_KINDS, type Evidence, type LlmErrorKind } from '@traceops/contracts';
 import { LlmError, withRetry, type LlmProvider, type RetryPolicy } from '../llm/index.ts';
 import { redactSecrets } from '../llm/errors.ts'; // types.ts: investigator may depend on index/errors/recorder
 import { runToolLoop, type LocalTool } from '../llm/tool-loop.ts';
@@ -167,9 +167,24 @@ export function redactAccountIds(text: string): string {
   return text.replace(/\borg_[A-Za-z0-9]+/g, 'org_[REDACTED]');
 }
 
+/**
+ * The `InvestigationOutcome.error` string format (the seam types it only as string):
+ * `llm_<kind>: <message>` for LLM errors (kind ∈ LLM_ERROR_KINDS), the plain message otherwise;
+ * redacted, ≤ 300 chars. Write it only with describeError; read it only with parseOutcomeError.
+ */
 export function describeError(e: unknown): string {
   const msg = e instanceof LlmError ? `llm_${e.kind}: ${e.message}` : e instanceof Error ? e.message : String(e);
   return redactAccountIds(redactSecrets(msg)).slice(0, 300);
+}
+
+export type OutcomeError = { llmKind: LlmErrorKind | null; message: string };
+
+/** Inverse of describeError: the LLM error kind (null for non-LLM errors) and the message. */
+export function parseOutcomeError(error: string | null): OutcomeError | null {
+  if (error === null) return null;
+  const m = /^llm_([a-z_]+): ([\s\S]*)$/.exec(error);
+  if (m && (LLM_ERROR_KINDS as readonly string[]).includes(m[1]!)) return { llmKind: m[1] as LlmErrorKind, message: m[2]! };
+  return { llmKind: null, message: error };
 }
 
 export const investigate: Investigate = makeInvestigate();

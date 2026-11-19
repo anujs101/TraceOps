@@ -8,10 +8,11 @@
  *  - failed with a non-retryable LLM error (auth, bad_request, …) → resolve: retrying cannot help
  *  - failed otherwise (retryable LLM kinds after the investigator's own retries, DB/tool-layer
  *    errors) → throw: the worker requeues until max_attempts, then dead
- * investigate() reports LLM failures as `error: "llm_<kind>: …"` (src/investigator/investigate.ts
- * describeError); that prefix is how the kind reaches this handler.
+ * The LLM error kind is read with the investigator's parseOutcomeError (the inverse of the
+ * describeError that wrote it), never by parsing the string here.
  */
-import { RETRYABLE_LLM_ERRORS, LLM_ERROR_KINDS, type Incident, type LlmErrorKind } from '@traceops/contracts';
+import { RETRYABLE_LLM_ERRORS, type Incident } from '@traceops/contracts';
+import { parseOutcomeError } from '../investigator/investigate.ts';
 import type { CallRecorder, LlmProvider } from '../llm/index.ts';
 import type { CreateTools, EvidenceSink, Investigate, InvestigationOutcome, InvestigationRow } from '../seams.ts';
 import type { ReportRow } from '../report/generate.ts';
@@ -46,16 +47,10 @@ export type HandlerDeps = {
 
 export const jobTrigger = (key: string): 'auto' | 'manual' => (key.endsWith(':auto') ? 'auto' : 'manual');
 
-/** The LLM error kind in an investigate() error string, or null when it is not an LLM error. */
-export function llmErrorKind(error: string | null): LlmErrorKind | null {
-  const m = /^llm_([a-z_]+):/.exec(error ?? '');
-  return m && (LLM_ERROR_KINDS as readonly string[]).includes(m[1]!) ? (m[1] as LlmErrorKind) : null;
-}
-
 /** Whether a finished outcome should make the worker retry the job (persistence.md §2). */
 export function shouldRetry(o: InvestigationOutcome): boolean {
   if (o.status !== 'failed') return false;
-  const kind = llmErrorKind(o.error);
+  const kind = parseOutcomeError(o.error)?.llmKind ?? null;
   return kind === null || RETRYABLE_LLM_ERRORS.includes(kind);
 }
 
