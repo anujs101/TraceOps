@@ -1,0 +1,10 @@
+- 11:21 | A | plan had 60 s cool-down; no per-step commits | told: take all load numbers from scenario-db-pool.md, commit per step, run stack + S1 in background | avoid invented numbers; keep git log for metrics
+- 11:26 | C | plan: reopen reuses job key → no re-investigation; DB tests skip if no URL | asked for proposal docs/proposals/detection-reopen-job-key.md; DB tests must run, 0 skipped | repeated S1/N=5 eval would silently not investigate; skipped ≠ passed
+- 11:31 | C | found no Postgres on 5433 (operator said it was up — it wasn't) | C started c-pg postgres:18.6 on 5433; forbade 5432 | A's live S1 run was using 5432
+- 11:31 | D | plan: tool_data uses call_id, contract says evidence_id; maps failed-after-repair → failed | told D to verify the model can see ev_N (BLOCKING if not); follow persistence.md state machine | could break every citation; doc says "unvalidated"
+- 11:31 | B | plan approved | added S2 fixture replay (shape only); shared rolldown binding fix | S2 is the cause-vs-effect test
+- 11:35 | B+D | both independently found tool_data call_id ≠ evidence_id | D owns decision; B notes in handoff only | single owner for a cross-cutting issue
+- 11:37 | A | DONE ~16 min: S1 valid=true, 9 metrics, 12 tests | my cool-down correction was ambiguous; A's reading (drop ≥60 s, cool-down ≥5 min) was right | —
+- 11:37 | all | vitest native rolldown binding missing (npm optional-deps bug) | --no-save install per worktree; regenerate lockfile clean at merge | lockfile drift
+- 11:40 | B | asked approval every step | removed per-step gate; abort → throw (matches D's cancel design) | operator was the bottleneck
+- 11:40 | A | idle, S2 ready | deferred S2 run | CPU contention with B/C/D tests
