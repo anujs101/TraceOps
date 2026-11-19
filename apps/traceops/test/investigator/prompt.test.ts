@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { deriveWindows, TOOL_NAMES } from '@traceops/contracts';
-import { buildReportSystemPrompt, buildReportUserMessage, buildSystemPrompt, buildUserMessage, INVESTIGATION_BUDGET, LOG_CALL_RESERVE, GAPS_RULE } from '../../src/investigator/prompt.ts';
+import { buildReportSystemPrompt, buildReportUserMessage, buildSystemPrompt, buildUserMessage, INVESTIGATION_BUDGET, LOG_CALL_RESERVE, GAPS_RULE, HYPOTHESIS_RULES } from '../../src/investigator/prompt.ts';
 import { INVESTIGATION_START, S1_INCIDENT } from './fakes.ts';
 
 const sys = buildSystemPrompt(S1_INCIDENT, INVESTIGATION_START);
@@ -25,6 +25,15 @@ describe('investigator system prompt (spec D §5.1)', () => {
     expect(sys).toContain(`Reserve at least ${LOG_CALL_RESERVE} calls for log tools`);
     expect(LOG_CALL_RESERVE).toBeLessThan(INVESTIGATION_BUDGET.maxToolCalls);
     expect(sys).toMatch(/incident vs baseline/);
+  });
+  it('report prompt: hypotheses are positive candidate causes; evidence for → supporting, against → contradicting', () => {
+    const rep = buildReportSystemPrompt(S1_INCIDENT, INVESTIGATION_START);
+    expect(rep).toContain(HYPOTHESIS_RULES);
+    expect(HYPOTHESIS_RULES).toMatch(/candidate cause, positively/);
+    expect(HYPOTHESIS_RULES).toMatch(/never as a negation or a verdict/);
+    expect(HYPOTHESIS_RULES).toMatch(/supporting_observation_ids = observations consistent with that cause \(evidence for it\)/);
+    expect(HYPOTHESIS_RULES).toMatch(/contradicting_observation_ids = observations that speak against it \(evidence against it\)/);
+    expect(HYPOTHESIS_RULES).toMatch(/Never list evidence against a cause as supporting it/);
   });
   it('report prompt: gaps list what was not checked; "unavailable" only after an error/empty call', () => {
     const rep = buildReportSystemPrompt(S1_INCIDENT, INVESTIGATION_START);
