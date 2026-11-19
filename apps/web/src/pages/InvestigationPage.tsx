@@ -147,7 +147,11 @@ function NoReport({ inv, incident, now }: { inv: InvestigationRow; incident: Inc
     return (
       <section className="verdict verdict-failed">
         <p className="verdict-line"><span className="verdict-status fault-text">Investigation failed</span></p>
-        <p className="problem" role="alert">The investigation stopped with an error: <code>{inv.error ?? 'unknown error'}</code>. No report was written. Run a new investigation from the incident page.</p>
+        <div className="problem" role="alert">
+          <p>The investigation stopped with an error, and no report was written.</p>
+          <pre className="code">{inv.error ?? 'unknown error'}</pre>
+          <p>Fix the cause, then run a new investigation from {incident ? <a href={`#/incidents/${incident.id}`}>the incident page</a> : 'the incident page'}.</p>
+        </div>
         <TimeRuler marks={[...marks, { at: inv.finished_at, label: 'Failed', tone: 'fault' }]} />
       </section>
     );
