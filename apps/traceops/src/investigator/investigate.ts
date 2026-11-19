@@ -27,8 +27,21 @@ export type InvestigatorOptions = {
   now?: () => number;
   maxTurns?: number;
   chatMaxOutputTokens?: number;
-  reportMaxOutputTokens?: number;
+  /**
+   * Output cap for each report/repair request. A function receives the request's
+   * estimated input tokens, so a TPM-limited account can keep each request under
+   * a total (e.g. min(4000, 7500 - input)).
+   */
+  reportMaxOutputTokens?: number | ((estimatedInputTokens: number) => number);
+  /** Called once per report/repair request with the cap that was applied. */
+  onReportCap?: (info: { turn: number | undefined; estimatedInputTokens: number; maxOutputTokens: number }) => void;
 };
+
+/** Rough token estimate (~4 chars/token) of what a request sends: messages + schema/tools. */
+export function estimateInputTokens(req: { messages: Array<{ content?: string | null }>; schema?: unknown; tools?: unknown }): number {
+  const chars = req.messages.reduce((n, m) => n + (m.content?.length ?? 0), 0) + JSON.stringify(req.schema ?? req.tools ?? '').length;
+  return Math.ceil(chars / 4);
+}
 
 export class InvestigationCancelled extends Error {
   constructor() { super('investigation cancelled'); this.name = 'InvestigationCancelled'; }
@@ -44,6 +57,20 @@ class CancelCheckingProvider implements LlmProvider {
   get model() { return this.inner.model; }
   async chat(req: Parameters<LlmProvider['chat']>[0]) { await this.check(); return this.inner.chat(req); }
   async structured(req: Parameters<LlmProvider['structured']>[0]) { await this.check(); return this.inner.structured(req); }
+}
+
+/** Applies a per-request output cap to report/repair requests (no change to the LLM layer). */
+class ReportCapProvider implements LlmProvider {
+  constructor(private readonly inner: LlmProvider, private readonly cap: (n: number) => number, private readonly onCap?: InvestigatorOptions['onReportCap']) {}
+  get name() { return this.inner.name; }
+  get model() { return this.inner.model; }
+  chat(req: Parameters<LlmProvider['chat']>[0]) { return this.inner.chat(req); }
+  structured(req: Parameters<LlmProvider['structured']>[0]) {
+    const estimatedInputTokens = estimateInputTokens(req);
+    const maxOutputTokens = Math.max(1, Math.floor(this.cap(estimatedInputTokens)));
+    this.onCap?.({ turn: req.trace?.turn, estimatedInputTokens, maxOutputTokens });
+    return this.inner.structured({ ...req, maxOutputTokens });
+  }
 }
 
 export function makeInvestigate(opts: InvestigatorOptions = {}): Investigate {
@@ -62,7 +89,9 @@ export function makeInvestigate(opts: InvestigatorOptions = {}): Investigate {
     const sink: EvidenceSink = { append: async (row) => { evidence.push(row); await input.evidence.append(row); } };
 
     const call = <T>(fn: () => Promise<T>) => withRetry(fn, opts.retry ?? INVESTIGATOR_RETRY, opts.sleep);
-    const provider = new CancelCheckingProvider(input.provider, check);
+    const cap = opts.reportMaxOutputTokens;
+    const capped = typeof cap === 'function' ? new ReportCapProvider(input.provider, cap, opts.onReportCap) : input.provider;
+    const provider = new CancelCheckingProvider(capped, check);
 
     try {
       const tools = input.createTools({
@@ -107,7 +136,7 @@ export function makeInvestigate(opts: InvestigatorOptions = {}): Investigate {
       ], evidence, {
         investigationId: input.investigationId,
         sink: input.reports,
-        maxOutputTokens: opts.reportMaxOutputTokens ?? 6000,
+        maxOutputTokens: typeof cap === 'number' ? cap : 6000, // overridden per request when cap is a function
         firstTurn: loop.turns + 1, // turn numbering continues from the tool loop
         call,
       });

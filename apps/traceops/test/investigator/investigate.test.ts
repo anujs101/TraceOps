@@ -217,3 +217,44 @@ describe('investigate: failures', () => {
     expect(out.error).toMatch(/^llm_rate_limit:/);
   });
 });
+
+describe('investigate: per-request report cap', () => {
+  it('computes max output tokens per report request from its estimated input', async () => {
+    const caps: Array<{ turn: number | undefined; estimatedInputTokens: number; maxOutputTokens: number }> = [];
+    const inv = makeInvestigate({ sleep: noSleep, reportMaxOutputTokens: (n) => Math.min(4000, 7500 - n), onReportCap: (c) => caps.push(c) });
+    const t = setup([...THREE_TOOL_TURNS, { kind: 'structured', value: INVALID_REPORT }, { kind: 'structured', value: VALID_REPORT }]);
+    await inv(t.input);
+    const sent = t.scripted.requests.filter((r) => r.kind === 'structured').map((r) => (r.req as { maxOutputTokens: number }).maxOutputTokens);
+    expect(caps.map((c) => c.turn)).toEqual([4, 5]);
+    expect(sent).toEqual(caps.map((c) => c.maxOutputTokens));
+    for (const c of caps) expect(c.maxOutputTokens).toBe(Math.min(4000, 7500 - c.estimatedInputTokens));
+    expect(caps[1]!.estimatedInputTokens).toBeGreaterThan(caps[0]!.estimatedInputTokens); // repair carries the first report
+  });
+
+  it('tool turns use the chat cap', async () => {
+    const t = setup([...THREE_TOOL_TURNS, { kind: 'structured', value: VALID_REPORT }]);
+    await makeInvestigate({ sleep: noSleep, chatMaxOutputTokens: 1024 })(t.input);
+    expect(t.scripted.requests.filter((r) => r.kind === 'chat').every((r) => (r.req as { maxOutputTokens: number }).maxOutputTokens === 1024)).toBe(true);
+  });
+});
+
+describe('investigate: short tool error shape {evidence_id, status, error} (session B)', () => {
+  it('passes it to the model as data and stores the row; the report cannot cite it as ok evidence', async () => {
+    const bad = { window: 'incident', severity: null, match: null, limit: 500 };
+    const citesError = { ...VALID_REPORT, observations: [{ ...VALID_REPORT.observations[0]!, evidence_ids: ['ev_1'], values: [{ key: 'used_max', evidence_id: 'ev_1', field: 'max', value: 1 }] }, VALID_REPORT.observations[1]!] };
+    const t = setup([
+      { kind: 'chat', toolCalls: [{ name: 'search_logs', args: bad }] },
+      { kind: 'chat', content: 'the tool rejected my input' },
+      { kind: 'structured', value: citesError }, { kind: 'structured', value: citesError },
+    ]);
+    const out = await investigate(t.input);
+    const toolMsg = t.scripted.requests[1]!.req.messages.find((m) => m.role === 'tool')!;
+    const body = JSON.parse(/<tool_data[^>]*>(.*)<\/tool_data>/s.exec((toolMsg as { content: string }).content)![1]!);
+    expect(Object.keys(body).sort()).toEqual(['error', 'evidence_id', 'status']);
+    expect(body).toMatchObject({ evidence_id: 'ev_1', status: 'error' });
+    expect(t.sinks.evidence[0]!.stats).toEqual({});
+    expect(out.status).toBe('completed');
+    expect(out.report!.validation).toBe('failed');
+    expect(out.report!.violations.some((v) => v.rule === 'V1')).toBe(true);
+  });
+});

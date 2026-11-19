@@ -5,7 +5,7 @@
  * read from the fixture outputs, so the validator decides, not this file.
  *
  *  - INV_VALIDATED:   completed, validation passed
- *  - INV_UNVALIDATED: completed, validation failed after one repair (UI: "unvalidated")
+ *  - INV_UNVALIDATED: completed, validation failed after one repair (UI: "unvalidated"); ev_9 is a rejected tool call
  *  - INV_FAILED:      failed (LLM auth error, no report)
  *  - INV_RUNNING:     running (no report yet; cancel is allowed)
  */
@@ -39,6 +39,13 @@ const TOOL_TURNS: Step[] = [
     { name: 'log_volume', args: { window: 'incident' } },
   ] },
   { kind: 'chat', content: 'Pool connections are all in use with requests queueing, errors are connection timeouts, and the event loop is mostly idle.' },
+];
+
+/** Same investigation plus one rejected call (limit 500), so the UI shows the short error shape {evidence_id, status, error} as ev_9. */
+const TOOL_TURNS_WITH_REJECTED_CALL: Step[] = [
+  ...TOOL_TURNS.slice(0, -1),
+  { kind: 'chat', toolCalls: [{ name: 'search_logs', args: { window: 'incident', severity: 'warn', match: null, limit: 500 } }] },
+  TOOL_TURNS.at(-1)!,
 ];
 
 function s1Report() {
@@ -130,7 +137,7 @@ async function run(store: MemoryStore, id: string, steps: Step[]): Promise<void>
 export async function seedS1(store: MemoryStore): Promise<void> {
   store.addIncident(S1_INCIDENT);
   await run(store, INV_VALIDATED, [...TOOL_TURNS, { kind: 'structured', value: s1Report() }]);
-  await run(store, INV_UNVALIDATED, [...TOOL_TURNS, { kind: 'structured', value: brokenReport() }, { kind: 'structured', value: brokenReport() }]);
+  await run(store, INV_UNVALIDATED, [...TOOL_TURNS_WITH_REJECTED_CALL, { kind: 'structured', value: brokenReport() }, { kind: 'structured', value: brokenReport() }]);
   await run(store, INV_FAILED, [{ kind: 'chat_error', error: new LlmError('auth', 'invalid API key', { status: 401 }) }]);
   store.putInvestigation({
     id: INV_RUNNING, incident_id: S1_INCIDENT.id, job_id: null, status: 'running', trigger: 'manual', model: MODEL,

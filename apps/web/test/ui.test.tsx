@@ -113,6 +113,22 @@ describe('other investigation states', () => {
     expect(within(band).getByRole('list', { name: 'Violations' }).textContent).toMatch(/V5/);
   });
 
+  it('the evidence panel handles the short error shape {evidence_id, status, error}', async () => {
+    go(`#/investigations/${INV_UNVALIDATED}`);
+    expect(await screen.findByRole('heading', { name: 'All evidence (9)' })).toBeTruthy();
+    fireEvent.click(screen.getByTestId('chip-ev_9'));
+    const panel = screen.getByTestId('evidence-panel');
+    const ev = (await store.listEvidence(INV_UNVALIDATED)).find((e) => e.id === 'ev_9')!;
+    expect(Object.keys(ev.result as object).sort()).toEqual(['error', 'evidence_id', 'status']);
+    expect(within(panel).getByTestId('ev-status').textContent).toMatch(/^error invalid_input: limit/);
+    expect(within(panel).getByTestId('ev-window').textContent).toBe('none (nothing was queried)');
+    expect(within(panel).queryByTestId('ev-query')).toBeNull();
+    expect(within(panel).getByText('Nothing was sent to the backend.')).toBeTruthy();
+    expect(JSON.parse(within(panel).getByTestId('ev-result').textContent!)).toEqual(ev.result);
+    expect(within(panel).queryByRole('table')).toBeNull(); // no stats
+    expect(within(panel).queryByRole('img')).toBeNull(); // no series
+  });
+
   it('a failed investigation shows its error and no report', async () => {
     go(`#/investigations/${INV_FAILED}`);
     expect((await screen.findByRole('alert')).textContent).toMatch(/llm_auth/);
