@@ -3,25 +3,20 @@
  * the S1 fixtures (apps/traceops/src/api/dev/seed-s1.ts). No hand-written reports.
  */
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { waitFor } from '@testing-library/react';
+import { EvidenceContext, Statement } from '../src/report/Statement.tsx';
+import type { Api } from '../src/api.ts';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryStore } from '../../traceops/src/api/memory-store.ts';
 import { INV_FAILED, INV_RUNNING, INV_UNVALIDATED, INV_VALIDATED, seedS1 } from '../../traceops/src/api/dev/seed-s1.ts';
 import { S1_INCIDENT } from '../../traceops/src/investigator/dev/fixture-tools.ts';
-import type { Api } from '../src/api.ts';
+import { ReportApi } from '@traceops/contracts';
 import { App } from '../src/App.tsx';
+import { apiOver, expectEveryNumberClickable, expectNoInlineIds } from './helpers.ts';
 
 const store = new MemoryStore();
-const api: Api = {
-  listIncidents: () => store.listIncidents(),
-  getIncident: (id) => store.getIncident(id),
-  listInvestigations: (id) => store.listInvestigations(id),
-  getInvestigation: (id) => store.getInvestigation(id),
-  listEvidence: (id) => store.listEvidence(id),
-  getReport: (id) => store.getReport(id),
-  listLlmCalls: (id) => store.listLlmCalls(id),
-  rerun: async (id) => ({ job_id: await store.enqueueManual(id) }),
-  cancel: (id) => store.requestCancel(id),
-};
+const api = apiOver(store);
+const reportOf = async (id: string) => ReportApi.parse((await store.getReport(id))!.report);
 
 beforeAll(async () => { await seedS1(store); });
 afterEach(() => { cleanup(); window.location.hash = ''; });
@@ -31,11 +26,26 @@ const go = (hash: string) => { window.location.hash = hash; return render(<App a
 describe('incident list and incident page', () => {
   it('lists the incident and its investigations', async () => {
     go('#/');
-    const link = await screen.findByRole('link', { name: /demo-service/ });
+    const table = await screen.findByRole('table');
+    const link = within(table).getByRole('link', { name: /demo-service/ });
     expect(link.getAttribute('href')).toBe(`#/incidents/${S1_INCIDENT.id}`);
+    const row = screen.getByTestId(`inc-${S1_INCIDENT.id}`);
+    expect(row.textContent).toMatch(/critical/);
+    // the newest investigation of the seeded incident is still running
+    expect(within(row).getByTestId('ttr').textContent).toMatch(/^running \d+(:\d\d)+$/);
+    expect(row.textContent).toMatch(/Investigating…/);
     cleanup();
     go(`#/incidents/${S1_INCIDENT.id}`);
     expect(await screen.findAllByRole('link', { name: /tool calls/ })).toHaveLength(4);
+    expect(screen.getByRole('list', { name: 'Detector rules that fired' }).textContent).toMatch(/from the detector/);
+    expect(screen.getByRole('region', { name: 'Latest investigation' }).textContent).toMatch(/Investigating/);
+  });
+
+  it('the sidebar lists recent incidents and shows the API status', async () => {
+    go('#/');
+    const recent = await screen.findByRole('list', { name: 'Recent incidents' });
+    expect(within(recent).getByRole('link').getAttribute('href')).toBe(`#/incidents/${S1_INCIDENT.id}`);
+    expect(screen.getByTestId('api-status').textContent).toBe('API connected');
   });
 
   it('re-run queues a manual investigation', async () => {
@@ -44,53 +54,87 @@ describe('incident list and incident page', () => {
     expect(await screen.findByRole('status')).toHaveProperty('textContent', expect.stringMatching(/Investigation queued/));
     expect(store.jobs).toHaveLength(1);
   });
+
+  it('after a re-run the page keeps polling until the new investigation appears (review fix)', async () => {
+    // every seeded investigation finished, so nothing else would poll; the worker creates the new row only later
+    let calls = 0;
+    const finished = async (id: string) => (await store.listInvestigations(id)).filter((x) => x.status !== 'running');
+    const slow: Api = {
+      ...api,
+      listInvestigations: async (id) => {
+        const rows = await finished(id);
+        calls++;
+        // the new row (a copy of a real one under a new id) shows up from the 3rd load on
+        return calls >= 3 ? [{ ...rows[0]!, id: '00000000-0000-4000-8000-00000000abcd', started_at: new Date().toISOString() }, ...rows] : rows;
+      },
+    };
+    window.location.hash = `#/incidents/${S1_INCIDENT.id}`;
+    render(<App api={slow} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Run a new investigation' }));
+    await waitFor(() => expect(document.querySelector('a[href="#/investigations/00000000-0000-4000-8000-00000000abcd"]')).not.toBeNull(), { timeout: 5000 });
+  }, 10_000);
 });
 
 describe('validated S1 report', () => {
-  it('shows validation status, hypotheses with supporting and contradicting observations, timeline and gaps', async () => {
+  it('shows the verdict, validation seal, hypotheses with supports and contradicts separated, timeline and gaps', async () => {
     go(`#/investigations/${INV_VALIDATED}`);
-    const band = await screen.findByTestId('validation');
-    expect(band.textContent).toMatch(/^Validated/);
-    expect(band.textContent).toMatch(/No warnings/);
+    const seal = await screen.findByTestId('validation');
+    expect(seal.textContent).toMatch(/^✓ Validated/);
+    expect(seal.textContent).toMatch(/No warnings/);
+    expect(screen.queryByRole('region', { name: 'Validation' })).toBeNull(); // no unvalidated banner
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toMatch(/Connection pool exhaustion/);
     const hyp1 = screen.getByTestId('hyp-hyp_1');
     expect(hyp1.textContent).toMatch(/Connection pool exhaustion/);
-    expect(hyp1.textContent).toMatch(/Supported by/);
+    expect(within(hyp1).getByRole('heading', { name: /^Supports/ })).toBeTruthy();
     const hyp2 = screen.getByTestId('hyp-hyp_2');
-    expect(within(hyp2).getByText('Contradicted by')).toBeTruthy();
+    const against = within(hyp2).getByRole('heading', { name: /^Contradicts/ }).parentElement!;
+    expect(against.className).toMatch(/side-against/);
+    expect(within(against).getAllByRole('listitem').length).toBeGreaterThan(0);
     expect(screen.getByTestId('gaps').textContent).toMatch(/Traces were not available/);
     expect(screen.getByRole('heading', { name: 'Timeline' })).toBeTruthy();
+    expect(screen.getByTestId('ttr').textContent).toMatch(/s$/);
   });
 
-  it('renders bound values instead of {key} placeholders', async () => {
+  it('renders bound values formatted for display, never as {key} placeholders', async () => {
     go(`#/investigations/${INV_VALIDATED}`);
     const obs2 = await screen.findByTestId('obs-obs_2');
     expect(obs2.textContent).not.toMatch(/\{used_max\}/);
-    const report = (await store.getReport(INV_VALIDATED))!.report as any;
-    const usedMax = report.observations[1].values.find((v: any) => v.key === 'used_max').value;
-    expect(within(obs2).getByTestId('num-used_max').textContent).toBe(`${usedMax}ev_2`);
+    const report = await reportOf(INV_VALIDATED);
+    const usedMax = report.observations[1]!.values.find((v) => v.key === 'used_max')!.value;
+    expect(within(obs2).getByTestId('num-used_max').textContent).toBe(String(usedMax));
   });
 
-  it('clicking a number opens its evidence: query, window, status, result and the cited field', async () => {
+  it('every number is clickable to its evidence, and no ids appear inline', async () => {
+    const { container } = go(`#/investigations/${INV_VALIDATED}`);
+    await screen.findByTestId('validation');
+    const main = container.querySelector('main')!;
+    expectNoInlineIds(main);
+    expectEveryNumberClickable(main, await reportOf(INV_VALIDATED));
+  });
+
+  it('clicking a number opens its evidence: query, window, status, result, the cited field and its exact value', async () => {
     go(`#/investigations/${INV_VALIDATED}`);
     const obs2 = await screen.findByTestId('obs-obs_2');
     fireEvent.click(within(obs2).getByTestId('num-used_max'));
     const panel = screen.getByTestId('evidence-panel');
     const ev = (await store.listEvidence(INV_VALIDATED)).find((e) => e.id === 'ev_2')!;
-    expect(within(panel).getByRole('heading').textContent).toBe('ev_2 · pool_used');
+    expect(within(panel).getByRole('heading', { level: 2 }).textContent).toBe('pool_used');
     expect(within(panel).getByTestId('ev-query').textContent).toBe(ev.rendered_query);
     expect(within(panel).getByTestId('ev-query').textContent).toContain('db_client_connection_count');
-    expect(within(panel).getByTestId('ev-status').textContent).toBe('ok');
-    expect(within(panel).getByTestId('ev-window').textContent).toMatch(/2026-11-16 18:23:38 UTC to 18:30:39/);
+    expect(within(panel).getByTestId('ev-status').textContent).toMatch(/ok/);
+    expect(within(panel).getByTestId('ev-window').textContent).toBe('2026-11-16 18:23:38 → 18:30:39 UTC');
     expect(JSON.parse(within(panel).getByTestId('ev-result').textContent!)).toEqual(ev.result);
     expect(within(panel).getByTestId('claim').textContent).toMatch(/Matches the evidence/);
+    expect(within(panel).getByText('ev_2')).toBeTruthy(); // the id lives in the drawer
+    expect(within(panel).getByRole('img')).toBeTruthy(); // sparkline from the stored series
   });
 
-  it('an evidence chip opens that row; Escape closes the panel', async () => {
+  it('an evidence reference opens that row; Escape closes the drawer', async () => {
     go(`#/investigations/${INV_VALIDATED}`);
     const obs4 = await screen.findByTestId('obs-obs_4');
-    fireEvent.click(within(obs4).getByTestId('chip-ev_6'));
+    fireEvent.click(within(obs4).getByTestId('ref-ev_6'));
     const panel = screen.getByTestId('evidence-panel');
-    expect(within(panel).getByRole('heading').textContent).toBe('ev_6 · Log search');
+    expect(within(panel).getByRole('heading', { level: 2 }).textContent).toMatch(/log/);
     expect(within(panel).queryByTestId('claim')).toBeNull();
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(screen.queryByTestId('evidence-panel')).toBeNull();
@@ -98,29 +142,61 @@ describe('validated S1 report', () => {
 
   it('lists every evidence row and the model calls with tokens', async () => {
     go(`#/investigations/${INV_VALIDATED}`);
-    expect(await screen.findByRole('heading', { name: 'All evidence (8)' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Model calls (6)' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: /^Evidence 8/ })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /^Model calls 6/ })).toBeTruthy();
   });
 });
 
 describe('other investigation states', () => {
-  it('an unvalidated report is labelled and lists its violations', async () => {
-    go(`#/investigations/${INV_UNVALIDATED}`);
+  it('an unvalidated report has a loud banner whose violations are always visible', async () => {
+    const { container } = go(`#/investigations/${INV_UNVALIDATED}`);
     const band = await screen.findByTestId('validation');
     expect(band.textContent).toMatch(/^Unvalidated/);
     expect(band.textContent).toMatch(/after one repair round/);
-    expect(within(band).getByRole('list', { name: 'Violations' }).textContent).toMatch(/V3/);
-    expect(within(band).getByRole('list', { name: 'Violations' }).textContent).toMatch(/V5/);
+    const violations = within(band).getByRole('list', { name: 'Violations' });
+    expect(violations.textContent).toMatch(/V3/);
+    expect(violations.textContent).toMatch(/V5/);
+    expect(band.closest('details')).toBeNull(); // no disclosure can hide it
+    for (const d of container.querySelectorAll('details')) d.open = false;
+    expect(screen.getByTestId('validation')).toBe(band);
+    expect(screen.getByTestId('seal').textContent).toMatch(/Unvalidated/);
+    // a pinned strip keeps it on screen while scrolling, whatever the list length
+    expect(screen.getByTestId('validation-strip').textContent).toMatch(/^Unvalidated claims are unchecked: \d+ violations?$/);
   });
 
-  it('the evidence panel handles the short error shape {evidence_id, status, error}', async () => {
+  it('the pinned strip and in-page anchors stay on the investigation page (review fix)', async () => {
     go(`#/investigations/${INV_UNVALIDATED}`);
-    expect(await screen.findByRole('heading', { name: 'All evidence (9)' })).toBeTruthy();
-    fireEvent.click(screen.getByTestId('chip-ev_9'));
+    const strip = await screen.findByTestId('validation-strip');
+    const scrolled: string[] = [];
+    Element.prototype.scrollIntoView = function (this: Element) { scrolled.push(this.id); };
+    fireEvent.click(strip);
+    expect(window.location.hash).toBe(`#/investigations/${INV_UNVALIDATED}`);
+    expect(scrolled).toContain('validation');
+    // even a plain anchor hash (typed, or from a link without the handler) does not route away
+    window.location.hash = '#validation';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    expect(screen.getByTestId('validation')).toBeTruthy();
+    expect(screen.queryByRole('table', { name: /incidents/i })).toBeNull();
+  });
+
+  it('prose hyp_N / obs_N read as the card rank, not the id number (review fix)', () => {
+    const refs = new Map([['hyp_2', 'hypothesis 1'], ['hyp_1', 'hypothesis 2'], ['obs_3', 'observation 1']]);
+    const { container } = render(
+      <EvidenceContext.Provider value={{ byId: new Map(), all: [], incidentStart: null, selected: null, open: () => {}, refs }}>
+        <p><Statement text="hyp_1 is less likely than hyp_2, see obs_3 and obs_9" /></p>
+      </EvidenceContext.Provider>,
+    );
+    expect(container.textContent).toBe('hypothesis 2 is less likely than hypothesis 1, see observation 1 and observation 9');
+  });
+
+  it('the drawer handles the short error shape {evidence_id, status, error}', async () => {
+    go(`#/investigations/${INV_UNVALIDATED}`);
+    expect(await screen.findByRole('heading', { name: /^Evidence 9/ })).toBeTruthy();
+    fireEvent.click(within(screen.getByTestId('ledger-ev_9')).getByRole('button'));
     const panel = screen.getByTestId('evidence-panel');
     const ev = (await store.listEvidence(INV_UNVALIDATED)).find((e) => e.id === 'ev_9')!;
     expect(Object.keys(ev.result as object).sort()).toEqual(['error', 'evidence_id', 'status']);
-    expect(within(panel).getByTestId('ev-status').textContent).toMatch(/^error invalid_input: limit/);
+    expect(within(panel).getByTestId('ev-status').textContent).toMatch(/error.*invalid_input: limit/);
     expect(within(panel).getByTestId('ev-window').textContent).toBe('none (nothing was queried)');
     expect(within(panel).queryByTestId('ev-query')).toBeNull();
     expect(within(panel).getByText('Nothing was sent to the backend.')).toBeTruthy();
@@ -133,11 +209,14 @@ describe('other investigation states', () => {
     go(`#/investigations/${INV_FAILED}`);
     expect((await screen.findByRole('alert')).textContent).toMatch(/llm_auth/);
     expect(screen.queryByTestId('validation')).toBeNull();
+    expect(screen.getByText('Investigation failed')).toBeTruthy();
   });
 
-  it('a running investigation can be cancelled', async () => {
+  it('a running investigation shows live progress and can be cancelled', async () => {
     go(`#/investigations/${INV_RUNNING}`);
-    fireEvent.click(await screen.findByRole('button', { name: 'Cancel investigation' }));
+    expect(await screen.findByText('Investigating')).toBeTruthy();
+    expect(screen.getByTestId('elapsed').textContent).toMatch(/^\d+(:\d\d)+$/);
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel investigation' }));
     expect(await screen.findByRole('button', { name: 'Cancelling…' })).toBeTruthy();
     expect((await store.getInvestigation(INV_RUNNING))!.cancel_requested).toBe(true);
   });
