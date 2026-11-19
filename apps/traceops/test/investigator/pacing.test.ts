@@ -141,9 +141,9 @@ describe('investigate() pacing', () => {
 
 describe('error redaction', () => {
   it('redacts provider organization ids and keys from the stored error', () => {
-    const e = new LlmError('rate_limit', 'Rate limit reached for model `m` in organization `org_01kq9bxsbge8xrp5bqd442snye` service tier on_demand; key gsk_abcdefghijklmnop', { status: 429 });
+    const e = new LlmError('rate_limit', 'Rate limit reached for model `m` in organization `org_TEST000` service tier on_demand; key gsk_abcdefghijklmnop', { status: 429 });
     const s = describeError(e);
-    expect(s).not.toMatch(/org_01kq/);
+    expect(s).not.toMatch(/org_TEST000/);
     expect(s).toContain('org_[REDACTED]');
     expect(s).not.toContain('gsk_abcdefghijklmnop');
     expect(redactAccountIds('organization org_ABC123 and borg_x')).toBe('organization org_[REDACTED] and borg_x');
