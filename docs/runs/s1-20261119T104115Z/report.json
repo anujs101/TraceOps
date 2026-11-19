@@ -1,0 +1,438 @@
+{
+  "investigation_id": "b1f7df0a-b917-4d2f-8af9-3beabd20cbe6",
+  "report": {
+    "gaps": [
+      "pool_idle, pool acquire-wait histograms and per-endpoint/route connection metrics were not queried (final query_metric call returned budget_exhausted, ev_13).",
+      "No log content search was performed to identify which request path or query held connections; the search_logs and second log_patterns calls returned budget_exhausted (ev_15, ev_14).",
+      "A further metric query planned after the main set returned budget_exhausted (ev_16), so no additional signals (e.g. CPU, memory, connection counts by endpoint) were checked.",
+      "Windows before 10:40:00 were not queried, so it is unknown whether pool_used was at zero for long prior to the window or whether a similar slow climb occurred earlier.",
+      "Deployment/config change events for version 1.0.1 were not checked; the link to a code change is inferred, not verified.",
+      "DB-side connection counts, slow-query logs and the possibility of connections held by other clients were not examined."
+    ],
+    "status": "probable_cause",
+    "summary": "The most probable cause is connection-pool exhaustion: the fixed pool filled while request rate stayed flat, queued requests then timed out at connect time, producing 5xx errors and a p95 latency jump. Database operation latency and event-loop delay stayed flat throughout, so neither DB slowness, traffic surge nor CPU/event-loop saturation explains the failure. The user-facing SLO breaches are downstream effects of pool saturation.",
+    "timeline": [
+      {
+        "at": "2026-11-19T10:42:15.403Z",
+        "event": "Baseline: pool_used at {pool_used_first} connections, pool_max fixed at {pool_max_min}, request_rate near {rr_first} req/s.",
+        "evidence_ids": [
+          "ev_9",
+          "ev_10",
+          "ev_12"
+        ]
+      },
+      {
+        "at": "2026-11-19T10:43:15.403Z",
+        "event": "pool_used is climbing ({pool_used_early} connections) while request_rate and db_operation_p95 remain flat.",
+        "evidence_ids": [
+          "ev_9",
+          "ev_12",
+          "ev_8"
+        ]
+      },
+      {
+        "at": "2026-11-19T10:43:45.403Z",
+        "event": "pool_used reaches {pool_used_mid} connections; pool_pending still {pending_min}.",
+        "evidence_ids": [
+          "ev_9",
+          "ev_6"
+        ]
+      },
+      {
+        "at": "2026-11-19T10:44:00.403Z",
+        "event": "Pool saturation: pool_used hits the ceiling of {pool_used_max} connections and pool_pending jumps to {pending_max} queued requests.",
+        "evidence_ids": [
+          "ev_9",
+          "ev_6",
+          "ev_10"
+        ]
+      },
+      {
+        "at": "2026-11-19T10:44:13.766Z",
+        "event": "First \"timeout exceeded when trying to connect\" error log line, after the pool saturated.",
+        "evidence_ids": [
+          "ev_5"
+        ]
+      },
+      {
+        "at": "2026-11-19T10:44:15.403Z",
+        "event": "latency_p95 jumps to {lat_last} s, error_ratio_5xx is {err_first}, pool_timeout_rate {timeout_first} timeouts/s.",
+        "evidence_ids": [
+          "ev_1",
+          "ev_2",
+          "ev_7"
+        ]
+      },
+      {
+        "at": "2026-11-19T10:44:30.403Z",
+        "event": "Detection fires: latency_p95 peaks at {lat_max} s, error_ratio_5xx at {err_max}, pool_timeout_rate at {timeout_max} timeouts/s, pool_pending still {pending_last}.",
+        "evidence_ids": [
+          "ev_1",
+          "ev_2",
+          "ev_7",
+          "ev_6"
+        ]
+      }
+    ],
+    "hypotheses": [
+      {
+        "id": "hyp_1",
+        "category": "db_pool_exhaustion",
+        "statement": "A code path began holding DB connections without releasing them (or far longer than the DB operation time), draining the fixed pool of {pool_max_min} connections; requests then queued (pool_pending reaching {pending_max}) and failed with connect timeouts (\"timeout exceeded when trying to connect\", {p1_count} occurrences), producing the 5xx ratio {err_max} and p95 latency {lat_max}.",
+        "confidence": "high",
+        "supporting_observation_ids": [
+          "obs_1",
+          "obs_2",
+          "obs_3",
+          "obs_4",
+          "obs_5",
+          "obs_6",
+          "obs_7",
+          "obs_8"
+        ],
+        "contradicting_observation_ids": []
+      },
+      {
+        "id": "hyp_2",
+        "category": "cpu_saturation",
+        "statement": "Application CPU/event-loop saturation caused the latency and error spike. Ruled out: eventloop_delay_p99 peaked at {el_max} s while requests waited on the pool.",
+        "confidence": "low",
+        "supporting_observation_ids": [
+          "obs_11"
+        ],
+        "contradicting_observation_ids": [
+          "obs_1",
+          "obs_3"
+        ]
+      },
+      {
+        "id": "hyp_3",
+        "category": "dependency_latency",
+        "statement": "The database itself became slow, holding connections. Ruled out: db_operation_p95 stayed between {db_min} s and {db_max} s while the pool saturated.",
+        "confidence": "low",
+        "supporting_observation_ids": [
+          "obs_9"
+        ],
+        "contradicting_observation_ids": [
+          "obs_1"
+        ]
+      },
+      {
+        "id": "hyp_4",
+        "category": "other",
+        "statement": "A traffic surge exhausted the pool. Ruled out: request_rate remained between {rr_first} req/s and {rr_max} req/s across the window.",
+        "confidence": "low",
+        "supporting_observation_ids": [
+          "obs_10"
+        ],
+        "contradicting_observation_ids": [
+          "obs_1"
+        ]
+      }
+    ],
+    "observations": [
+      {
+        "id": "obs_1",
+        "values": [
+          {
+            "key": "pool_used_first",
+            "field": "first",
+            "value": 0,
+            "evidence_id": "ev_9"
+          },
+          {
+            "key": "pool_used_max",
+            "field": "max",
+            "value": 10,
+            "evidence_id": "ev_9"
+          },
+          {
+            "key": "pool_used_last",
+            "field": "last",
+            "value": 10,
+            "evidence_id": "ev_9"
+          }
+        ],
+        "statement": "pool_used climbed steadily from {pool_used_first} connections at the start of the window to the pool ceiling of {pool_used_max} connections at 10:44:00.403Z and stayed there through the end of the window ({pool_used_last}).",
+        "evidence_ids": [
+          "ev_9"
+        ]
+      },
+      {
+        "id": "obs_2",
+        "values": [
+          {
+            "key": "pool_max_min",
+            "field": "min",
+            "value": 10,
+            "evidence_id": "ev_10"
+          }
+        ],
+        "statement": "pool_max was constant at {pool_max_min} connections across all points of the window, so the pool size is a fixed ceiling rather than an autoscaling limit.",
+        "evidence_ids": [
+          "ev_10"
+        ]
+      },
+      {
+        "id": "obs_3",
+        "values": [
+          {
+            "key": "pending_min",
+            "field": "min",
+            "value": 0,
+            "evidence_id": "ev_6"
+          },
+          {
+            "key": "pending_max",
+            "field": "max",
+            "value": 60,
+            "evidence_id": "ev_6"
+          },
+          {
+            "key": "pending_last",
+            "field": "last",
+            "value": 59,
+            "evidence_id": "ev_6"
+          }
+        ],
+        "statement": "pool_pending was {pending_min} queued requests until 10:43:45, then jumped to {pending_max} at 10:44:00.403Z and was still {pending_last} at the end of the window, i.e. waiters never drained.",
+        "evidence_ids": [
+          "ev_6"
+        ]
+      },
+      {
+        "id": "obs_4",
+        "values": [
+          {
+            "key": "p1_count",
+            "field": "p1.count",
+            "value": 500,
+            "evidence_id": "ev_5"
+          }
+        ],
+        "statement": "The dominant error log pattern is \"request failed\" with exception \"timeout exceeded when trying to connect\", appearing {p1_count} times between 10:44:13.766Z and 10:44:30.655Z, i.e. after the pool saturated.",
+        "evidence_ids": [
+          "ev_5"
+        ]
+      },
+      {
+        "id": "obs_5",
+        "values": [
+          {
+            "key": "timeout_max",
+            "field": "max",
+            "value": 16.672925206340743,
+            "evidence_id": "ev_7"
+          },
+          {
+            "key": "timeout_first",
+            "field": "first",
+            "value": 9.273291566693326,
+            "evidence_id": "ev_7"
+          }
+        ],
+        "statement": "pool_timeout_rate reached {timeout_max} timeouts/s at 10:44:30.403Z, after {timeout_first} timeouts/s at 10:44:15.403Z.",
+        "evidence_ids": [
+          "ev_7"
+        ]
+      },
+      {
+        "id": "obs_6",
+        "values": [
+          {
+            "key": "lat_min",
+            "field": "min",
+            "value": 0.0093234693877551,
+            "evidence_id": "ev_1"
+          },
+          {
+            "key": "lat_last",
+            "field": "series@2026-11-19T10:44:15.403Z",
+            "value": 2.2700376069674686,
+            "evidence_id": "ev_1"
+          },
+          {
+            "key": "lat_max",
+            "field": "max",
+            "value": 2.3744883136257697,
+            "evidence_id": "ev_1"
+          }
+        ],
+        "statement": "latency_p95 was flat near {lat_min} s for the early points of the window, then jumped to {lat_last} s at 10:44:15.403Z and {lat_max} s at 10:44:30.403Z.",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      {
+        "id": "obs_7",
+        "values": [
+          {
+            "key": "err_first",
+            "field": "first",
+            "value": 0.32614028324792327,
+            "evidence_id": "ev_2"
+          },
+          {
+            "key": "err_max",
+            "field": "max",
+            "value": 0.5975539184166275,
+            "evidence_id": "ev_2"
+          }
+        ],
+        "statement": "error_ratio_5xx rose from {err_first} at 10:44:15.403Z to {err_max} at 10:44:30.403Z.",
+        "evidence_ids": [
+          "ev_2"
+        ]
+      },
+      {
+        "id": "obs_8",
+        "values": [
+          {
+            "key": "base_warn_sum",
+            "field": "warn.sum",
+            "value": 16,
+            "evidence_id": "ev_4"
+          },
+          {
+            "key": "base_info_sum",
+            "field": "info.sum",
+            "value": 2848,
+            "evidence_id": "ev_4"
+          },
+          {
+            "key": "err_sum",
+            "field": "error.sum",
+            "value": 1023,
+            "evidence_id": "ev_3"
+          },
+          {
+            "key": "err_last",
+            "field": "error.last",
+            "value": 921,
+            "evidence_id": "ev_3"
+          }
+        ],
+        "statement": "Error-level log volume was absent during the baseline window ending at 10:42:15.403Z (only warn and info lines: {base_warn_sum} warn, {base_info_sum} info) and then totalled {err_sum} error lines in the incident window, concentrated in the last minute ({err_last} lines in the 10:45 bucket).",
+        "evidence_ids": [
+          "ev_4",
+          "ev_3"
+        ]
+      },
+      {
+        "id": "obs_9",
+        "values": [
+          {
+            "key": "db_min",
+            "field": "min",
+            "value": 0.004817135862913096,
+            "evidence_id": "ev_8"
+          },
+          {
+            "key": "db_max",
+            "field": "max",
+            "value": 0.004866531027466937,
+            "evidence_id": "ev_8"
+          }
+        ],
+        "statement": "db_operation_p95 stayed essentially flat between {db_min} s and {db_max} s across the whole window, showing no database slowdown.",
+        "evidence_ids": [
+          "ev_8"
+        ]
+      },
+      {
+        "id": "obs_10",
+        "values": [
+          {
+            "key": "rr_first",
+            "field": "first",
+            "value": 24.58177735368211,
+            "evidence_id": "ev_12"
+          },
+          {
+            "key": "rr_max",
+            "field": "max",
+            "value": 29.503190271036704,
+            "evidence_id": "ev_12"
+          },
+          {
+            "key": "rr_last",
+            "field": "last",
+            "value": 27.86941939235203,
+            "evidence_id": "ev_12"
+          }
+        ],
+        "statement": "request_rate stayed in a narrow band: first {rr_first} req/s, max {rr_max} req/s, last {rr_last} req/s, so there was no traffic surge when the pool filled.",
+        "evidence_ids": [
+          "ev_12"
+        ]
+      },
+      {
+        "id": "obs_11",
+        "values": [
+          {
+            "key": "el_max",
+            "field": "max",
+            "value": 0.019382271,
+            "evidence_id": "ev_11"
+          },
+          {
+            "key": "el_last",
+            "field": "last",
+            "value": 0.015310847,
+            "evidence_id": "ev_11"
+          }
+        ],
+        "statement": "eventloop_delay_p99 peaked at only {el_max} s and ended at {el_last} s, indicating the application event loop was not saturated while requests queued on the pool.",
+        "evidence_ids": [
+          "ev_11"
+        ]
+      }
+    ],
+    "recommendations": [
+      {
+        "risk": "low",
+        "action": "Restart demo-service (version 1.0.1) to drop the leaked connections and clear the queued waiters, then confirm pool_used and pool_pending return to baseline.",
+        "rationale": "hyp_1: pool_used stayed pinned at the fixed ceiling and waiters never drained; a restart releases held connections as an immediate mitigation.",
+        "hypothesis_id": "hyp_1"
+      },
+      {
+        "risk": "low",
+        "action": "Audit pool-acquire/release code paths and any changes shipped in version 1.0.1 around 10:42–10:43 for missing release in error branches or connections held across awaits.",
+        "rationale": "hyp_1: the pool drained in about a minute at constant load with flat DB latency, pointing to a leak rather than slow queries.",
+        "hypothesis_id": "hyp_1"
+      },
+      {
+        "risk": "low",
+        "action": "Add pool instrumentation and alerting (pool_used/pool_max ratio, pool_pending, pool_timeout_rate) with a warning well before saturation, and emit a warning log when a connection is held beyond a threshold.",
+        "rationale": "hyp_1: pool saturation preceded the SLO breach, but only latency and error-ratio alerts fired.",
+        "hypothesis_id": "hyp_1"
+      },
+      {
+        "risk": "medium",
+        "action": "Evaluate raising pool_max or adding an acquire timeout/backpressure only after the leak is fixed, to avoid masking it.",
+        "rationale": "hyp_1: the fixed ceiling of pool_max converted the leak into total starvation; raising it would delay but not prevent recurrence.",
+        "hypothesis_id": "hyp_1"
+      }
+    ]
+  },
+  "validation": "passed",
+  "violations": [],
+  "warnings": [
+    {
+      "path": "observations.2.statement",
+      "rule": "W-time",
+      "message": "time literal \"10:43:45\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.7.statement",
+      "rule": "W-time",
+      "message": "time literal \"10:45\" — times belong in the timeline"
+    },
+    {
+      "path": "recommendations.1",
+      "rule": "W-rec",
+      "message": "quantity \"10:42–10:43\" in a proposal"
+    }
+  ],
+  "repair_attempted": true
+}

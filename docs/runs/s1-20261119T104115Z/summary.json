@@ -1,0 +1,158 @@
+{
+  "run": "S1 live end to end, second run (after fix/investigator-prompt: actionable repair messages, neutral strategy prompt, gaps rule)",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "run_start": "2026-11-19T10:41:15.000Z",
+  "pre_run_data_change": "incident a165d158 (run 1) was still open; marked resolved at run 1 end (2026-11-19T10:33:36Z) by SQL before this run so the new breach opens a fresh incident (see docs/known-gaps.md). No code changed.",
+  "validity_gate": {
+    "scenario": "S1",
+    "times": {
+      "tBaselineStart": "2026-11-19T10:41:23.000Z",
+      "tDeploy": "2026-11-19T10:42:53.000Z",
+      "tDrop": "2026-11-19T10:47:24.000Z",
+      "tEnd": "2026-11-19T10:48:24.000Z"
+    },
+    "signal_summary": {
+      "baseline_clean": true,
+      "latency_alert_fired": true,
+      "pool_used_max": 10,
+      "pool_max": 10,
+      "pool_used_at_max_seconds": 210,
+      "pool_timeouts_increase": 6545.463523685551,
+      "eventloop_utilization_max": 0.1937113592370706,
+      "pool_used_after_load_drop": 10
+    },
+    "scenarioValid": {
+      "valid": true,
+      "reasons": []
+    }
+  },
+  "incident": {
+    "id": "d9d57f65-fa47-4887-aec7-1265b95eac3b",
+    "service": "demo-service",
+    "group": "http-slo",
+    "severity": "critical",
+    "status": "open",
+    "started_at": "2026-11-19T10:44:15.403Z",
+    "detected_at": "2026-11-19T10:44:30.403Z",
+    "reopen_count": 0,
+    "trigger": [
+      {
+        "rule_id": "http-latency-p95",
+        "query": "latency_p95",
+        "threshold": 1,
+        "observed": 2.425,
+        "at": "2026-11-19T10:49:09.645Z"
+      },
+      {
+        "rule_id": "http-error-ratio",
+        "query": "error_ratio_5xx",
+        "threshold": 0.05,
+        "observed": 1,
+        "at": "2026-11-19T10:49:09.645Z"
+      }
+    ]
+  },
+  "investigation": {
+    "id": "b1f7df0a-b917-4d2f-8af9-3beabd20cbe6",
+    "trigger": "auto",
+    "status": "completed",
+    "model": "deepseek-flash",
+    "started_at": "2026-11-19T10:44:30.687Z",
+    "finished_at": "2026-11-19T10:45:08.174Z",
+    "tool_calls": 16,
+    "error": null
+  },
+  "report": {
+    "status": "probable_cause",
+    "top_hypothesis": {
+      "category": "db_pool_exhaustion",
+      "confidence": "high"
+    },
+    "hypotheses": [
+      {
+        "id": "hyp_1",
+        "category": "db_pool_exhaustion",
+        "confidence": "high"
+      },
+      {
+        "id": "hyp_2",
+        "category": "cpu_saturation",
+        "confidence": "low"
+      },
+      {
+        "id": "hyp_3",
+        "category": "dependency_latency",
+        "confidence": "low"
+      },
+      {
+        "id": "hyp_4",
+        "category": "other",
+        "confidence": "low"
+      }
+    ],
+    "validation": "passed",
+    "repair_attempted": true,
+    "violations": [],
+    "warnings": [
+      {
+        "path": "observations.2.statement",
+        "rule": "W-time",
+        "message": "time literal \"10:43:45\" — times belong in the timeline"
+      },
+      {
+        "path": "observations.7.statement",
+        "rule": "W-time",
+        "message": "time literal \"10:45\" — times belong in the timeline"
+      },
+      {
+        "path": "recommendations.1",
+        "rule": "W-rec",
+        "message": "quantity \"10:42–10:43\" in a proposal"
+      }
+    ],
+    "note": "only the final attempt is persisted; the first attempt's violations are not stored"
+  },
+  "evidence": {
+    "rows": 16,
+    "by_tool_and_status": {
+      "query_metric": {
+        "ok": 9,
+        "budget_exhausted": 2
+      },
+      "log_volume": {
+        "ok": 2
+      },
+      "log_patterns": {
+        "ok": 1,
+        "budget_exhausted": 1
+      },
+      "search_logs": {
+        "budget_exhausted": 1
+      }
+    },
+    "tools_used_ok": [
+      "log_patterns",
+      "log_volume",
+      "query_metric"
+    ]
+  },
+  "detection_to_report_s": 37.8,
+  "detection_to_report_note": "detected_at → investigation finished_at (reports has no created_at; finish follows the report write)",
+  "llm_calls": {
+    "attempts": 7,
+    "errors": 0,
+    "by_stage": {
+      "investigate": 5,
+      "report": 2
+    },
+    "input_tokens": 45460,
+    "output_tokens": 8543,
+    "total_tokens": 54003,
+    "latency_ms_total": 36270,
+    "cost_estimate_usd": {
+      "value": 0.01194,
+      "basis": "deepseek-flash off-peak list price (api-docs.deepseek.com/quick_start/pricing, read 2026-11-19): $0.15/M input cache-miss, $0.60/M output; cache_read_tokens not reported, so all input priced as cache miss (upper bound). Peak would be 2x."
+    }
+  }
+}
