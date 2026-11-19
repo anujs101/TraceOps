@@ -14,7 +14,7 @@
   "author": "",
   "license": "ISC",
   "type": "module",
-  "private": "true",
+  "private": true,
   "dependencies": {
     "zod": "~4.6.7"
   },

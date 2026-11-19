@@ -15,9 +15,9 @@
   "author": "",
   "license": "ISC",
   "type": "module",
-  "private": "true",
+  "private": true,
   "dependencies": {
-    "@traceops/contracts": "file:../../packages/contracts",
+    "@traceops/contracts": "*",
     "groq-sdk": "~1.6.0",
     "zod": "~4.6.7"
   },
