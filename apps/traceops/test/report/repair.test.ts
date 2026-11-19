@@ -45,8 +45,10 @@ describe('repair flow', () => {
     // the repair request carries the previous output and the violation list
     const repairMsgs = client.bodies[1]!.messages as Array<{ role: string; content: string }>;
     expect(repairMsgs.at(-2)!.role).toBe('assistant');
-    expect(repairMsgs.at(-1)!.content).toContain('[V3] observations.0.statement: unbound quantity "10"');
-    expect(repairMsgs.at(-1)!.content).toContain('[V5] hypotheses.1.confidence');
+    // each violation: what + where (path and owning id) + the rule
+    expect(repairMsgs.at(-1)!.content).toMatch(/\[V3\] observations\.0\.statement \(obs_\d+\): unbound quantity "10"/);
+    expect(repairMsgs.at(-1)!.content).toMatch(/\[V5\] hypotheses\.1\.confidence \(hyp_\d+\)/);
+    expect(repairMsgs.at(-1)!.content).toContain('Rule: "high" confidence requires supporting observations that cite both a prometheus and a loki evidence row');
     expect(rec.records.map((r) => r.stage)).toEqual(['report', 'report']);
   });
 
