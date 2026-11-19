@@ -1,0 +1,363 @@
+{
+  "investigation_id": "eca8439f-bb92-4842-9dd8-52bee3132829",
+  "report": {
+    "gaps": [
+      "pool_timeout_rate returned no data for the incident window (ev_6), so pool timeouts could not be quantified.",
+      "query_metric calls for request_rate and other signal checks were refused with budget_exhausted (ev_12, ev_13), so traffic surge and downstream DB latency (db_operation_p95, pool_wait_p95) were not measured.",
+      "log_patterns with an error-level filter failed with an invalid_input error (ev_14), so error-level log patterns were never examined.",
+      "search_logs and a further log_patterns call were refused with budget_exhausted (ev_15, ev_16), so raw log lines around 21:04:01 (deploy/reload messages) were not inspected.",
+      "error_ratio_5xx was not queried, so the user-visible error impact of the latency spike is unknown.",
+      "Deployment and release metadata for v1.0.1 were not checked, so the rollout timing relative to the 21:04:01 onset is unconfirmed.",
+      "No window after 21:04:16 was queried, so recovery time and whether the saturation persisted are unknown."
+    ],
+    "status": "probable_cause",
+    "summary": "p95 latency on demo-service left its flat baseline around 21:04 and tripped the http-latency-p95 SLO. Onset coincides with the event loop saturating (utilization at ceiling, delay p99 up by an order of magnitude) and the DB pool filling to its configured maximum with requests queueing. Logs show only the pre-existing \"order rejected\" warn pattern, but incident warns include a service version absent from baseline, hinting a v1.0.1 rollout. Evidence favors event-loop CPU/blocking saturation as primary, with pool saturation as its consequence; traffic surge and downstream DB latency were not measured.",
+    "timeline": [
+      {
+        "at": "2026-11-19T20:59:46.212Z",
+        "event": "Baseline window begins; p95 latency and event-loop delay p99 are nominal and no pool connections are in use.",
+        "evidence_ids": [
+          "ev_2",
+          "ev_9",
+          "ev_5"
+        ]
+      },
+      {
+        "at": "2026-11-19T21:02:01.413Z",
+        "event": "Incident window opens with p95 latency still at baseline; baseline warn logs are exclusively from service version 1.0.0.",
+        "evidence_ids": [
+          "ev_1",
+          "ev_11"
+        ]
+      },
+      {
+        "at": "2026-11-19T21:03:31.413Z",
+        "event": "Last pre-onset sample: event-loop utilization and delay p99 still at baseline, pool still idle.",
+        "evidence_ids": [
+          "ev_7",
+          "ev_9",
+          "ev_5"
+        ]
+      },
+      {
+        "at": "2026-11-19T21:04:01.413Z",
+        "event": "Onset: event-loop utilization reaches {el_max}, delay p99 rises to {delay_max} s, pool usage reaches {used_max} of {pool_max} connections with {pend_max} pending, and p95 latency jumps to {lat_step} s.",
+        "evidence_ids": [
+          "ev_7",
+          "ev_9",
+          "ev_5",
+          "ev_4",
+          "ev_1"
+        ]
+      },
+      {
+        "at": "2026-11-19T21:04:16.413Z",
+        "event": "p95 latency peaks at {lat_max} s, event loop still saturated, {pend_last} requests still pending on the pool, and the http-latency-p95 rule fires.",
+        "evidence_ids": [
+          "ev_1",
+          "ev_7",
+          "ev_4"
+        ]
+      }
+    ],
+    "hypotheses": [
+      {
+        "id": "hyp_1",
+        "category": "cpu_saturation",
+        "statement": "Event-loop CPU/blocking saturation (utilization pinned at {el_max}, delay p99 {delay_max} s) beginning at 21:04:01 stalled connection recycling and request handling, filling the pool to {pool_max} connections with {pend_max} requests waiting and producing the {lat_max} s p95 latency breach.",
+        "confidence": "high",
+        "supporting_observation_ids": [
+          "obs_1",
+          "obs_2",
+          "obs_3",
+          "obs_4",
+          "obs_5",
+          "obs_6",
+          "obs_8"
+        ],
+        "contradicting_observation_ids": []
+      },
+      {
+        "id": "hyp_2",
+        "category": "db_pool_exhaustion",
+        "statement": "Exhaustion of the 10-connection DB pool itself caused the incident, with pool_used at {used_max} of {pool_max} and {pend_max} requests queueing, so requests waited on the pool and pushed p95 latency to {lat_max} s.",
+        "confidence": "low",
+        "supporting_observation_ids": [
+          "obs_2",
+          "obs_5",
+          "obs_6"
+        ],
+        "contradicting_observation_ids": [
+          "obs_3",
+          "obs_4",
+          "obs_7"
+        ]
+      },
+      {
+        "id": "hyp_3",
+        "category": "other",
+        "statement": "A rollout of service version 1.0.1 coinciding with the onset introduced a regression or reload cost that slowed request handling and saturated the event loop, driving p95 latency to {lat_max} s with the pool at {pool_max} connections.",
+        "confidence": "low",
+        "supporting_observation_ids": [
+          "obs_9",
+          "obs_2",
+          "obs_5"
+        ],
+        "contradicting_observation_ids": [
+          "obs_8"
+        ]
+      }
+    ],
+    "observations": [
+      {
+        "id": "obs_1",
+        "values": [
+          {
+            "key": "lat_base",
+            "field": "max",
+            "value": 0.009820149253731343,
+            "evidence_id": "ev_2"
+          }
+        ],
+        "statement": "p95 latency was flat near {lat_base} s across the baseline window before the incident.",
+        "evidence_ids": [
+          "ev_2"
+        ]
+      },
+      {
+        "id": "obs_2",
+        "values": [
+          {
+            "key": "lat_step",
+            "field": "series@2026-11-19T21:04:01.413Z",
+            "value": 1.7324931666202965,
+            "evidence_id": "ev_1"
+          },
+          {
+            "key": "lat_max",
+            "field": "max",
+            "value": 2.2469238359055392,
+            "evidence_id": "ev_1"
+          },
+          {
+            "key": "lat_base_obs2",
+            "field": "max",
+            "value": 0.009820149253731343,
+            "evidence_id": "ev_2"
+          }
+        ],
+        "statement": "p95 latency stepped up at 21:04:01 to {lat_step} s and reached {lat_max} s at 21:04:16, versus the {lat_base_obs2} s baseline maximum.",
+        "evidence_ids": [
+          "ev_1",
+          "ev_2"
+        ]
+      },
+      {
+        "id": "obs_3",
+        "values": [
+          {
+            "key": "el_first",
+            "field": "first",
+            "value": 0.0874394333097884,
+            "evidence_id": "ev_7"
+          },
+          {
+            "key": "el_max",
+            "field": "max",
+            "value": 1,
+            "evidence_id": "ev_7"
+          }
+        ],
+        "statement": "Event-loop utilization sat at its baseline level (first point {el_first}, max before onset 0.12306992644704053) and then jumped to {el_max} at 21:04:01, where it stayed at 21:04:16.",
+        "evidence_ids": [
+          "ev_7"
+        ]
+      },
+      {
+        "id": "obs_4",
+        "values": [
+          {
+            "key": "delay_base",
+            "field": "first",
+            "value": 0.016113663,
+            "evidence_id": "ev_9"
+          },
+          {
+            "key": "delay_max",
+            "field": "max",
+            "value": 0.516685823,
+            "evidence_id": "ev_9"
+          },
+          {
+            "key": "delay_last",
+            "field": "last",
+            "value": 0.449839103,
+            "evidence_id": "ev_9"
+          }
+        ],
+        "statement": "Event-loop delay p99 rose from a baseline of {delay_base} s to {delay_max} s at 21:04:01 and was still {delay_last} s at the last point.",
+        "evidence_ids": [
+          "ev_9"
+        ]
+      },
+      {
+        "id": "obs_5",
+        "values": [
+          {
+            "key": "used_min",
+            "field": "min",
+            "value": 0,
+            "evidence_id": "ev_5"
+          },
+          {
+            "key": "used_max",
+            "field": "max",
+            "value": 10,
+            "evidence_id": "ev_5"
+          },
+          {
+            "key": "pool_max",
+            "field": "max",
+            "value": 10,
+            "evidence_id": "ev_8"
+          }
+        ],
+        "statement": "Pool connection usage went from {used_min} idle connections through the pre-onset window to {used_max} connections at 21:04:01 and held 10 at the last point, matching the constant pool maximum of {pool_max} connections.",
+        "evidence_ids": [
+          "ev_5",
+          "ev_8"
+        ]
+      },
+      {
+        "id": "obs_6",
+        "values": [
+          {
+            "key": "pend_avg",
+            "field": "avg",
+            "value": 6,
+            "evidence_id": "ev_4"
+          },
+          {
+            "key": "pend_max",
+            "field": "max",
+            "value": 31,
+            "evidence_id": "ev_4"
+          },
+          {
+            "key": "pend_last",
+            "field": "last",
+            "value": 29,
+            "evidence_id": "ev_4"
+          }
+        ],
+        "statement": "Requests waiting for a pool connection went from 0 (baseline-window average {pend_avg}) to {pend_max} at 21:04:01 and were still {pend_last} at the last point.",
+        "evidence_ids": [
+          "ev_4"
+        ]
+      },
+      {
+        "id": "obs_7",
+        "values": [
+          {
+            "key": "pool_max_cfg",
+            "field": "min",
+            "value": 10,
+            "evidence_id": "ev_8"
+          }
+        ],
+        "statement": "The pool maximum was a constant {pool_max_cfg} connections throughout the incident window, so no pool size configuration change accompanied the saturation.",
+        "evidence_ids": [
+          "ev_8"
+        ]
+      },
+      {
+        "id": "obs_8",
+        "values": [
+          {
+            "key": "warn_count",
+            "field": "p1.count",
+            "value": 25,
+            "evidence_id": "ev_10"
+          },
+          {
+            "key": "warn_base_count",
+            "field": "p1.count",
+            "value": 16,
+            "evidence_id": "ev_11"
+          }
+        ],
+        "statement": "The only warn log pattern in the incident window is \"order rejected\" with {warn_count} sampled lines; in the baseline window the same pattern appears with {warn_base_count} sampled lines, so no new error class emerged.",
+        "evidence_ids": [
+          "ev_10",
+          "ev_11"
+        ]
+      },
+      {
+        "id": "obs_9",
+        "values": [],
+        "statement": "Incident-window warn logs come from service versions 1.0.0 and 1.0.1, whereas the baseline window's warn logs come only from 1.0.0.",
+        "evidence_ids": [
+          "ev_10",
+          "ev_11"
+        ]
+      },
+      {
+        "id": "obs_10",
+        "values": [
+          {
+            "key": "warn_vol_max",
+            "field": "warn.max",
+            "value": 14,
+            "evidence_id": "ev_3"
+          },
+          {
+            "key": "info_vol_max",
+            "field": "info.max",
+            "value": 1773,
+            "evidence_id": "ev_3"
+          }
+        ],
+        "statement": "Warn log volume peaked at {warn_vol_max} lines/min in the 21:03 bucket while info volume was {info_vol_max} lines/min, i.e. logs remained dominated by info-level lines.",
+        "evidence_ids": [
+          "ev_3"
+        ]
+      }
+    ],
+    "recommendations": [
+      {
+        "risk": "low",
+        "action": "Capture an event-loop CPU profile / long-task trace on demo-service during a recurrence, and compare synchronous/CPU-bound work per request in version 1.0.1 versus 1.0.0.",
+        "rationale": "Confirms whether the event loop is genuinely CPU/blocked-bound, the leading cause in hyp_1.",
+        "hypothesis_id": "hyp_1"
+      },
+      {
+        "risk": "low",
+        "action": "Add request-queueing observability and an alarm on pool_pending so that pool wait is alerted before the p95 SLO breach; verify pool_timeout_rate is actually instrumented.",
+        "rationale": "Pending requests rose to {pend_max} at onset; earlier visibility shortens detection for hyp_1.",
+        "hypothesis_id": "hyp_1"
+      },
+      {
+        "risk": "medium",
+        "action": "Review the v1.0.1 deployment timing against the 21:04:01 onset and be prepared to roll back to 1.0.0 if recurrence follows a deploy.",
+        "rationale": "Tests hyp_3, the competing explanation that the new version introduced the slowdown.",
+        "hypothesis_id": "hyp_3"
+      },
+      {
+        "risk": "low",
+        "action": "Compare request_rate and db_operation_p95 between the baseline and incident windows.",
+        "rationale": "Distinguishes an external load surge or slow downstream DB from local pool exhaustion (hyp_2) and event-loop saturation (hyp_1).",
+        "hypothesis_id": "hyp_2"
+      }
+    ]
+  },
+  "validation": "failed",
+  "violations": [
+    {
+      "path": "summary",
+      "rule": "V0",
+      "message": "summary must be <= 600 chars"
+    }
+  ],
+  "warnings": [],
+  "repair_attempted": true
+}

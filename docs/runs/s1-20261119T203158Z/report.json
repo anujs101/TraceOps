@@ -1,0 +1,438 @@
+{
+  "investigation_id": "42ddea1b-8aa7-46cf-9dfa-1df4a8a9fde3",
+  "report": {
+    "gaps": [
+      "Connection-leak and transaction-hold diagnostics (open transactions, connection acquire/release logs) were not checked.",
+      "Two prometheus metric queries were refused because the query_metric budget was exhausted (ev_11, ev_12), so additional pool or dependency metrics were not examined.",
+      "The follow-up log_patterns and search_logs calls for the pre-incident baseline and deeper log search were cut off with budget_exhausted (ev_15, ev_16).",
+      "log_patterns over the baseline window 20:41:12-20:43:28 returned empty (ev_14), so pre-incident error patterns could not be compared from that call.",
+      "Database-side telemetry (DB server connection counts, DB-side latency) was not queried; only application-side db_operation_p95 was observed.",
+      "Request rate per route was not directly queried; inference about traffic volume relies on log volume counts.",
+      "No deployment, config-change or cron/background-job timeline was checked for around 20:43:58."
+    ],
+    "status": "probable_cause",
+    "summary": "demo-service exhausted its database connection pool: idle connections collapsed while the pool filled to its fixed ceiling, queued acquires appeared, and requests to /products then failed with connect timeouts and HTTP server errors, driving error ratio and latency p95 above their SLO thresholds. The database itself stayed fast throughout, so the fault lies in connection holding / pool capacity rather than in database performance.",
+    "timeline": [
+      {
+        "at": "2026-11-19T20:43:28.655Z",
+        "event": "pool_idle still at its maximum and pool_used at its minimum; latency_p95 still at baseline.",
+        "evidence_ids": [
+          "ev_10",
+          "ev_6",
+          "ev_1"
+        ]
+      },
+      {
+        "at": "2026-11-19T20:43:58.655Z",
+        "event": "pool_idle collapses to nothing while pool_used begins climbing, marking the start of connection holding.",
+        "evidence_ids": [
+          "ev_10",
+          "ev_6"
+        ]
+      },
+      {
+        "at": "2026-11-19T20:45:27.707Z",
+        "event": "First 'timeout exceeded when trying to connect' error pattern line on /products.",
+        "evidence_ids": [
+          "ev_8"
+        ]
+      },
+      {
+        "at": "2026-11-19T20:45:28.655Z",
+        "event": "Pool pinned at its ceiling: pool_used reaches pool_max and pool_pending jumps sharply; error_ratio_5xx begins rising.",
+        "evidence_ids": [
+          "ev_6",
+          "ev_9",
+          "ev_5",
+          "ev_4"
+        ]
+      },
+      {
+        "at": "2026-11-19T20:45:43.655Z",
+        "event": "SLO breach: latency_p95 and error_ratio_5xx peak while requests remain queued as pending.",
+        "evidence_ids": [
+          "ev_1",
+          "ev_4",
+          "ev_5"
+        ]
+      },
+      {
+        "at": "2026-11-19T20:45:44.589Z",
+        "event": "Last sampled connect-timeout error line, HTTP 500 on /products, service version 1.0.1.",
+        "evidence_ids": [
+          "ev_13",
+          "ev_8"
+        ]
+      }
+    ],
+    "hypotheses": [
+      {
+        "id": "hyp_1",
+        "category": "db_pool_exhaustion",
+        "statement": "Connection-pool exhaustion caused the incident: all {pool_max} connections became busy (idle dropped to {idle_low}) while {pending_max} requests queued, so /products requests timed out trying to connect, raising error_ratio_5xx to {err_max} and latency_p95 to {lat_max}.",
+        "confidence": "high",
+        "supporting_observation_ids": [
+          "obs_4",
+          "obs_5",
+          "obs_6",
+          "obs_7",
+          "obs_2",
+          "obs_3",
+          "obs_9",
+          "obs_10",
+          "obs_11"
+        ],
+        "contradicting_observation_ids": [
+          "obs_8"
+        ]
+      },
+      {
+        "id": "hyp_2",
+        "category": "dependency_latency",
+        "statement": "Slowness inside the database caused connections to be held and the pool to fill, letting latency_p95 reach {lat_max}.",
+        "confidence": "low",
+        "supporting_observation_ids": [
+          "obs_2",
+          "obs_5"
+        ],
+        "contradicting_observation_ids": [
+          "obs_8",
+          "obs_9"
+        ]
+      },
+      {
+        "id": "hyp_3",
+        "category": "other",
+        "statement": "A surge in request volume caused the connection pool to saturate and pending acquires to reach {pending_max}.",
+        "confidence": "low",
+        "supporting_observation_ids": [
+          "obs_6",
+          "obs_5"
+        ],
+        "contradicting_observation_ids": [
+          "obs_11"
+        ]
+      }
+    ],
+    "observations": [
+      {
+        "id": "obs_1",
+        "values": [
+          {
+            "key": "lat_base",
+            "field": "max",
+            "value": 0.019885245901639346,
+            "evidence_id": "ev_2"
+          }
+        ],
+        "statement": "latency_p95 was flat around {lat_base} in the baseline window immediately before the incident.",
+        "evidence_ids": [
+          "ev_2"
+        ]
+      },
+      {
+        "id": "obs_2",
+        "values": [
+          {
+            "key": "lat_max",
+            "field": "max",
+            "value": 2.316671749781389,
+            "evidence_id": "ev_1"
+          }
+        ],
+        "statement": "latency_p95 jumped in the two final samples, reaching a maximum of {lat_max} at 2026-11-19T20:45:43.655Z.",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      {
+        "id": "obs_3",
+        "values": [
+          {
+            "key": "err_first",
+            "field": "first",
+            "value": 0,
+            "evidence_id": "ev_4"
+          },
+          {
+            "key": "err_max",
+            "field": "max",
+            "value": 0.40910225189279725,
+            "evidence_id": "ev_4"
+          }
+        ],
+        "statement": "error_ratio_5xx was {err_first} for the first eight samples and then rose to a maximum of {err_max} at 2026-11-19T20:45:43.655Z.",
+        "evidence_ids": [
+          "ev_4"
+        ]
+      },
+      {
+        "id": "obs_4",
+        "values": [
+          {
+            "key": "idle_first",
+            "field": "first",
+            "value": 10,
+            "evidence_id": "ev_10"
+          },
+          {
+            "key": "idle_low",
+            "field": "series@2026-11-19T20:43:58.655Z",
+            "value": 0,
+            "evidence_id": "ev_10"
+          },
+          {
+            "key": "idle_last",
+            "field": "last",
+            "value": 0,
+            "evidence_id": "ev_10"
+          }
+        ],
+        "statement": "pool_idle dropped from {idle_first} at the start of the window to {idle_low} at 2026-11-19T20:43:58.655Z and stayed at {idle_last} by the end of the window.",
+        "evidence_ids": [
+          "ev_10"
+        ]
+      },
+      {
+        "id": "obs_5",
+        "values": [
+          {
+            "key": "pool_used_mid",
+            "field": "series@2026-11-19T20:44:28.655Z",
+            "value": 3,
+            "evidence_id": "ev_6"
+          },
+          {
+            "key": "pool_used_high",
+            "field": "series@2026-11-19T20:45:13.655Z",
+            "value": 8,
+            "evidence_id": "ev_6"
+          },
+          {
+            "key": "pool_used_max",
+            "field": "max",
+            "value": 10,
+            "evidence_id": "ev_6"
+          }
+        ],
+        "statement": "pool_used climbed steadily from {pool_used_mid} at 2026-11-19T20:44:28.655Z to {pool_used_high} at 2026-11-19T20:45:13.655Z and peaked at {pool_used_max} at 2026-11-19T20:45:28.655Z.",
+        "evidence_ids": [
+          "ev_6"
+        ]
+      },
+      {
+        "id": "obs_6",
+        "values": [
+          {
+            "key": "pending_first",
+            "field": "first",
+            "value": 0,
+            "evidence_id": "ev_5"
+          },
+          {
+            "key": "pending_max",
+            "field": "max",
+            "value": 60,
+            "evidence_id": "ev_5"
+          },
+          {
+            "key": "pending_last",
+            "field": "last",
+            "value": 59,
+            "evidence_id": "ev_5"
+          }
+        ],
+        "statement": "pool_pending was {pending_first} until the ceiling was reached, then jumped to {pending_max} at 2026-11-19T20:45:28.655Z and was {pending_last} at 2026-11-19T20:45:43.655Z.",
+        "evidence_ids": [
+          "ev_5"
+        ]
+      },
+      {
+        "id": "obs_7",
+        "values": [
+          {
+            "key": "pool_max",
+            "field": "max",
+            "value": 10,
+            "evidence_id": "ev_9"
+          }
+        ],
+        "statement": "pool_max was constant at {pool_max} connections for every sample of the window, i.e. the pool had no headroom to grow.",
+        "evidence_ids": [
+          "ev_9"
+        ]
+      },
+      {
+        "id": "obs_8",
+        "values": [
+          {
+            "key": "db_min",
+            "field": "min",
+            "value": 0.00483693218608037,
+            "evidence_id": "ev_7"
+          },
+          {
+            "key": "db_max",
+            "field": "max",
+            "value": 0.007234126984126959,
+            "evidence_id": "ev_7"
+          },
+          {
+            "key": "db_last",
+            "field": "last",
+            "value": 0.00490692076228686,
+            "evidence_id": "ev_7"
+          }
+        ],
+        "statement": "db_operation_p95 stayed low and even improved during pool saturation, between {db_min} and {db_max} with last value {db_last}.",
+        "evidence_ids": [
+          "ev_7"
+        ]
+      },
+      {
+        "id": "obs_9",
+        "values": [
+          {
+            "key": "pat_count",
+            "field": "p1.count",
+            "value": 500,
+            "evidence_id": "ev_8"
+          }
+        ],
+        "statement": "The only error pattern in the incident window is 'request failed' with exception_message 'timeout exceeded when trying to connect': {pat_count} occurrences from 2026-11-19T20:45:27.707Z to 2026-11-19T20:45:44.589Z, all on service version 1.0.1.",
+        "evidence_ids": [
+          "ev_8"
+        ]
+      },
+      {
+        "id": "obs_10",
+        "values": [
+          {
+            "key": "log_status",
+            "field": "l1.status",
+            "value": 500,
+            "evidence_id": "ev_13"
+          }
+        ],
+        "statement": "Sampled error log lines are all HTTP 500 on route /products with exception_message 'timeout exceeded when trying to connect' (first sampled line status {log_status}).",
+        "evidence_ids": [
+          "ev_13"
+        ]
+      },
+      {
+        "id": "obs_11",
+        "values": [
+          {
+            "key": "err_sum",
+            "field": "error.sum",
+            "value": 751,
+            "evidence_id": "ev_3"
+          },
+          {
+            "key": "info_first",
+            "field": "info.first",
+            "value": 1764,
+            "evidence_id": "ev_3"
+          },
+          {
+            "key": "info_max",
+            "field": "info.max",
+            "value": 1764,
+            "evidence_id": "ev_3"
+          }
+        ],
+        "statement": "Error-severity log volume shows {err_sum} error lines in the final minute of the window, while info volume stayed around {info_first} to {info_max} lines per minute before dropping.",
+        "evidence_ids": [
+          "ev_3"
+        ]
+      }
+    ],
+    "recommendations": [
+      {
+        "risk": "low",
+        "action": "Capture and inspect the connection-acquire and release paths in service version 1.0.1 around 20:43:58 to find what held all pool connections open (leaked/unreleased connections or long-held transactions).",
+        "rationale": "Idle capacity collapsed before any error appeared and the pool stayed at its ceiling, so something began holding connections rather than the database being slow (hyp_1).",
+        "hypothesis_id": "hyp_1"
+      },
+      {
+        "risk": "low",
+        "action": "Add pool saturation alerting on pool_idle and pool_pending so queuing is detected before latency and 5xx SLOs breach.",
+        "rationale": "Pending acquires only became visible at the same time as the SLO breach, well after idle capacity was exhausted (hyp_1).",
+        "hypothesis_id": "hyp_1"
+      },
+      {
+        "risk": "medium",
+        "action": "Re-evaluate the pool ceiling against peak concurrency and raise it if headroom is insufficient.",
+        "rationale": "The pool was pinned at its fixed maximum with many callers queued, leaving no capacity for bursts (hyp_1, hyp_3).",
+        "hypothesis_id": "hyp_1"
+      },
+      {
+        "risk": "low",
+        "action": "Instrument per-route request rate and connection hold time to confirm whether a traffic increase preceded the saturation.",
+        "rationale": "Info log volume looked flat, so a volume-driven surge was not confirmed and needs a direct request-rate measurement (hyp_3).",
+        "hypothesis_id": "hyp_3"
+      },
+      {
+        "risk": "low",
+        "action": "Verify database-side latency and connection-count metrics for the same window from the DB's own telemetry.",
+        "rationale": "Application-side db_operation_p95 stayed flat, but the database was not observed from its own metrics (hyp_2).",
+        "hypothesis_id": "hyp_2"
+      }
+    ]
+  },
+  "validation": "passed",
+  "violations": [],
+  "warnings": [
+    {
+      "path": "observations.1.statement",
+      "rule": "W-time",
+      "message": "time literal \"2026-11-19T20:45:43.655Z\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.2.statement",
+      "rule": "W-time",
+      "message": "time literal \"2026-11-19T20:45:43.655Z\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.3.statement",
+      "rule": "W-time",
+      "message": "time literal \"2026-11-19T20:43:58.655Z\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.4.statement",
+      "rule": "W-time",
+      "message": "time literal \"2026-11-19T20:44:28.655Z\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.4.statement",
+      "rule": "W-time",
+      "message": "time literal \"2026-11-19T20:45:13.655Z\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.4.statement",
+      "rule": "W-time",
+      "message": "time literal \"2026-11-19T20:45:28.655Z\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.5.statement",
+      "rule": "W-time",
+      "message": "time literal \"2026-11-19T20:45:28.655Z\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.5.statement",
+      "rule": "W-time",
+      "message": "time literal \"2026-11-19T20:45:43.655Z\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.8.statement",
+      "rule": "W-time",
+      "message": "time literal \"2026-11-19T20:45:27.707Z\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.8.statement",
+      "rule": "W-time",
+      "message": "time literal \"2026-11-19T20:45:44.589Z\" — times belong in the timeline"
+    }
+  ],
+  "repair_attempted": true
+}

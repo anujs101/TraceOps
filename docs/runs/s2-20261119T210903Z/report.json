@@ -1,0 +1,385 @@
+{
+  "investigation_id": "8527245e-596a-475a-9f7c-eb1f91f6f7bb",
+  "report": {
+    "gaps": [
+      "Database-side latency (db_operation_p95) was not checked: the query_metric call was refused as budget_exhausted (ev_10).",
+      "A further query_metric call to characterise the metric set (intended request-rate or error-rate query) was refused as budget_exhausted (ev_11).",
+      "log_patterns over the incident window returned empty in one call (ev_12), so patterns were only obtained from the second attempt (ev_13).",
+      "Planned log search for pool-specific or timeout messages did not run: search_logs hit the tool budget (ev_15).",
+      "Request rate, error ratio and CPU/memory host metrics were not checked.",
+      "No trace or span-level data was queried, so which downstream call holds connections is unknown.",
+      "Whether the pool_max of 10 connections is an appropriate configuration for this service's concurrency was not assessed."
+    ],
+    "status": "probable_cause",
+    "summary": "Saturation, not errors: around 21:21:18 the event loop pinned at full utilisation with p99 delay up ~30x, while the 10-connection DB pool filled to its ceiling and requests queued, pushing pool wait p95 above a second. HTTP p95 latency, stable near 0.010 s all window, breached the 1 s SLO by detection. Warn-level \\\"order rejected\\\" logs are unchanged from baseline across both versions and no error pattern appeared. Most probable cause: in-process blocking work starving connection release and exhausting the pool; a slow DB dependency is the leading unverified candidate.",
+    "timeline": [
+      {
+        "at": "2026-11-19T21:19:33.502Z",
+        "event": "Pre-incident baseline: p95 latency {lat_base_max}, pool used {pool_used_first}, pending {pend_first}, event-loop utilisation {el_util_min}.",
+        "evidence_ids": [
+          "ev_3",
+          "ev_5",
+          "ev_4",
+          "ev_7"
+        ]
+      },
+      {
+        "at": "2026-11-19T21:21:18.502Z",
+        "event": "Onset: event-loop utilisation hits {el_util_max}, p99 delay rises to {el_delay_max}, pool used jumps to {pool_used_max} of {pool_max}; pending waiters climb toward {pend_max}.",
+        "evidence_ids": [
+          "ev_7",
+          "ev_6",
+          "ev_5",
+          "ev_4",
+          "ev_8"
+        ]
+      },
+      {
+        "at": "2026-11-19T21:21:18.502Z",
+        "event": "p95 latency first deviates from baseline, rising from {lat_first}.",
+        "evidence_ids": [
+          "ev_2"
+        ]
+      },
+      {
+        "at": "2026-11-19T21:21:33.502Z",
+        "event": "Pool pending requests peak at {pend_max}; pool wait p95 reaches {wait_max}.",
+        "evidence_ids": [
+          "ev_4",
+          "ev_9"
+        ]
+      },
+      {
+        "at": "2026-11-19T21:21:40.279Z",
+        "event": "Last \"order rejected\" warn line in the incident window; {warn_inc_count} such lines versus {warn_base_count} in baseline.",
+        "evidence_ids": [
+          "ev_13",
+          "ev_14"
+        ]
+      },
+      {
+        "at": "2026-11-19T21:21:48.502Z",
+        "event": "p95 latency peaks at {lat_max}, breaching the 1 s SLO threshold; event-loop delay p99 also peaks at {el_delay_max}.",
+        "evidence_ids": [
+          "ev_2",
+          "ev_6"
+        ]
+      }
+    ],
+    "hypotheses": [
+      {
+        "id": "hyp_1",
+        "category": "db_pool_exhaustion",
+        "statement": "DB connection pool exhaustion (all {pool_max} connections held with requests queuing, wait p95 at {wait_max}) caused the p95 latency to rise to {lat_max}, because server-side work stalls while holding connections and prevents release.",
+        "confidence": "medium",
+        "supporting_observation_ids": [
+          "obs_5",
+          "obs_6",
+          "obs_7",
+          "obs_2",
+          "obs_3"
+        ],
+        "contradicting_observation_ids": [
+          "obs_8"
+        ]
+      },
+      {
+        "id": "hyp_2",
+        "category": "cpu_saturation",
+        "statement": "In-process CPU-bound work saturating the single-threaded event loop (utilisation at {el_util_max}, p99 delay {el_delay_max}) caused the incident by blocking request handling and starving pool connection release.",
+        "confidence": "medium",
+        "supporting_observation_ids": [
+          "obs_3",
+          "obs_4",
+          "obs_5",
+          "obs_2"
+        ],
+        "contradicting_observation_ids": []
+      },
+      {
+        "id": "hyp_3",
+        "category": "dependency_latency",
+        "statement": "A slowdown in the downstream database dependency (queries blocking the event loop) caused the incident, showing up as event-loop utilisation {el_util_max} and pool wait p95 {wait_max} while latency reached {lat_max}.",
+        "confidence": "low",
+        "supporting_observation_ids": [
+          "obs_3",
+          "obs_4",
+          "obs_7",
+          "obs_2",
+          "obs_8"
+        ],
+        "contradicting_observation_ids": []
+      }
+    ],
+    "observations": [
+      {
+        "id": "obs_1",
+        "values": [
+          {
+            "key": "lat_base_max",
+            "field": "max",
+            "value": 0.009947194719471949,
+            "evidence_id": "ev_3"
+          }
+        ],
+        "statement": "HTTP p95 latency was flat at ~0.0097 s throughout the baseline window immediately before the incident.",
+        "evidence_ids": [
+          "ev_3"
+        ]
+      },
+      {
+        "id": "obs_2",
+        "values": [
+          {
+            "key": "lat_first",
+            "field": "first",
+            "value": 0.009845890410958902,
+            "evidence_id": "ev_2"
+          },
+          {
+            "key": "lat_max",
+            "field": "max",
+            "value": 2.338429345063579,
+            "evidence_id": "ev_2"
+          }
+        ],
+        "statement": "In the incident window p95 latency rose from {lat_first} to {lat_max}, peaking at 21:21:48.502Z.",
+        "evidence_ids": [
+          "ev_2"
+        ]
+      },
+      {
+        "id": "obs_3",
+        "values": [
+          {
+            "key": "el_util_min",
+            "field": "min",
+            "value": 0.07085990105549653,
+            "evidence_id": "ev_7"
+          },
+          {
+            "key": "el_util_max",
+            "field": "max",
+            "value": 1,
+            "evidence_id": "ev_7"
+          }
+        ],
+        "statement": "Event-loop utilisation jumped from a baseline-like {el_util_min} to {el_util_max}, pegged at the ceiling for the last three samples from 21:21:18.502Z onward.",
+        "evidence_ids": [
+          "ev_7"
+        ]
+      },
+      {
+        "id": "obs_4",
+        "values": [
+          {
+            "key": "el_delay_min",
+            "field": "min",
+            "value": 0.012959743,
+            "evidence_id": "ev_6"
+          },
+          {
+            "key": "el_delay_max",
+            "field": "max",
+            "value": 0.396886015,
+            "evidence_id": "ev_6"
+          }
+        ],
+        "statement": "Event-loop p99 delay rose from {el_delay_min} to {el_delay_max} across the same onset samples.",
+        "evidence_ids": [
+          "ev_6"
+        ]
+      },
+      {
+        "id": "obs_5",
+        "values": [
+          {
+            "key": "pool_used_first",
+            "field": "first",
+            "value": 0,
+            "evidence_id": "ev_5"
+          },
+          {
+            "key": "pool_used_max",
+            "field": "max",
+            "value": 10,
+            "evidence_id": "ev_5"
+          },
+          {
+            "key": "pool_max",
+            "field": "max",
+            "value": 10,
+            "evidence_id": "ev_8"
+          }
+        ],
+        "statement": "Pool used connections went from {pool_used_first} to {pool_used_max}, exactly saturating the constant pool limit of {pool_max} connections.",
+        "evidence_ids": [
+          "ev_5",
+          "ev_8"
+        ]
+      },
+      {
+        "id": "obs_6",
+        "values": [
+          {
+            "key": "pend_first",
+            "field": "first",
+            "value": 0,
+            "evidence_id": "ev_4"
+          },
+          {
+            "key": "pend_max",
+            "field": "max",
+            "value": 35,
+            "evidence_id": "ev_4"
+          },
+          {
+            "key": "pend_last",
+            "field": "last",
+            "value": 26,
+            "evidence_id": "ev_4"
+          }
+        ],
+        "statement": "Pending pool requests went from {pend_first} to {pend_max} at 21:21:33.502Z, still {pend_last} waiters at the end of the window.",
+        "evidence_ids": [
+          "ev_4"
+        ]
+      },
+      {
+        "id": "obs_7",
+        "values": [
+          {
+            "key": "wait_first",
+            "field": "first",
+            "value": 0.0009612742036227358,
+            "evidence_id": "ev_9"
+          },
+          {
+            "key": "wait_max",
+            "field": "max",
+            "value": 1.40045735639987,
+            "evidence_id": "ev_9"
+          }
+        ],
+        "statement": "Pool wait p95 rose from {wait_first} to {wait_max}, reaching over a second of queueing per request.",
+        "evidence_ids": [
+          "ev_9"
+        ]
+      },
+      {
+        "id": "obs_8",
+        "values": [
+          {
+            "key": "warn_inc_count",
+            "field": "p1.count",
+            "value": 13,
+            "evidence_id": "ev_13"
+          },
+          {
+            "key": "warn_base_count",
+            "field": "p1.count",
+            "value": 16,
+            "evidence_id": "ev_14"
+          }
+        ],
+        "statement": "Loki shows the same single warn pattern \"order rejected\" in the incident window ({warn_inc_count} lines) as in the preceding baseline window ({warn_base_count} lines), with no error-severity pattern.",
+        "evidence_ids": [
+          "ev_13",
+          "ev_14"
+        ]
+      },
+      {
+        "id": "obs_9",
+        "values": [],
+        "statement": "The warn pattern appears under both service versions 1.0.0 and 1.0.1 during the incident window, while baseline carries only 1.0.0.",
+        "evidence_ids": [
+          "ev_13",
+          "ev_14"
+        ]
+      },
+      {
+        "id": "obs_10",
+        "values": [
+          {
+            "key": "info_max",
+            "field": "info.max",
+            "value": 1772,
+            "evidence_id": "ev_1"
+          },
+          {
+            "key": "warn_max",
+            "field": "warn.max",
+            "value": 8,
+            "evidence_id": "ev_1"
+          }
+        ],
+        "statement": "Overall log volume stayed near {info_max} info lines per minute and never exceeded {warn_max} warn lines per minute, so there was no log-volume surge accompanying the latency spike.",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      }
+    ],
+    "recommendations": [
+      {
+        "risk": "low",
+        "action": "Query db_operation_p95 (and DB-side query latency) for the onset window against the pre-incident baseline to determine whether a slow query is what blocks the event loop.",
+        "rationale": "hyp_3 is the leading unverified candidate and hyp_1/hyp_2 cannot be separated without downstream latency data; metric budget ran out before this query.",
+        "hypothesis_id": "hyp_3"
+      },
+      {
+        "risk": "low",
+        "action": "Profile or sample the event loop during a reproduction to identify the blocking code path and confirm whether it is CPU-bound work or awaited I/O.",
+        "rationale": "Distinguishes hyp_2 (in-process CPU-bound work saturating the loop) from hyp_3 (slow dependency).",
+        "hypothesis_id": "hyp_2"
+      },
+      {
+        "risk": "low",
+        "action": "Instrument pool acquire/release timing and add a per-request pool-hold duration metric so held connections can be attributed to specific endpoints.",
+        "rationale": "Confirms whether connections are held by stalled handlers, as hyp_1 asserts, and identifies which call path to fix.",
+        "hypothesis_id": "hyp_1"
+      },
+      {
+        "risk": "low",
+        "action": "Check request rate and concurrency at 21:21:18 to determine whether the pool saturation was driven by a traffic spike rather than by slow work holding connections.",
+        "rationale": "hyp_1 assumes saturation from stalling work; a traffic surge would change the mitigation (rate limiting or pool sizing rather than code fix).",
+        "hypothesis_id": "hyp_1"
+      }
+    ]
+  },
+  "validation": "failed",
+  "violations": [
+    {
+      "path": "observations.0.values",
+      "rule": "V3",
+      "message": "value key \"lat_base_max\" is not used in the statement"
+    },
+    {
+      "path": "observations.0.statement",
+      "rule": "V3",
+      "message": "unbound quantity \"~0.0097\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "summary",
+      "rule": "V3",
+      "message": "unbound quantity \"0.010\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "summary",
+      "rule": "V3",
+      "message": "unbound quantity \"1\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.5.event",
+      "rule": "V3",
+      "message": "unbound quantity \"1\" — use a {key} placeholder bound in values"
+    }
+  ],
+  "warnings": [
+    {
+      "path": "summary",
+      "rule": "W-time",
+      "message": "time literal \"21:21:18\" — times belong in the timeline"
+    }
+  ],
+  "repair_attempted": true
+}

@@ -1,0 +1,243 @@
+{
+  "scenario": "S2",
+  "run_start": "2026-11-19T21:09:03.000Z",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "validity_gate": {
+    "times": {
+      "tBaselineStart": "2026-11-19T21:14:06.000Z",
+      "tDeploy": "2026-11-19T21:21:06.000Z",
+      "tDrop": "2026-11-19T21:24:52.000Z",
+      "tEnd": "2026-11-19T21:25:52.000Z"
+    },
+    "signal_summary": {
+      "baseline_clean": true,
+      "latency_alert_fired": true,
+      "pool_used_max": 10,
+      "pool_max": 10,
+      "pool_used_at_max_seconds": 220,
+      "pool_timeouts_increase": 0,
+      "eventloop_utilization_max": 1,
+      "pool_used_after_load_drop": null
+    },
+    "scenarioValid": {
+      "valid": true,
+      "reasons": []
+    }
+  },
+  "baseline_window": {
+    "derived_baseline": {
+      "start": "2026-11-19T21:17:18.392Z",
+      "end": "2026-11-19T21:19:33.502Z"
+    },
+    "derived_incident": {
+      "start": "2026-11-19T21:19:33.502Z",
+      "end": "2026-11-19T21:21:48.612Z"
+    },
+    "healthy": {
+      "start": "2026-11-19T21:14:06.000Z",
+      "deploy": "2026-11-19T21:21:06.000Z"
+    },
+    "covered": true,
+    "note": "investigation start approximated by investigation.started_at"
+  },
+  "incident": {
+    "id": "dd81beef-aceb-4665-9f0b-84521c9e8c59",
+    "group": "http-slo",
+    "severity": "warning",
+    "status": "open",
+    "started_at": "2026-11-19T21:21:33.502Z",
+    "detected_at": "2026-11-19T21:21:48.502Z",
+    "resolved_at": null,
+    "reopen_count": 0,
+    "trigger": [
+      {
+        "rule_id": "http-latency-p95",
+        "query": "latency_p95",
+        "threshold": 1,
+        "observed": 2.3384465405287873,
+        "at": "2026-11-19T21:21:48.502Z"
+      }
+    ]
+  },
+  "investigation": {
+    "id": "8527245e-596a-475a-9f7c-eb1f91f6f7bb",
+    "status": "completed",
+    "started_at": "2026-11-19T21:21:48.612Z",
+    "finished_at": "2026-11-19T21:22:18.768Z",
+    "tool_calls": 15,
+    "error": null
+  },
+  "report": {
+    "status": "probable_cause",
+    "top_hypothesis": {
+      "category": "db_pool_exhaustion",
+      "confidence": "medium"
+    },
+    "hypotheses": [
+      {
+        "id": "hyp_1",
+        "category": "db_pool_exhaustion",
+        "confidence": "medium"
+      },
+      {
+        "id": "hyp_2",
+        "category": "cpu_saturation",
+        "confidence": "medium"
+      },
+      {
+        "id": "hyp_3",
+        "category": "dependency_latency",
+        "confidence": "low"
+      }
+    ],
+    "validation": "failed",
+    "repair_attempted": true,
+    "violations": [
+      {
+        "path": "observations.0.values",
+        "rule": "V3",
+        "message": "value key \"lat_base_max\" is not used in the statement"
+      },
+      {
+        "path": "observations.0.statement",
+        "rule": "V3",
+        "message": "unbound quantity \"~0.0097\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "summary",
+        "rule": "V3",
+        "message": "unbound quantity \"0.010\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "summary",
+        "rule": "V3",
+        "message": "unbound quantity \"1\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.5.event",
+        "rule": "V3",
+        "message": "unbound quantity \"1\" — use a {key} placeholder bound in values"
+      }
+    ],
+    "warnings_count": 1
+  },
+  "grade": {
+    "outcome": "invalid",
+    "pass": false,
+    "if_validation_had_passed": {
+      "outcome": "misattributed",
+      "pass": false
+    },
+    "basis": "gradeRun (packages/contracts/src/grading.ts)"
+  },
+  "actual_onset_order": {
+    "method": "Prometheus via contract METRIC_TEMPLATES, step 5 s, baseline [tBaselineStart,tDeploy], onset = first of 2 consecutive points above max(1.25×baseline max, mean+4σ, baseline max + max(5%, 0.01)) in [tDeploy, detected_at]",
+    "order": [
+      {
+        "metric": "pool_used",
+        "onset": "2026-11-19T21:21:16.000Z",
+        "baseline_max": 1,
+        "peak": 10
+      },
+      {
+        "metric": "pool_pending",
+        "onset": "2026-11-19T21:21:16.000Z",
+        "baseline_max": 0,
+        "peak": 37
+      },
+      {
+        "metric": "eventloop_delay_p99",
+        "onset": "2026-11-19T21:21:16.000Z",
+        "baseline_max": 0.019611647,
+        "peak": 0.395837439
+      },
+      {
+        "metric": "eventloop_utilization",
+        "onset": "2026-11-19T21:21:16.000Z",
+        "baseline_max": 0.11314671191113543,
+        "peak": 1
+      },
+      {
+        "metric": "latency_p95",
+        "onset": "2026-11-19T21:21:21.000Z",
+        "baseline_max": 0.013486486486486477,
+        "peak": 2.3209589775018014
+      },
+      {
+        "metric": "pool_wait_p95",
+        "onset": "2026-11-19T21:21:21.000Z",
+        "baseline_max": 0.0009654471544715446,
+        "peak": 1.3858168870877114
+      },
+      {
+        "metric": "db_operation_p95",
+        "onset": "2026-11-19T21:21:21.000Z",
+        "baseline_max": 0.004895354239256678,
+        "peak": 0.4644159182429239
+      },
+      {
+        "metric": "latency_p50",
+        "onset": "2026-11-19T21:21:41.000Z",
+        "baseline_max": 0.0033675799086758,
+        "peak": 0.6319243053474981
+      }
+    ],
+    "no_onset": [
+      "request_rate",
+      "error_ratio_5xx",
+      "pool_idle",
+      "pool_max",
+      "pool_timeout_rate"
+    ]
+  },
+  "evidence": {
+    "rows": 15,
+    "by_tool_and_status": {
+      "log_volume": {
+        "ok": 1
+      },
+      "query_metric": {
+        "ok": 8,
+        "budget_exhausted": 2
+      },
+      "log_patterns": {
+        "empty": 1,
+        "ok": 2
+      },
+      "search_logs": {
+        "budget_exhausted": 1
+      }
+    },
+    "calls": [
+      "ev_1:log_volume:ok:{\"window\":{\"end\":\"2026-11-19T21:21:48.613Z\",\"start\":\"2026-11-19T21:19:33.502Z\"}}",
+      "ev_2:query_metric:ok:{\"metric\":\"latency_p95\",\"window\":{\"end\":\"2026-11-19T21:21:48.613Z\",\"start\":\"2026-11-19T21:19:33.502Z\"}}",
+      "ev_3:query_metric:ok:{\"metric\":\"latency_p95\",\"window\":{\"end\":\"2026-11-19T21:19:33.502Z\",\"start\":\"2026-11-19T21:17:18.391Z\"}}",
+      "ev_4:query_metric:ok:{\"metric\":\"pool_pending\",\"window\":{\"end\":\"2026-11-19T21:21:48.613Z\",\"start\":\"2026-11-19T21:19:33.502Z\"}}",
+      "ev_5:query_metric:ok:{\"metric\":\"pool_used\",\"window\":{\"end\":\"2026-11-19T21:21:48.613Z\",\"start\":\"2026-11-19T21:19:33.502Z\"}}",
+      "ev_6:query_metric:ok:{\"metric\":\"eventloop_delay_p99\",\"window\":{\"end\":\"2026-11-19T21:21:48.613Z\",\"start\":\"2026-11-19T21:19:33.502Z\"}}",
+      "ev_7:query_metric:ok:{\"metric\":\"eventloop_utilization\",\"window\":{\"end\":\"2026-11-19T21:21:48.613Z\",\"start\":\"2026-11-19T21:19:33.502Z\"}}",
+      "ev_8:query_metric:ok:{\"metric\":\"pool_max\",\"window\":{\"end\":\"2026-11-19T21:21:48.613Z\",\"start\":\"2026-11-19T21:19:33.502Z\"}}",
+      "ev_9:query_metric:ok:{\"metric\":\"pool_wait_p95\",\"window\":{\"end\":\"2026-11-19T21:21:48.613Z\",\"start\":\"2026-11-19T21:19:33.502Z\"}}",
+      "ev_10:query_metric:budget_exhausted:{\"metric\":\"db_operation_p95\",\"window\":\"incident\"}",
+      "ev_11:query_metric:budget_exhausted:{\"metric\":\"request_rate\",\"window\":\"incident\"}",
+      "ev_12:log_patterns:empty:{\"window\":{\"end\":\"2026-11-19T21:21:48.613Z\",\"start\":\"2026-11-19T21:19:33.502Z\"},\"severity\":\"error\"}",
+      "ev_13:log_patterns:ok:{\"window\":{\"end\":\"2026-11-19T21:21:48.613Z\",\"start\":\"2026-11-19T21:19:33.502Z\"},\"severity\":\"warn\"}",
+      "ev_14:log_patterns:ok:{\"window\":{\"end\":\"2026-11-19T21:19:33.502Z\",\"start\":\"2026-11-19T21:17:18.391Z\"},\"severity\":\"warn\"}",
+      "ev_15:search_logs:budget_exhausted:{\"limit\":20,\"match\":{\"field\":\"message\",\"contains\":\"pool\"},\"window\":\"incident\",\"severity\":null}"
+    ]
+  },
+  "detection_to_report_s": 30.266,
+  "llm_calls": {
+    "attempts": 8,
+    "errors": 0,
+    "by_stage": {
+      "investigate": 6,
+      "report": 2
+    },
+    "input_tokens": 52894,
+    "output_tokens": 7297,
+    "total_tokens": 60191,
+    "latency_ms_total": 29815
+  }
+}

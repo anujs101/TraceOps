@@ -1,0 +1,298 @@
+{
+  "scenario": "S2",
+  "run_start": "2026-11-19T21:26:36.000Z",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "validity_gate": {
+    "times": {
+      "tBaselineStart": "2026-11-19T21:31:38.000Z",
+      "tDeploy": "2026-11-19T21:38:38.000Z",
+      "tDrop": "2026-11-19T21:42:09.000Z",
+      "tEnd": "2026-11-19T21:43:09.000Z"
+    },
+    "signal_summary": {
+      "baseline_clean": true,
+      "latency_alert_fired": true,
+      "pool_used_max": 10,
+      "pool_max": 10,
+      "pool_used_at_max_seconds": 205,
+      "pool_timeouts_increase": 26.77161079830649,
+      "eventloop_utilization_max": 1,
+      "pool_used_after_load_drop": null
+    },
+    "scenarioValid": {
+      "valid": true,
+      "reasons": []
+    }
+  },
+  "baseline_window": {
+    "derived_baseline": {
+      "start": "2026-11-19T21:34:36.289Z",
+      "end": "2026-11-19T21:36:51.498Z"
+    },
+    "derived_incident": {
+      "start": "2026-11-19T21:36:51.498Z",
+      "end": "2026-11-19T21:39:06.707Z"
+    },
+    "healthy": {
+      "start": "2026-11-19T21:31:38.000Z",
+      "deploy": "2026-11-19T21:38:38.000Z"
+    },
+    "covered": true,
+    "note": "investigation start approximated by investigation.started_at"
+  },
+  "incident": {
+    "id": "84e008ed-81cb-413d-9574-14437d9f36c5",
+    "group": "http-slo",
+    "severity": "warning",
+    "status": "open",
+    "started_at": "2026-11-19T21:38:51.498Z",
+    "detected_at": "2026-11-19T21:39:06.498Z",
+    "resolved_at": null,
+    "reopen_count": 0,
+    "trigger": [
+      {
+        "rule_id": "http-latency-p95",
+        "query": "latency_p95",
+        "threshold": 1,
+        "observed": 2.286288087630518,
+        "at": "2026-11-19T21:39:06.498Z"
+      }
+    ]
+  },
+  "investigation": {
+    "id": "7a0d3e76-f631-462b-b887-022d39114ea2",
+    "status": "completed",
+    "started_at": "2026-11-19T21:39:06.707Z",
+    "finished_at": "2026-11-19T21:39:37.140Z",
+    "tool_calls": 15,
+    "error": null
+  },
+  "report": {
+    "status": "probable_cause",
+    "top_hypothesis": {
+      "category": "db_pool_exhaustion",
+      "confidence": "high"
+    },
+    "hypotheses": [
+      {
+        "id": "hyp_1",
+        "category": "db_pool_exhaustion",
+        "confidence": "high"
+      },
+      {
+        "id": "hyp_2",
+        "category": "cpu_saturation",
+        "confidence": "low"
+      },
+      {
+        "id": "hyp_3",
+        "category": "dependency_latency",
+        "confidence": "low"
+      },
+      {
+        "id": "hyp_4",
+        "category": "other",
+        "confidence": "low"
+      }
+    ],
+    "validation": "failed",
+    "repair_attempted": true,
+    "violations": [
+      {
+        "path": "observations.0.values",
+        "rule": "V3",
+        "message": "value key \"lat_series\" is not used in the statement"
+      },
+      {
+        "path": "timeline.0.event",
+        "rule": "V3",
+        "message": "unbound quantity \"0.0098\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.0.event",
+        "rule": "V3",
+        "message": "unbound quantity \"0\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.0.event",
+        "rule": "V3",
+        "message": "unbound quantity \"10\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.0.evidence_ids",
+        "rule": "V1",
+        "message": "ev_14 is unknown or not status ok"
+      },
+      {
+        "path": "timeline.2.event",
+        "rule": "V3",
+        "message": "unbound quantity \"10\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.2.event",
+        "rule": "V3",
+        "message": "unbound quantity \"35\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.2.event",
+        "rule": "V3",
+        "message": "unbound quantity \"0.75\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.2.event",
+        "rule": "V3",
+        "message": "unbound quantity \"0.33\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.2.event",
+        "rule": "V3",
+        "message": "unbound quantity \"1\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.2.event",
+        "rule": "V3",
+        "message": "unbound quantity \"1.54\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.4.event",
+        "rule": "V3",
+        "message": "unbound quantity \"19\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.5.event",
+        "rule": "V3",
+        "message": "unbound quantity \"2.286\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.5.event",
+        "rule": "V3",
+        "message": "unbound quantity \"1.46\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.5.event",
+        "rule": "V3",
+        "message": "unbound quantity \"32\" — use a {key} placeholder bound in values"
+      },
+      {
+        "path": "timeline.5.event",
+        "rule": "V3",
+        "message": "unbound quantity \"0.46\" — use a {key} placeholder bound in values"
+      }
+    ],
+    "warnings_count": 3
+  },
+  "grade": {
+    "outcome": "invalid",
+    "pass": false,
+    "if_validation_had_passed": {
+      "outcome": "misattributed",
+      "pass": false
+    },
+    "basis": "gradeRun (packages/contracts/src/grading.ts)"
+  },
+  "actual_onset_order": {
+    "method": "Prometheus via contract METRIC_TEMPLATES, step 5 s, baseline [tBaselineStart,tDeploy], onset = first of 2 consecutive points above max(1.25×baseline max, mean+4σ, baseline max + max(5%, 0.01)) in [tDeploy, detected_at]",
+    "order": [
+      {
+        "metric": "pool_used",
+        "onset": "2026-11-19T21:38:48.000Z",
+        "baseline_max": 1,
+        "peak": 10
+      },
+      {
+        "metric": "pool_pending",
+        "onset": "2026-11-19T21:38:48.000Z",
+        "baseline_max": 0,
+        "peak": 35
+      },
+      {
+        "metric": "eventloop_delay_p99",
+        "onset": "2026-11-19T21:38:48.000Z",
+        "baseline_max": 0.018759679,
+        "peak": 1.011351551
+      },
+      {
+        "metric": "eventloop_utilization",
+        "onset": "2026-11-19T21:38:48.000Z",
+        "baseline_max": 0.13780221051595895,
+        "peak": 1
+      },
+      {
+        "metric": "latency_p95",
+        "onset": "2026-11-19T21:38:53.000Z",
+        "baseline_max": 0.01176470588235295,
+        "peak": 2.1816918089168054
+      },
+      {
+        "metric": "pool_wait_p95",
+        "onset": "2026-11-19T21:38:53.000Z",
+        "baseline_max": 0.0009679245283018868,
+        "peak": 1.3933362339448698
+      },
+      {
+        "metric": "db_operation_p95",
+        "onset": "2026-11-19T21:38:53.000Z",
+        "baseline_max": 0.0049041902604756524,
+        "peak": 0.4375214364726915
+      }
+    ],
+    "no_onset": [
+      "latency_p50",
+      "request_rate",
+      "error_ratio_5xx",
+      "pool_idle",
+      "pool_max",
+      "pool_timeout_rate"
+    ]
+  },
+  "evidence": {
+    "rows": 15,
+    "by_tool_and_status": {
+      "query_metric": {
+        "ok": 8,
+        "budget_exhausted": 2
+      },
+      "log_volume": {
+        "ok": 1
+      },
+      "log_patterns": {
+        "ok": 2,
+        "empty": 1
+      },
+      "search_logs": {
+        "budget_exhausted": 1
+      }
+    },
+    "calls": [
+      "ev_1:query_metric:ok:{\"metric\":\"latency_p95\",\"window\":{\"end\":\"2026-11-19T21:39:06.710Z\",\"start\":\"2026-11-19T21:36:51.498Z\"}}",
+      "ev_2:query_metric:ok:{\"metric\":\"latency_p95\",\"window\":{\"end\":\"2026-11-19T21:36:51.498Z\",\"start\":\"2026-11-19T21:34:36.286Z\"}}",
+      "ev_3:log_volume:ok:{\"window\":{\"end\":\"2026-11-19T21:39:06.710Z\",\"start\":\"2026-11-19T21:36:51.498Z\"}}",
+      "ev_4:query_metric:ok:{\"metric\":\"pool_used\",\"window\":{\"end\":\"2026-11-19T21:39:06.710Z\",\"start\":\"2026-11-19T21:36:51.498Z\"}}",
+      "ev_5:query_metric:ok:{\"metric\":\"pool_max\",\"window\":{\"end\":\"2026-11-19T21:39:06.710Z\",\"start\":\"2026-11-19T21:36:51.498Z\"}}",
+      "ev_6:query_metric:ok:{\"metric\":\"pool_pending\",\"window\":{\"end\":\"2026-11-19T21:39:06.710Z\",\"start\":\"2026-11-19T21:36:51.498Z\"}}",
+      "ev_7:query_metric:ok:{\"metric\":\"pool_wait_p95\",\"window\":{\"end\":\"2026-11-19T21:39:06.710Z\",\"start\":\"2026-11-19T21:36:51.498Z\"}}",
+      "ev_8:query_metric:ok:{\"metric\":\"db_operation_p95\",\"window\":{\"end\":\"2026-11-19T21:39:06.710Z\",\"start\":\"2026-11-19T21:36:51.498Z\"}}",
+      "ev_9:query_metric:ok:{\"metric\":\"eventloop_utilization\",\"window\":{\"end\":\"2026-11-19T21:39:06.710Z\",\"start\":\"2026-11-19T21:36:51.498Z\"}}",
+      "ev_10:query_metric:budget_exhausted:{\"metric\":\"request_rate\",\"window\":\"incident\"}",
+      "ev_11:log_patterns:ok:{\"window\":{\"end\":\"2026-11-19T21:39:06.710Z\",\"start\":\"2026-11-19T21:36:51.498Z\"},\"severity\":\"error\"}",
+      "ev_12:query_metric:budget_exhausted:{\"metric\":\"eventloop_delay_p99\",\"window\":\"incident\"}",
+      "ev_13:log_patterns:ok:{\"window\":{\"end\":\"2026-11-19T21:39:06.710Z\",\"start\":\"2026-11-19T21:36:51.498Z\"},\"severity\":\"warn\"}",
+      "ev_14:log_patterns:empty:{\"window\":{\"end\":\"2026-11-19T21:36:51.498Z\",\"start\":\"2026-11-19T21:34:36.286Z\"},\"severity\":\"error\"}",
+      "ev_15:search_logs:budget_exhausted:{\"limit\":10,\"match\":null,\"window\":\"incident\",\"severity\":\"error\"}"
+    ]
+  },
+  "detection_to_report_s": 30.642,
+  "llm_calls": {
+    "attempts": 8,
+    "errors": 0,
+    "by_stage": {
+      "investigate": 6,
+      "report": 2
+    },
+    "input_tokens": 54601,
+    "output_tokens": 7393,
+    "total_tokens": 61994,
+    "latency_ms_total": 30020
+  }
+}

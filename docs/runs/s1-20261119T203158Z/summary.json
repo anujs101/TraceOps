@@ -1,0 +1,217 @@
+{
+  "scenario": "S1",
+  "run_start": "2026-11-19T20:31:58.000Z",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "validity_gate": {
+    "times": {
+      "tBaselineStart": "2026-11-19T20:37:01.000Z",
+      "tDeploy": "2026-11-19T20:44:01.000Z",
+      "tDrop": "2026-11-19T20:48:47.000Z",
+      "tEnd": "2026-11-19T20:49:47.000Z"
+    },
+    "signal_summary": {
+      "baseline_clean": true,
+      "latency_alert_fired": true,
+      "pool_used_max": 10,
+      "pool_max": 10,
+      "pool_used_at_max_seconds": 205,
+      "pool_timeouts_increase": 6537.121005289807,
+      "eventloop_utilization_max": 0.14552210187172981,
+      "pool_used_after_load_drop": 10
+    },
+    "scenarioValid": {
+      "valid": true,
+      "reasons": []
+    }
+  },
+  "baseline_window": {
+    "derived_baseline": {
+      "start": "2026-11-19T20:41:12.706Z",
+      "end": "2026-11-19T20:43:28.655Z"
+    },
+    "derived_incident": {
+      "start": "2026-11-19T20:43:28.655Z",
+      "end": "2026-11-19T20:45:44.604Z"
+    },
+    "healthy": {
+      "start": "2026-11-19T20:37:01.000Z",
+      "deploy": "2026-11-19T20:44:01.000Z"
+    },
+    "covered": true,
+    "note": "investigation start approximated by investigation.started_at"
+  },
+  "incident": {
+    "id": "fe1589e1-7688-498f-bfa4-e82b4ce0f007",
+    "group": "http-slo",
+    "severity": "critical",
+    "status": "open",
+    "started_at": "2026-11-19T20:45:28.655Z",
+    "detected_at": "2026-11-19T20:45:43.656Z",
+    "resolved_at": null,
+    "reopen_count": 0,
+    "trigger": [
+      {
+        "rule_id": "http-latency-p95",
+        "query": "latency_p95",
+        "threshold": 1,
+        "observed": 2.3167998293891223,
+        "at": "2026-11-19T20:45:43.656Z"
+      },
+      {
+        "rule_id": "http-error-ratio",
+        "query": "error_ratio_5xx",
+        "threshold": 0.05,
+        "observed": 0.4093780550450375,
+        "at": "2026-11-19T20:45:43.656Z"
+      }
+    ]
+  },
+  "investigation": {
+    "id": "42ddea1b-8aa7-46cf-9dfa-1df4a8a9fde3",
+    "status": "completed",
+    "started_at": "2026-11-19T20:45:44.604Z",
+    "finished_at": "2026-11-19T20:46:17.166Z",
+    "tool_calls": 16,
+    "error": null
+  },
+  "report": {
+    "status": "probable_cause",
+    "top_hypothesis": {
+      "category": "db_pool_exhaustion",
+      "confidence": "high"
+    },
+    "hypotheses": [
+      {
+        "id": "hyp_1",
+        "category": "db_pool_exhaustion",
+        "confidence": "high"
+      },
+      {
+        "id": "hyp_2",
+        "category": "dependency_latency",
+        "confidence": "low"
+      },
+      {
+        "id": "hyp_3",
+        "category": "other",
+        "confidence": "low"
+      }
+    ],
+    "validation": "passed",
+    "repair_attempted": true,
+    "violations": [],
+    "warnings_count": 10
+  },
+  "grade": {
+    "outcome": "correct",
+    "pass": true,
+    "if_validation_had_passed": {
+      "outcome": "correct",
+      "pass": true
+    },
+    "basis": "gradeRun (packages/contracts/src/grading.ts)"
+  },
+  "actual_onset_order": {
+    "method": "Prometheus via contract METRIC_TEMPLATES, step 5 s, baseline [tBaselineStart,tDeploy], onset = first of 2 consecutive points above max(1.25×baseline max, mean+4σ, baseline max + max(5%, 0.01)) in [tDeploy, detected_at]",
+    "order": [
+      {
+        "metric": "pool_used",
+        "onset": "2026-11-19T20:45:01.000Z",
+        "baseline_max": 5,
+        "peak": 10
+      },
+      {
+        "metric": "pool_pending",
+        "onset": "2026-11-19T20:45:26.000Z",
+        "baseline_max": 0,
+        "peak": 60
+      },
+      {
+        "metric": "latency_p95",
+        "onset": "2026-11-19T20:45:31.000Z",
+        "baseline_max": 0.04779677035220782,
+        "peak": 2.283358939819734
+      },
+      {
+        "metric": "error_ratio_5xx",
+        "onset": "2026-11-19T20:45:31.000Z",
+        "baseline_max": 0,
+        "peak": 0.3461947607604624
+      },
+      {
+        "metric": "pool_wait_p95",
+        "onset": "2026-11-19T20:45:31.000Z",
+        "baseline_max": 0.0037999999999999918,
+        "peak": 2.4128062360801783
+      },
+      {
+        "metric": "pool_timeout_rate",
+        "onset": "2026-11-19T20:45:31.000Z",
+        "baseline_max": 0,
+        "peak": 10.358150024441185
+      }
+    ],
+    "no_onset": [
+      "latency_p50",
+      "request_rate",
+      "pool_idle",
+      "pool_max",
+      "db_operation_p95",
+      "eventloop_delay_p99",
+      "eventloop_utilization"
+    ]
+  },
+  "evidence": {
+    "rows": 16,
+    "by_tool_and_status": {
+      "query_metric": {
+        "ok": 8,
+        "budget_exhausted": 2
+      },
+      "log_volume": {
+        "ok": 1
+      },
+      "log_patterns": {
+        "ok": 1,
+        "empty": 1,
+        "budget_exhausted": 1
+      },
+      "search_logs": {
+        "ok": 1,
+        "budget_exhausted": 1
+      }
+    },
+    "calls": [
+      "ev_1:query_metric:ok:{\"metric\":\"latency_p95\",\"window\":{\"end\":\"2026-11-19T20:45:44.609Z\",\"start\":\"2026-11-19T20:43:28.655Z\"}}",
+      "ev_2:query_metric:ok:{\"metric\":\"latency_p95\",\"window\":{\"end\":\"2026-11-19T20:43:28.655Z\",\"start\":\"2026-11-19T20:41:12.701Z\"}}",
+      "ev_3:log_volume:ok:{\"window\":{\"end\":\"2026-11-19T20:45:44.609Z\",\"start\":\"2026-11-19T20:43:28.655Z\"}}",
+      "ev_4:query_metric:ok:{\"metric\":\"error_ratio_5xx\",\"window\":{\"end\":\"2026-11-19T20:45:44.609Z\",\"start\":\"2026-11-19T20:43:28.655Z\"}}",
+      "ev_5:query_metric:ok:{\"metric\":\"pool_pending\",\"window\":{\"end\":\"2026-11-19T20:45:44.609Z\",\"start\":\"2026-11-19T20:43:28.655Z\"}}",
+      "ev_6:query_metric:ok:{\"metric\":\"pool_used\",\"window\":{\"end\":\"2026-11-19T20:45:44.609Z\",\"start\":\"2026-11-19T20:43:28.655Z\"}}",
+      "ev_7:query_metric:ok:{\"metric\":\"db_operation_p95\",\"window\":{\"end\":\"2026-11-19T20:45:44.609Z\",\"start\":\"2026-11-19T20:43:28.655Z\"}}",
+      "ev_8:log_patterns:ok:{\"window\":{\"end\":\"2026-11-19T20:45:44.609Z\",\"start\":\"2026-11-19T20:43:28.655Z\"},\"severity\":\"error\"}",
+      "ev_9:query_metric:ok:{\"metric\":\"pool_max\",\"window\":{\"end\":\"2026-11-19T20:45:44.609Z\",\"start\":\"2026-11-19T20:43:28.655Z\"}}",
+      "ev_10:query_metric:ok:{\"metric\":\"pool_idle\",\"window\":{\"end\":\"2026-11-19T20:45:44.609Z\",\"start\":\"2026-11-19T20:43:28.655Z\"}}",
+      "ev_11:query_metric:budget_exhausted:{\"metric\":\"pool_wait_p95\",\"window\":\"incident\"}",
+      "ev_12:query_metric:budget_exhausted:{\"metric\":\"pool_pending\",\"window\":\"baseline\"}",
+      "ev_13:search_logs:ok:{\"limit\":10,\"match\":{\"field\":\"exception_message\",\"contains\":\"timeout\"},\"window\":{\"end\":\"2026-11-19T20:45:44.609Z\",\"start\":\"2026-11-19T20:43:28.655Z\"},\"severity\":\"error\"}",
+      "ev_14:log_patterns:empty:{\"window\":{\"end\":\"2026-11-19T20:43:28.655Z\",\"start\":\"2026-11-19T20:41:12.701Z\"},\"severity\":\"error\"}",
+      "ev_15:log_patterns:budget_exhausted:{\"window\":\"incident\",\"severity\":\"warn\"}",
+      "ev_16:search_logs:budget_exhausted:{\"limit\":15,\"match\":null,\"window\":{\"end\":\"2026-11-19T20:45:30.000Z\",\"start\":\"2026-11-19T20:44:00.000Z\"},\"severity\":\"warn\"}"
+    ]
+  },
+  "detection_to_report_s": 33.51,
+  "llm_calls": {
+    "attempts": 7,
+    "errors": 0,
+    "by_stage": {
+      "investigate": 5,
+      "report": 2
+    },
+    "input_tokens": 51145,
+    "output_tokens": 8097,
+    "total_tokens": 59242,
+    "latency_ms_total": 31207
+  }
+}

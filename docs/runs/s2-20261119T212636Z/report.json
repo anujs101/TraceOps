@@ -1,0 +1,451 @@
+{
+  "investigation_id": "7a0d3e76-f631-462b-b887-022d39114ea2",
+  "report": {
+    "gaps": [
+      "Request-rate / traffic-volume metrics were not obtained; query_metric calls were refused with budget_exhausted (ev_10, ev_12), so a traffic surge alternative was not checked.",
+      "Log search across the incident window was not performed; search_logs returned budget_exhausted (ev_15).",
+      "log_patterns over the baseline window returned empty (ev_14), so baseline error/warn patterns were not characterised.",
+      "CPU, memory and container-level resource metrics were not queried.",
+      "Downstream database server-side metrics (query latency, locks, replication) were not queried.",
+      "The last ~10 s of the incident window may be incomplete due to ingestion lag; the true duration of pool saturation is not measured.",
+      "Deployment/rollout history was not queried; version attribution rests on service_versions in log patterns only."
+    ],
+    "status": "probable_cause",
+    "summary": "demo-service breached its latency SLO when the database connection pool saturated: pool usage jumped from idle to the full connection ceiling while requests queued for connections, database operation latency rose at the same step, the event loop became pinned, and log evidence shows requests failing with connection timeouts. No anomaly is visible in the baseline window before the onset point.",
+    "timeline": [
+      {
+        "at": "2026-11-19T21:36:51.498Z",
+        "event": "Baseline: latency_p95 near 0.0098 s, pool_used at 0 of 10 connections, no error log lines.",
+        "evidence_ids": [
+          "ev_1",
+          "ev_2",
+          "ev_4",
+          "ev_14"
+        ]
+      },
+      {
+        "at": "2026-11-19T21:37:16.658Z",
+        "event": "First 'order rejected' warn log appears, spanning versions 1.0.0 and 1.0.1 (background noise).",
+        "evidence_ids": [
+          "ev_13"
+        ]
+      },
+      {
+        "at": "2026-11-19T21:38:51.498Z",
+        "event": "Onset: pool_used jumps to 10 (pool_max), pool_pending to 35, pool_wait_p95 to 0.75 s, db_operation_p95 to 0.33 s, eventloop_utilization to 1, latency_p95 to 1.54 s.",
+        "evidence_ids": [
+          "ev_1",
+          "ev_4",
+          "ev_6",
+          "ev_7",
+          "ev_8",
+          "ev_9"
+        ]
+      },
+      {
+        "at": "2026-11-19T21:38:59.907Z",
+        "event": "First 'request failed / timeout exceeded when trying to connect' error log on version 1.0.1.",
+        "evidence_ids": [
+          "ev_11"
+        ]
+      },
+      {
+        "at": "2026-11-19T21:39:01.210Z",
+        "event": "Last of 19 connection-timeout error lines in the sampled pattern.",
+        "evidence_ids": [
+          "ev_11"
+        ]
+      },
+      {
+        "at": "2026-11-19T21:39:06.498Z",
+        "event": "Detection point: latency_p95 peaks at 2.286 s, pool_wait_p95 at 1.46 s, pool_pending at 32, db_operation_p95 at 0.46 s.",
+        "evidence_ids": [
+          "ev_1",
+          "ev_6",
+          "ev_7",
+          "ev_8"
+        ]
+      }
+    ],
+    "hypotheses": [
+      {
+        "id": "hyp_1",
+        "category": "db_pool_exhaustion",
+        "statement": "Slower database operations ({db_max} s p95) held connections longer and saturated the {pool_cap}-connection pool, so requests queued (pool_pending {pend_max}, pool_wait_p95 {pwait_max} s) and latency rose to {lat_inc} s, producing connection-timeout failures.",
+        "confidence": "high",
+        "supporting_observation_ids": [
+          "obs_1",
+          "obs_2",
+          "obs_3",
+          "obs_4",
+          "obs_5",
+          "obs_7"
+        ],
+        "contradicting_observation_ids": []
+      },
+      {
+        "id": "hyp_2",
+        "category": "cpu_saturation",
+        "statement": "Event-loop saturation reached {el_max} and starved request handling, contributing to the latency rise to {lat_inc} s and the connection-timeout errors.",
+        "confidence": "low",
+        "supporting_observation_ids": [
+          "obs_1",
+          "obs_6",
+          "obs_7"
+        ],
+        "contradicting_observation_ids": [
+          "obs_2",
+          "obs_3",
+          "obs_5"
+        ]
+      },
+      {
+        "id": "hyp_3",
+        "category": "dependency_latency",
+        "statement": "A downstream database dependency slowed down ({db_max} s operation p95), directly driving the user-facing latency to {lat_inc} s.",
+        "confidence": "low",
+        "supporting_observation_ids": [
+          "obs_1",
+          "obs_5",
+          "obs_7"
+        ],
+        "contradicting_observation_ids": [
+          "obs_2",
+          "obs_4"
+        ]
+      },
+      {
+        "id": "hyp_4",
+        "category": "other",
+        "statement": "A deployment of version 1.0.1 introduced the failure behaviour observed as connection-timeout errors ({err_count} occurrences).",
+        "confidence": "low",
+        "supporting_observation_ids": [
+          "obs_7"
+        ],
+        "contradicting_observation_ids": [
+          "obs_9"
+        ]
+      }
+    ],
+    "observations": [
+      {
+        "id": "obs_1",
+        "values": [
+          {
+            "key": "lat_base",
+            "field": "max",
+            "value": 0.01161607142857141,
+            "evidence_id": "ev_2"
+          },
+          {
+            "key": "lat_inc",
+            "field": "max",
+            "value": 2.286055149468855,
+            "evidence_id": "ev_1"
+          },
+          {
+            "key": "lat_series",
+            "field": "series@2026-11-19T21:38:51.498Z",
+            "value": 1.5407574296568278,
+            "evidence_id": "ev_1"
+          }
+        ],
+        "statement": "latency_p95 was flat near {lat_base} in the baseline window and rose to {lat_inc} by the incident detection point.",
+        "evidence_ids": [
+          "ev_1",
+          "ev_2"
+        ]
+      },
+      {
+        "id": "obs_2",
+        "values": [
+          {
+            "key": "pool_first",
+            "field": "first",
+            "value": 0,
+            "evidence_id": "ev_4"
+          },
+          {
+            "key": "pool_max_used",
+            "field": "max",
+            "value": 10,
+            "evidence_id": "ev_4"
+          },
+          {
+            "key": "pool_cap",
+            "field": "max",
+            "value": 10,
+            "evidence_id": "ev_5"
+          }
+        ],
+        "statement": "pool_used went from {pool_first} connections to {pool_max_used}, equal to the flat pool_max of {pool_cap} connections, so the pool was fully consumed.",
+        "evidence_ids": [
+          "ev_4",
+          "ev_5"
+        ]
+      },
+      {
+        "id": "obs_3",
+        "values": [
+          {
+            "key": "pend_first",
+            "field": "first",
+            "value": 0,
+            "evidence_id": "ev_6"
+          },
+          {
+            "key": "pend_max",
+            "field": "max",
+            "value": 35,
+            "evidence_id": "ev_6"
+          }
+        ],
+        "statement": "pool_pending rose from {pend_first} to {pend_max} requests waiting for a connection at the onset point.",
+        "evidence_ids": [
+          "ev_6"
+        ]
+      },
+      {
+        "id": "obs_4",
+        "values": [
+          {
+            "key": "pwait_first",
+            "field": "first",
+            "value": 0.0009588785046728971,
+            "evidence_id": "ev_7"
+          },
+          {
+            "key": "pwait_max",
+            "field": "max",
+            "value": 1.4609146744959485,
+            "evidence_id": "ev_7"
+          }
+        ],
+        "statement": "pool_wait_p95 rose from about {pwait_first} s in the pre-onset points to {pwait_max} s.",
+        "evidence_ids": [
+          "ev_7"
+        ]
+      },
+      {
+        "id": "obs_5",
+        "values": [
+          {
+            "key": "db_first",
+            "field": "first",
+            "value": 0.004835502283105023,
+            "evidence_id": "ev_8"
+          },
+          {
+            "key": "db_max",
+            "field": "max",
+            "value": 0.4595338894404526,
+            "evidence_id": "ev_8"
+          }
+        ],
+        "statement": "db_operation_p95 rose from about {db_first} s before onset to {db_max} s at the detection point, holding connections longer.",
+        "evidence_ids": [
+          "ev_8"
+        ]
+      },
+      {
+        "id": "obs_6",
+        "values": [
+          {
+            "key": "el_first",
+            "field": "first",
+            "value": 0.0815609093789489,
+            "evidence_id": "ev_9"
+          },
+          {
+            "key": "el_max",
+            "field": "max",
+            "value": 1,
+            "evidence_id": "ev_9"
+          }
+        ],
+        "statement": "eventloop_utilization rose from about {el_first} in the pre-onset points to {el_max} at the same timestamp the pool saturated.",
+        "evidence_ids": [
+          "ev_9"
+        ]
+      },
+      {
+        "id": "obs_7",
+        "values": [
+          {
+            "key": "err_count",
+            "field": "p1.count",
+            "value": 19,
+            "evidence_id": "ev_11"
+          }
+        ],
+        "statement": "The only error log pattern in the incident window is 'request failed' with exception 'timeout exceeded when trying to connect', {err_count} occurrences on version 1.0.1 between 21:38:59.907Z and 21:39:01.210Z.",
+        "evidence_ids": [
+          "ev_11"
+        ]
+      },
+      {
+        "id": "obs_8",
+        "values": [
+          {
+            "key": "err_vol_max",
+            "field": "error.max",
+            "value": 11,
+            "evidence_id": "ev_3"
+          }
+        ],
+        "statement": "Log volume shows error lines only in the 21:39 minute bucket onward, reaching {err_vol_max} lines, while the incident onset was at 21:38:51.",
+        "evidence_ids": [
+          "ev_3"
+        ]
+      },
+      {
+        "id": "obs_9",
+        "values": [
+          {
+            "key": "warn_count",
+            "field": "p1.count",
+            "value": 12,
+            "evidence_id": "ev_13"
+          }
+        ],
+        "statement": "A warn pattern 'order rejected' spans versions 1.0.0 and 1.0.1 with {warn_count} occurrences starting at 21:37:16.658Z, before the latency onset, indicating background noise.",
+        "evidence_ids": [
+          "ev_13"
+        ]
+      }
+    ],
+    "recommendations": [
+      {
+        "risk": "medium",
+        "action": "Identify and optimize the database operations behind the db_operation_p95 jump (e.g. missing indexes, lock contention, slow queries) so connections are held for shorter periods.",
+        "rationale": "Slower DB operations keeping the 10-connection pool fully occupied is the mechanism that produced the queueing and latency breach.",
+        "hypothesis_id": "hyp_1"
+      },
+      {
+        "risk": "medium",
+        "action": "Raise or re-tune the connection pool ceiling and acquisition timeout, and add pool_wait/saturation alerting ahead of the SLO.",
+        "rationale": "The pool was pinned at its 10-connection ceiling with 35 pending requests, so a small increase in headroom would reduce queueing and premature connect timeouts.",
+        "hypothesis_id": "hyp_1"
+      },
+      {
+        "risk": "low",
+        "action": "Schedule follow-up profiling of event-loop utilization under pool-backlog conditions to confirm it is a symptom rather than an independent bottleneck.",
+        "rationale": "Event-loop utilization reached its ceiling at the same timestamp as the pool saturation, which currently points to it being a byproduct.",
+        "hypothesis_id": "hyp_2"
+      },
+      {
+        "risk": "low",
+        "action": "Verify downstream database health and dependency latency during the onset window with dependency-side metrics.",
+        "rationale": "The DB operation slowdown could originate in the database rather than the service; dependency-side signals were not checked.",
+        "hypothesis_id": "hyp_3"
+      },
+      {
+        "risk": "low",
+        "action": "Review the 1.0.1 rollout timeline and connection-timeout configuration for that version.",
+        "rationale": "The connection-timeout errors appear only from version 1.0.1, though the shared warn pattern predates the incident and spans both versions.",
+        "hypothesis_id": "hyp_4"
+      }
+    ]
+  },
+  "validation": "failed",
+  "violations": [
+    {
+      "path": "observations.0.values",
+      "rule": "V3",
+      "message": "value key \"lat_series\" is not used in the statement"
+    },
+    {
+      "path": "timeline.0.event",
+      "rule": "V3",
+      "message": "unbound quantity \"0.0098\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.0.event",
+      "rule": "V3",
+      "message": "unbound quantity \"0\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.0.event",
+      "rule": "V3",
+      "message": "unbound quantity \"10\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.0.evidence_ids",
+      "rule": "V1",
+      "message": "ev_14 is unknown or not status ok"
+    },
+    {
+      "path": "timeline.2.event",
+      "rule": "V3",
+      "message": "unbound quantity \"10\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.2.event",
+      "rule": "V3",
+      "message": "unbound quantity \"35\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.2.event",
+      "rule": "V3",
+      "message": "unbound quantity \"0.75\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.2.event",
+      "rule": "V3",
+      "message": "unbound quantity \"0.33\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.2.event",
+      "rule": "V3",
+      "message": "unbound quantity \"1\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.2.event",
+      "rule": "V3",
+      "message": "unbound quantity \"1.54\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.4.event",
+      "rule": "V3",
+      "message": "unbound quantity \"19\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.5.event",
+      "rule": "V3",
+      "message": "unbound quantity \"2.286\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.5.event",
+      "rule": "V3",
+      "message": "unbound quantity \"1.46\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.5.event",
+      "rule": "V3",
+      "message": "unbound quantity \"32\" — use a {key} placeholder bound in values"
+    },
+    {
+      "path": "timeline.5.event",
+      "rule": "V3",
+      "message": "unbound quantity \"0.46\" — use a {key} placeholder bound in values"
+    }
+  ],
+  "warnings": [
+    {
+      "path": "observations.7.statement",
+      "rule": "W-time",
+      "message": "time literal \"21:39\" — times belong in the timeline"
+    },
+    {
+      "path": "observations.7.statement",
+      "rule": "W-time",
+      "message": "time literal \"21:38:51\" — times belong in the timeline"
+    },
+    {
+      "path": "recommendations.1",
+      "rule": "W-rec",
+      "message": "quantity \"35\" in a proposal"
+    }
+  ],
+  "repair_attempted": true
+}
