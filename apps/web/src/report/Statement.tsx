@@ -28,7 +28,7 @@ export function Num({ v, withCountUnit = false, showUnit = true }: { v: BoundVal
   const ev = byId.get(v.evidence_id);
   const unit = unitFor(ev, v.field);
   const f = formatValue(v.value, unit);
-  const unitText = !showUnit || !f.unit || (!withCountUnit && COUNT_UNITS.has(f.unit)) ? '' : f.unit;
+  const unitText = !showUnit || !f.unit || f.unit === 'count' || (!withCountUnit && COUNT_UNITS.has(f.unit)) ? '' : f.unit;
   const active = selected?.evidenceId === v.evidence_id && selected.field === v.field;
   const what = `${evidenceLabel(ev)} ${v.field}`;
   return (
@@ -65,9 +65,6 @@ export function EvidenceRef({ id }: { id: string }) {
     </button>
   );
 }
-
-/** @deprecated name kept for the step-(a) pages; use EvidenceRef. */
-export const EvidenceChip = EvidenceRef;
 
 export function SourceIcon({ source }: { source?: 'prometheus' | 'loki' }) {
   if (source === 'prometheus') {

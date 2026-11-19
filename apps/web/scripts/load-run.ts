@@ -6,10 +6,9 @@
  */
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import type { MemoryStore } from '../../traceops/src/api/memory-store.ts';
 
-export const RUNS_DIR = resolve(fileURLToPath(new URL('.', import.meta.url)), '../../../docs/runs');
+export const RUNS_DIR = resolve(import.meta.dirname, '../../../docs/runs');
 
 const read = (dir: string, f: string) => JSON.parse(readFileSync(join(dir, f), 'utf8'));
 const FILES = ['summary.json', 'evidence.json', 'report.json', 'llm_calls.json'];
