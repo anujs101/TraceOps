@@ -1,4 +1,4 @@
-# TraceOps MVP contracts — v1.5 (2026-11-19; v1.4 2026-11-19; v1.3 2026-11-19; v1.2 2026-11-19; v1.1 2026-11-18; v1 frozen 2026-11-17)
+# TraceOps MVP contracts — v1.6 (2026-11-20; v1.5 2026-11-19; v1.4 2026-11-19; v1.3 2026-11-19; v1.2 2026-11-19; v1.1 2026-11-18; v1 frozen 2026-11-17)
 
 These are the boundaries that let the demo-service and TraceOps be built **in parallel**. A build session may depend only on these files and on `@traceops/contracts`, never on another session's implementation.
 
@@ -20,6 +20,11 @@ Only these changed relative to frozen v1 (`05cad4a`). Everything else is identic
 - `environment.md` §4 and new §6: `LLM_PROVIDER`, `GROQ_*` variables, the provider interface, adapter requirements and error handling. `ANTHROPIC_API_KEY` is removed.
 - `tools.md` §1 and `evidence-and-report.md` §2: provider-neutral wording (Groq replaces the Claude `output_config` references).
 - `packages/contracts/src/llm.ts`: `LlmCall`, `LLM_ERROR_KINDS`, `LLM_DEFAULTS` (+ tests).
+
+## v1.6 amendments (2026-11-20): refused metric calls do not count toward the 12
+**Reason:** under v1.5 a `query_metric` call refused by the metric share still counted toward the 12, so the log reserve shrank by one for every refused call. In round-2 eval every run had at least one log call refused by the global budget, and in `docs/runs/s2-20261119T191005Z` 8 ok + 3 refused metric calls + 1 `log_volume` used all 12, so all three log calls were refused (`docs/runs/EVAL.md`). Proposal: `docs/proposals/tools-budget-refusals.md`. Only this changed relative to v1.5:
+- `tools.md` §1 "Metric share of the budget": a refused call is still recorded as an evidence row but does not count toward the 12; ids stay contiguous, so an investigation can hold more than 12 rows.
+- `packages/contracts/src/tools.ts`: comment on `LIMITS.logCallReserve` only. No schema, status or fixture change.
 
 ## v1.5 amendments (2026-11-19): tool-layer enforcement of the metric share and JSON-string input
 **Reason:** the investigator prompt asks for at most 8 `query_metric` calls so 4 stay for log tools, but the model is untrusted and ignored it in both round-1 runs (10 and 12 metric calls; `docs/runs/s1-20261119T142737Z`, `s2-20261119T144936Z`), so log calls were refused with `budget_exhausted`. One call per run was also lost to JSON-string-encoded arguments (`invalid_input: expected object, received string`). Proposal: `docs/proposals/tools-budget-enforcement.md`. Only these changed relative to v1.4:
