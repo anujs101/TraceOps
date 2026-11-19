@@ -16,7 +16,10 @@ import { redactSecrets } from '../llm/errors.ts'; // types.ts: investigator may 
 import { runToolLoop, type LocalTool } from '../llm/tool-loop.ts';
 import { generateValidatedReport } from '../report/generate.ts';
 import type { EvidenceSink, Investigate, InvestigateInput, InvestigationOutcome } from '../seams.ts';
+import { estimateInputTokens, PacedProvider, pacingFor, TokenPacer, type PaceEvent, type PacingConfig } from './pacing.ts';
 import { buildReportSystemPrompt, buildReportUserMessage, buildSystemPrompt, buildUserMessage, INVESTIGATION_BUDGET } from './prompt.ts';
+
+export { estimateInputTokens };
 
 /** 429 waits up to ~60 s are honoured (spec D §5.2). */
 export const INVESTIGATOR_RETRY: RetryPolicy = { maxAttempts: 4, baseDelayMs: 2000, maxDelayMs: 60_000 };
@@ -35,13 +38,14 @@ export type InvestigatorOptions = {
   reportMaxOutputTokens?: number | ((estimatedInputTokens: number) => number);
   /** Called once per report/repair request with the cap that was applied. */
   onReportCap?: (info: { turn: number | undefined; estimatedInputTokens: number; maxOutputTokens: number }) => void;
+  /**
+   * Tokens-per-minute pacing. Default: looked up by provider name in PROVIDER_PACING
+   * (groq: on, deepseek: off). Pass null to disable, or a config to override.
+   */
+  pacing?: PacingConfig;
+  /** Called when a request had to wait for the TPM budget. */
+  onPace?: (e: PaceEvent) => void;
 };
-
-/** Rough token estimate (~4 chars/token) of what a request sends: messages + schema/tools. */
-export function estimateInputTokens(req: { messages: Array<{ content?: string | null }>; schema?: unknown; tools?: unknown }): number {
-  const chars = req.messages.reduce((n, m) => n + (m.content?.length ?? 0), 0) + JSON.stringify(req.schema ?? req.tools ?? '').length;
-  return Math.ceil(chars / 4);
-}
 
 export class InvestigationCancelled extends Error {
   constructor() { super('investigation cancelled'); this.name = 'InvestigationCancelled'; }
@@ -89,8 +93,12 @@ export function makeInvestigate(opts: InvestigatorOptions = {}): Investigate {
     const sink: EvidenceSink = { append: async (row) => { evidence.push(row); await input.evidence.append(row); } };
 
     const call = <T>(fn: () => Promise<T>) => withRetry(fn, opts.retry ?? INVESTIGATOR_RETRY, opts.sleep);
+    const pacing = opts.pacing !== undefined ? opts.pacing : pacingFor(input.provider.name);
+    const sleep = opts.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+    const paced = pacing ? new PacedProvider(input.provider, new TokenPacer(pacing.tokensPerMinute, now, sleep, opts.onPace), check) : input.provider;
     const cap = opts.reportMaxOutputTokens;
-    const capped = typeof cap === 'function' ? new ReportCapProvider(input.provider, cap, opts.onReportCap) : input.provider;
+    const capped = typeof cap === 'function' ? new ReportCapProvider(paced, cap, opts.onReportCap) : paced;
+    // order: cancel check → report cap → pacing (sees the final cap; re-checks cancel after waiting) → provider
     const provider = new CancelCheckingProvider(capped, check);
 
     try {
@@ -148,9 +156,14 @@ export function makeInvestigate(opts: InvestigatorOptions = {}): Investigate {
   };
 }
 
-function describeError(e: unknown): string {
+/** Provider account identifiers (e.g. Groq "organization `org_…`") are not secrets but are not shown either. */
+export function redactAccountIds(text: string): string {
+  return text.replace(/\borg_[A-Za-z0-9]+/g, 'org_[REDACTED]');
+}
+
+export function describeError(e: unknown): string {
   const msg = e instanceof LlmError ? `llm_${e.kind}: ${e.message}` : e instanceof Error ? e.message : String(e);
-  return redactSecrets(msg).slice(0, 300);
+  return redactAccountIds(redactSecrets(msg)).slice(0, 300);
 }
 
 export const investigate: Investigate = makeInvestigate();

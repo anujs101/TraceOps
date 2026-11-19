@@ -124,7 +124,7 @@ async function run(store: MemoryStore, id: string, steps: Step[]): Promise<void>
     started_at: startedAt, finished_at: null, tool_calls: 0, cancel_requested: false, error: null,
   };
   store.putInvestigation(row);
-  const out = await makeInvestigate({ sleep: async () => {} })({
+  const out = await makeInvestigate({ pacing: null, sleep: async () => {} })({ // scripted provider: no TPM budget
     investigationId: id, incident: S1_INCIDENT, investigationStart: startedAt, provider,
     createTools: fixtureCreateTools({ now: () => base + 2000 }).create,
     evidence: store.evidenceSink(id), reports: store.reportSink(id),

@@ -7,7 +7,7 @@ import { logPatternsOutput, queryMetricOutput } from '../../scripts/lib/fixture-
 import { fixtureCreateTools, INV_ID, INVESTIGATION_START, memorySinks, S1_INCIDENT, ScriptedProvider, type ChatStep, type Step } from './fakes.ts';
 
 const noSleep = async () => {};
-const investigate = makeInvestigate({ sleep: noSleep });
+const investigate = makeInvestigate({ pacing: null, sleep: noSleep });
 
 const usedMax = queryMetricOutput('pool_used').stats!.max;
 const p1Count = logPatternsOutput().patterns[0]!.count;
@@ -201,7 +201,7 @@ describe('investigate: failures', () => {
 
   it('waits out a 429 within the 60 s cap and records each attempt under the same turn', async () => {
     const waits: number[] = [];
-    const inv = makeInvestigate({ sleep: async (ms) => { waits.push(ms); } });
+    const inv = makeInvestigate({ pacing: null, sleep: async (ms) => { waits.push(ms); } });
     const t = setup([{ kind: 'chat_error', error: new LlmError('rate_limit', 'slow down', { status: 429, retryAfterMs: 45_000 }) }, ...THREE_TOOL_TURNS, { kind: 'structured', value: VALID_REPORT }]);
     const out = await inv(t.input);
     expect(out.status).toBe('completed');
@@ -221,7 +221,7 @@ describe('investigate: failures', () => {
 describe('investigate: per-request report cap', () => {
   it('computes max output tokens per report request from its estimated input', async () => {
     const caps: Array<{ turn: number | undefined; estimatedInputTokens: number; maxOutputTokens: number }> = [];
-    const inv = makeInvestigate({ sleep: noSleep, reportMaxOutputTokens: (n) => Math.min(4000, 7500 - n), onReportCap: (c) => caps.push(c) });
+    const inv = makeInvestigate({ pacing: null, sleep: noSleep, reportMaxOutputTokens: (n) => Math.min(4000, 7500 - n), onReportCap: (c) => caps.push(c) });
     const t = setup([...THREE_TOOL_TURNS, { kind: 'structured', value: INVALID_REPORT }, { kind: 'structured', value: VALID_REPORT }]);
     await inv(t.input);
     const sent = t.scripted.requests.filter((r) => r.kind === 'structured').map((r) => (r.req as { maxOutputTokens: number }).maxOutputTokens);
@@ -233,7 +233,7 @@ describe('investigate: per-request report cap', () => {
 
   it('tool turns use the chat cap', async () => {
     const t = setup([...THREE_TOOL_TURNS, { kind: 'structured', value: VALID_REPORT }]);
-    await makeInvestigate({ sleep: noSleep, chatMaxOutputTokens: 1024 })(t.input);
+    await makeInvestigate({ pacing: null, sleep: noSleep, chatMaxOutputTokens: 1024 })(t.input);
     expect(t.scripted.requests.filter((r) => r.kind === 'chat').every((r) => (r.req as { maxOutputTokens: number }).maxOutputTokens === 1024)).toBe(true);
   });
 });
