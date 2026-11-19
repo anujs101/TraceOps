@@ -3,12 +3,7 @@
 ## Done and verified
 - Commits `4447f69`…`96bf614`, steps (a)–(f), plus `94c2756`: a pinned unvalidated strip, added after the real-app check.
 - `/verify` 17:31: typecheck passes in all 4 workspaces; tests contracts 114/114, demo-service 16/16, app 483 + 79 skipped, web 43/43.
-- Web tests:
-  - every number is clickable (each `num-*` opens the drawer, the claim matches, the exact stored value is shown);
-  - the unvalidated banner and its violations stay visible with every `<details>` closed;
-  - no `ev_N`/`obs_N`/`hyp_N` text in the page body;
-  - `formatValue` table on real run values;
-  - the recorded S1 run (`docs/runs/s1-20261119T104115Z`) renders: 16 evidence rows, 4 budget_exhausted, TTR 37.8 s, key numbers.
+- Web tests: every number opens its evidence and shows the exact stored value; the unvalidated banner and its violations stay visible with every `<details>` closed; no `ev_N`/`obs_N`/`hyp_N` text in the page body; `formatValue` checked on real run values; the recorded S1 run renders (16 evidence rows, TTR 37.8 s).
 - Vite proxy target from `VITE_API_TARGET` (default `http://localhost:4000`). Unit-tested, and seen working live: 5174 → 4100.
 - `/contract-check`: CONTRACTS UNCHANGED. Outside `apps/web/` only the build log and one proposal changed.
 - Screenshots, viewed: 4 before/after pairs plus light 1440 and dark 390, in `~/TraceOps-video/screens/`. Every capture had 0 px horizontal overflow.
@@ -27,8 +22,7 @@
 
 ## Deviations and proposals
 - [validator-timeline-placeholders.md](../proposals/validator-timeline-placeholders.md): V3 doesn't check `{key}` in timeline events. The recorded S1 run passed with `{pool_used_early}` and `{pool_used_mid}` unbound. The UI marks them unbound.
-- Report sections are grouped into `report/Sections.tsx` rather than one file per section.
-- A theme toggle follows the system theme by default.
+- Report sections share one file, `report/Sections.tsx`; the theme follows the system by default.
 - Prose like "{el_max} s" absorbs the unit and shows "19.4 ms". Only when the following unit exactly equals the evidence unit (s, req/s, timeouts/s).
 - The list makes N+1 reads (investigations + latest report per incident). A summary endpoint would remove this (not proposed yet).
 
