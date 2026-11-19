@@ -1,0 +1,23 @@
+{
+  "scenario": "S1",
+  "times": {
+    "tBaselineStart": "2026-11-19T05:57:02.000Z",
+    "tDeploy": "2026-11-19T05:58:32.000Z",
+    "tDrop": "2026-11-19T06:04:17.000Z",
+    "tEnd": "2026-11-19T06:05:17.000Z"
+  },
+  "summary": {
+    "baseline_clean": true,
+    "latency_alert_fired": true,
+    "pool_used_max": 10,
+    "pool_max": 10,
+    "pool_used_at_max_seconds": 205,
+    "pool_timeouts_increase": 6562.133833285261,
+    "eventloop_utilization_max": 0.11118069838004918,
+    "pool_used_after_load_drop": 10
+  },
+  "verdict": {
+    "valid": true,
+    "reasons": []
+  }
+}

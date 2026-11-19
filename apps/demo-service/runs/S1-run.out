@@ -1,0 +1,37 @@
+[2026-11-19T05:57:01.657Z] baseline: FAULT=none SERVICE_VERSION=1.0.0
+[2026-11-19T05:58:32.215Z] deploy: FAULT=pool_leak SERVICE_VERSION=1.0.1
+[2026-11-19T05:58:47.791Z] latency_p95=0.009 breaches=0/2
+[2026-11-19T05:59:02.803Z] latency_p95=0.009 breaches=0/2
+[2026-11-19T05:59:17.821Z] latency_p95=0.009 breaches=0/2
+[2026-11-19T05:59:32.837Z] latency_p95=0.009 breaches=0/2
+[2026-11-19T05:59:47.850Z] latency_p95=0.009 breaches=0/2
+[2026-11-19T06:00:02.863Z] latency_p95=0.009 breaches=0/2
+[2026-11-19T06:00:17.881Z] latency_p95=0.009 breaches=0/2
+[2026-11-19T06:00:32.895Z] latency_p95=0.009 breaches=0/2
+[2026-11-19T06:00:47.910Z] latency_p95=0.009 breaches=0/2
+[2026-11-19T06:01:02.927Z] latency_p95=2.136 breaches=1/2
+[2026-11-19T06:01:17.934Z] latency_p95=2.344 breaches=2/2
+[2026-11-19T06:01:17.934Z] latency alert condition holds; load continues 180s
+[2026-11-19T06:04:17.940Z] {"sent":12808,"codes":{"200":5338,"201":1305,"409":15,"500":6078},"errors":12}
+[2026-11-19T06:05:27.945Z] queries
+{
+  "scenario": "S1",
+  "times": {
+    "tBaselineStart": "2026-11-19T05:57:02.000Z",
+    "tDeploy": "2026-11-19T05:58:32.000Z",
+    "tDrop": "2026-11-19T06:04:17.000Z",
+    "tEnd": "2026-11-19T06:05:17.000Z"
+  },
+  "summary": {
+    "baseline_clean": true,
+    "latency_alert_fired": true,
+    "pool_used_max": 10,
+    "pool_max": 10,
+    "pool_used_at_max_seconds": 205,
+    "pool_timeouts_increase": 6562.133833285261,
+    "eventloop_utilization_max": 0.11118069838004918,
+    "pool_used_after_load_drop": 10
+  }
+}
+scenarioValid('S1') => {"valid":true,"reasons":[]}
+exit=0

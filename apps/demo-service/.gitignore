@@ -1,2 +1,4 @@
 dist/
-runs/
+runs/*
+!runs/S1-run.out
+!runs/S1-summary.json
