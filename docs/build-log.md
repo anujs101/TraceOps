@@ -8,3 +8,11 @@
 - 11:37 | all | vitest native rolldown binding missing (npm optional-deps bug) | --no-save install per worktree; regenerate lockfile clean at merge | lockfile drift
 - 11:40 | B | asked approval every step | removed per-step gate; abort → throw (matches D's cancel design) | operator was the bottleneck
 - 11:40 | A | idle, S2 ready | deferred S2 run | CPU contention with B/C/D tests
+- 11:44 | A | DONE + handoff: 7 commits, S1 valid, contracts unchanged; committed runs/S1-run.out + summary, excluded app log (hostname) | none | —
+- 11:44 | C | step 2 detector: 53 tests passed first try → C mutated resolve_after itself, 8 tests failed, restored | none — kept as proof tests are real | self-verification worth showing
+- 11:44 | C | added beyond-contract behaviour: restart → recovering(0), owed-write retry | must list in handoff for contract-guardian | undeclared behaviour is a merge risk
+- 11:44 | C | reopen proposal recommends reopen_window_s: 0 for eval | deferred to Wave 2; contract default kept | operator decision, not session's
+- 11:45 | D | verified ev_N is in every tool output body → tool_data mismatch cosmetic, non-blocking proposal | none | check done before deciding
+- 11:45 | D | had mapped failed-after-repair → failed; contract says completed + validation:'failed' | corrected per persistence.md §2 | contract > plan
+- 11:45 | ops | root cause of missing vitest binding: my Wave 1 instruction ran `npm install` per worktree, rewriting the lockfile (npm/cli#4828) | D restored lockfile from HEAD + `npm ci`; use `npm ci` in worktrees | operator error; `npm ci` never rewrites the lockfile
+- 11:46 | C,D | sessions paused for approval between steps | told both to run to completion, stop only on stop conditions / before Groq spend | operator was the bottleneck
