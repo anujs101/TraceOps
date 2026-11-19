@@ -12,7 +12,7 @@ description: How to run TraceOps evaluation scenarios S1 (pool leak) or S2 (CPU 
 
 ## Timeline (both scenarios)
 1. Start demo-service with `FAULT=none SERVICE_VERSION=1.0.0`; load at 30 rps (80% `GET /products`, 20% `POST /orders`, `LOW_STOCK_SHARE=0.02`) for **≥ 90 s**.
-2. Restart ("deploy") with `SERVICE_VERSION=1.0.1` and `FAULT=pool_leak` (S1) or `FAULT=cpu_burn CPU_ITER=300000` (S2). Keep the load running.
+2. Restart ("deploy") with `SERVICE_VERSION=1.0.1` and `FAULT=pool_leak` (S1) or `FAULT=cpu_burn CPU_ITER=400000` (S2, contracts v1.4). Keep the load running.
 3. Keep the load until the incident is detected, **plus 3 minutes**.
 4. Drop to **6 rps for ≥ 60 s** (this is what separates S1, no recovery, from S2, recovery).
 5. Stop the load; record the end time.

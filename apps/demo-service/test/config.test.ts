@@ -13,8 +13,8 @@ describe('fault flag parsing', () => {
     expect(() => parseFault('cpu_spike')).toThrow(/invalid FAULT/);
     expect(() => parseFault('')).toThrow(/invalid FAULT/);
   });
-  it('CPU_ITER defaults to 300000 and must be a positive integer', () => {
-    expect(parseCpuIter(undefined)).toBe(300000);
+  it('CPU_ITER defaults to 400000 (contracts v1.4) and must be a positive integer', () => {
+    expect(parseCpuIter(undefined)).toBe(400000);
     expect(parseCpuIter('1000')).toBe(1000);
     expect(() => parseCpuIter('0')).toThrow();
     expect(() => parseCpuIter('abc')).toThrow();
