@@ -331,25 +331,47 @@ describe('budget', () => {
     expect((await h.call('query_metric', { nope: true })).status).toBe('budget_exhausted');
   });
 
-  it('v1.5: query_metric gets at most maxToolCalls - logCallReserve calls; log tools keep the rest', async () => {
+  it('v1.5: query_metric gets at most maxToolCalls - logCallReserve calls; v1.6: refusals are not charged, log tools keep all 4', async () => {
     const h = harness('S1', [loadFixtureText('S1', 'prom-pool_used.json')]); // maxToolCalls 12
     const args = { metric: 'pool_used', window: 'incident' };
     for (let i = 1; i <= 8; i++) expect((await h.call('query_metric', args)).status).toBe('ok');
-    const ninth = await h.call('query_metric', args);
-    expect(ninth).toMatchObject({ evidence_id: 'ev_9', status: 'budget_exhausted' });
-    expect(ninth.error).toBe('budget_exhausted: query_metric limit reached (8 of 12 calls); the remaining calls are reserved for log tools (log_volume, log_patterns, search_logs)');
-    expect(h.calls).toHaveLength(8); // nothing sent for the refused call
-    const row = h.rows[8]!;
-    expect(Evidence.safeParse(row).error).toBeUndefined();
-    expect(row).toMatchObject({ id: 'ev_9', tool: 'query_metric', status: 'budget_exhausted', rendered_query: null, window: null, args, stats: {} });
-    // log tools still run; the refused call counted toward the 12 (ev_10..ev_12 are left)
-    for (const id of ['ev_10', 'ev_11', 'ev_12']) {
+    const MSG = 'budget_exhausted: query_metric limit reached (8 of 12 calls); the remaining calls are reserved for log tools (log_volume, log_patterns, search_logs). This refused call did not use up a call.';
+    // three refused metric calls in a row (round-2 eval: the model kept asking)
+    for (const id of ['ev_9', 'ev_10', 'ev_11']) {
+      const out = await h.call('query_metric', args);
+      expect(out).toMatchObject({ evidence_id: id, status: 'budget_exhausted', error: MSG });
+    }
+    expect(h.calls).toHaveLength(8); // nothing sent for the refused calls
+    for (const row of h.rows.slice(8, 11)) {
+      expect(Evidence.safeParse(row).error).toBeUndefined();
+      expect(row).toMatchObject({ tool: 'query_metric', status: 'budget_exhausted', rendered_query: null, window: null, args, stats: {} });
+    }
+    // all 4 reserved log calls still run (ev_12..ev_15)
+    for (const id of ['ev_12', 'ev_13', 'ev_14', 'ev_15']) {
       const out = await h.call('log_volume', { window: 'incident' });
       expect(out.evidence_id).toBe(id);
       expect(out.status).not.toBe('budget_exhausted');
     }
+    // 8 metric + 4 log = 12 charged: now the global budget is used up, for every tool
     expect((await h.call('log_volume', { window: 'incident' })).error).toMatch(/^budget_exhausted: the tool budget is used up/);
-    expect(h.rows.map((r) => r.id)).toEqual(Array.from({ length: 13 }, (_, i) => `ev_${i + 1}`));
+    expect((await h.call('query_metric', args)).error).toMatch(/^budget_exhausted: the tool budget is used up/);
+    expect(h.rows.map((r) => r.id)).toEqual(Array.from({ length: 17 }, (_, i) => `ev_${i + 1}`));
+  });
+
+  it('v1.6: round-2 S2 run 3 sequence keeps its log calls (1 log_volume, 8 ok + 3 refused metrics, 3 log calls)', async () => {
+    const h = harness('S1', [loadFixtureText('S1', 'prom-pool_used.json')]);
+    await h.call('log_volume', { window: 'incident' });
+    for (let i = 0; i < 11; i++) await h.call('query_metric', { metric: 'pool_used', window: 'incident' });
+    const logs = [await h.call('log_patterns', { window: 'incident', severity: 'warn' }), await h.call('search_logs', { window: 'incident', severity: 'error', match: null, limit: 20 }), await h.call('log_patterns', { window: 'incident', severity: 'error' })];
+    for (const out of logs) expect(out.error ?? '').not.toMatch(/^budget_exhausted/);
+    expect(h.rows.filter((r) => r.status === 'budget_exhausted')).toHaveLength(3); // only the 3 metric refusals
+  });
+
+  it('v1.6: parallel metric calls past the cap are refused deterministically in request order', async () => {
+    const h = harness('S1', [loadFixtureText('S1', 'prom-pool_used.json')]);
+    const outs = await Promise.all(Array.from({ length: 10 }, () => h.call('query_metric', { metric: 'pool_used', window: 'incident' })));
+    expect(outs.map((o) => o.status)).toEqual([...Array(8).fill('ok'), 'budget_exhausted', 'budget_exhausted']);
+    expect(outs.map((o) => o.evidence_id)).toEqual(Array.from({ length: 10 }, (_, i) => `ev_${i + 1}`));
   });
 
   it('v1.5: the metric limit counts invalid query_metric calls too, and not log calls', async () => {
