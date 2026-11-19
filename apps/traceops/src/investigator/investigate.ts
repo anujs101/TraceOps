@@ -7,10 +7,14 @@
  *    (persistence.md §2: "validation: failed and insufficient_evidence are
  *    completed investigations, never retried"; the UI shows "unvalidated")
  *  - cancel_requested observed before a model turn or tool call → cancelled
- *  - any other error (LLM transport after retries, tool layer crash) → failed
+ *  - any other error (LLM transport after retries, report sink) → failed
+ *
+ * A tool crash is data, not an infrastructure failure: runToolLoop turns it into a tool_error
+ * result (redacted, ≤ 300 chars, `toolErrorText`) that the model sees, and the loop continues.
+ * The outcome is then decided by the report like any other run.
  */
 import { z } from 'zod';
-import type { Evidence } from '@traceops/contracts';
+import { LLM_ERROR_KINDS, type Evidence, type LlmErrorKind } from '@traceops/contracts';
 import { LlmError, withRetry, type LlmProvider, type RetryPolicy } from '../llm/index.ts';
 import { redactSecrets } from '../llm/errors.ts'; // types.ts: investigator may depend on index/errors/recorder
 import { runToolLoop, type LocalTool } from '../llm/tool-loop.ts';
@@ -88,9 +92,11 @@ export function makeInvestigate(opts: InvestigatorOptions = {}): Investigate {
       if (cancelled) throw new InvestigationCancelled();
     };
 
-    // tee: the validator needs exactly the rows the model saw, in order
+    // tee: the validator sees only rows that are durably stored, in order. A row whose write
+    // fails is never citable: it is not added here, and the write error propagates to the tool
+    // (the model gets a tool_error), so a report can never cite an ev_N the UI can't show.
     const evidence: Evidence[] = [];
-    const sink: EvidenceSink = { append: async (row) => { evidence.push(row); await input.evidence.append(row); } };
+    const sink: EvidenceSink = { append: async (row) => { await input.evidence.append(row); evidence.push(row); } };
 
     const call = <T>(fn: () => Promise<T>) => withRetry(fn, opts.retry ?? INVESTIGATOR_RETRY, opts.sleep);
     const pacing = opts.pacing !== undefined ? opts.pacing : pacingFor(input.provider.name);
@@ -161,9 +167,24 @@ export function redactAccountIds(text: string): string {
   return text.replace(/\borg_[A-Za-z0-9]+/g, 'org_[REDACTED]');
 }
 
+/**
+ * The `InvestigationOutcome.error` string format (the seam types it only as string):
+ * `llm_<kind>: <message>` for LLM errors (kind ∈ LLM_ERROR_KINDS), the plain message otherwise;
+ * redacted, ≤ 300 chars. Write it only with describeError; read it only with parseOutcomeError.
+ */
 export function describeError(e: unknown): string {
   const msg = e instanceof LlmError ? `llm_${e.kind}: ${e.message}` : e instanceof Error ? e.message : String(e);
   return redactAccountIds(redactSecrets(msg)).slice(0, 300);
+}
+
+export type OutcomeError = { llmKind: LlmErrorKind | null; message: string };
+
+/** Inverse of describeError: the LLM error kind (null for non-LLM errors) and the message. */
+export function parseOutcomeError(error: string | null): OutcomeError | null {
+  if (error === null) return null;
+  const m = /^llm_([a-z_]+): ([\s\S]*)$/.exec(error);
+  if (m && (LLM_ERROR_KINDS as readonly string[]).includes(m[1]!)) return { llmKind: m[1] as LlmErrorKind, message: m[2]! };
+  return { llmKind: null, message: error };
 }
 
 export const investigate: Investigate = makeInvestigate();

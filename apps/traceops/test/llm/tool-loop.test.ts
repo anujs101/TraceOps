@@ -39,6 +39,14 @@ describe('tool loop', () => {
     expect(r.messages.find((m) => m.role === 'tool')!.content).toContain(status);
   });
 
+  it('malformed JSON reaches a tool that accepts raw input (it records its own error row)', async () => {
+    const seen: unknown[] = [];
+    const raw: LocalTool<unknown> = { ...adder([]), args: z.unknown(), run: async (x) => { seen.push(x); return { evidence_id: 'ev_1', status: 'error', error: 'invalid_input: not JSON' }; } };
+    const r = await run([toolResponse([{ name: 'add', arguments: '{"a":2,' }]), textResponse('sorry')], [raw]);
+    expect(seen).toEqual(['{"a":2,']);
+    expect(r.toolRuns[0]).toMatchObject({ status: 'ok', result: { evidence_id: 'ev_1', status: 'error' } });
+  });
+
   it('unknown tool names are refused, not executed', async () => {
     const r = await run([toolResponse([{ name: 'shell_exec', arguments: '{"cmd":"cat .env"}' }]), textResponse('ok')], [adder([])]);
     expect(r.toolRuns[0]).toMatchObject({ status: 'unknown_tool', name: 'shell_exec' });
@@ -48,6 +56,16 @@ describe('tool loop', () => {
     const failing: LocalTool<{ a: number; b: number }> = { ...adder([]), run: async () => { throw new Error('backend down'); } };
     const r = await run([toolResponse([{ name: 'add', arguments: '{"a":1,"b":1}' }]), textResponse('noted')], [failing]);
     expect(r.toolRuns[0]).toMatchObject({ status: 'tool_error', result: 'backend down' });
+  });
+
+  it('tool error text is redacted and capped before the model sees it; the loop continues', async () => {
+    const msg = `pg: password auth failed, Authorization: Bearer abcdefgh12345678 key gsk_ABCDEFGHijklmnop12345678 ${'x'.repeat(400)}`;
+    const failing: LocalTool<{ a: number; b: number }> = { ...adder([]), run: async () => { throw new Error(msg); } };
+    const r = await run([toolResponse([{ name: 'add', arguments: '{"a":1,"b":1}' }]), textResponse('noted')], [failing]);
+    const seen = r.messages.find((m) => m.role === 'tool')!.content as string;
+    for (const s of ['abcdefgh12345678', 'gsk_ABCDEFGH']) expect(seen).not.toContain(s);
+    expect((r.toolRuns[0]!.result as string).length).toBeLessThanOrEqual(300);
+    expect(r.finalText).toBe('noted');
   });
 
   it('enforces the tool-call budget', async () => {

@@ -101,6 +101,21 @@ describe.skipIf(!DB_URL)('db: schema, store and llm_calls (real Postgres)', () =
       expect(r.rows).toHaveLength(2);
       for (const k of r.rows) expect(k).toMatchObject({ status: 'queued', idempotency_key: expect.stringMatching(new RegExp(`^incident:${incidentId}:manual:[0-9a-f-]{36}$`)) });
     });
+    it('failRunningForJob closes only this job\'s running investigations as failed(worker_lost)', async () => {
+      const incidentId = await seedIncident(db.pool);
+      const jobA = await store.enqueueManual(incidentId);
+      const jobB = await store.enqueueManual(incidentId);
+      const stale = await store.createInvestigation({ incidentId, jobId: jobA, trigger: 'manual', model: 'm' });
+      const done = await store.createInvestigation({ incidentId, jobId: jobA, trigger: 'manual', model: 'm' });
+      await store.finishInvestigation(done.id, { status: 'cancelled', toolCalls: 0, error: null });
+      const other = await store.createInvestigation({ incidentId, jobId: jobB, trigger: 'manual', model: 'm' });
+
+      expect(await store.failRunningForJob(jobA)).toBe(1);
+      expect(await store.getInvestigation(stale.id)).toMatchObject({ status: 'failed', error: 'worker_lost', finished_at: expect.stringMatching(ISO_UTC_MS) });
+      expect(await store.getInvestigation(done.id)).toMatchObject({ status: 'cancelled', error: null });
+      expect(await store.getInvestigation(other.id)).toMatchObject({ status: 'running' });
+      expect(await store.failRunningForJob(jobA)).toBe(0); // idempotent: first attempt of a job is a no-op
+    });
   });
 
   describe('llm_calls', () => {
