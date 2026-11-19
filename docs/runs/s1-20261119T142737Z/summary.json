@@ -1,0 +1,233 @@
+{
+  "scenario": "S1",
+  "run_start": "2026-11-19T14:27:37.000Z",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "validity_gate": {
+    "times": {
+      "tBaselineStart": "2026-11-19T14:27:39.000Z",
+      "tDeploy": "2026-11-19T14:29:09.000Z",
+      "tDrop": "2026-11-19T14:33:39.000Z",
+      "tEnd": "2026-11-19T14:34:39.000Z"
+    },
+    "signal_summary": {
+      "baseline_clean": true,
+      "latency_alert_fired": true,
+      "pool_used_max": 10,
+      "pool_max": 10,
+      "pool_used_at_max_seconds": 205,
+      "pool_timeouts_increase": 6595.735642426298,
+      "eventloop_utilization_max": 0.17408063293761725,
+      "pool_used_after_load_drop": 10
+    },
+    "scenarioValid": {
+      "valid": true,
+      "reasons": []
+    }
+  },
+  "incident": {
+    "id": "585fc3e3-050e-4b96-a7ea-d86de83a65d8",
+    "group": "http-slo",
+    "severity": "critical",
+    "status": "resolved",
+    "started_at": "2026-11-19T14:30:26.157Z",
+    "detected_at": "2026-11-19T14:30:41.151Z",
+    "resolved_at": "2026-11-19T14:36:26.171Z",
+    "reopen_count": 0,
+    "trigger": [
+      {
+        "rule_id": "http-latency-p95",
+        "query": "latency_p95",
+        "threshold": 1,
+        "observed": 2.3544495959405736,
+        "at": "2026-11-19T14:30:41.151Z"
+      },
+      {
+        "rule_id": "http-error-ratio",
+        "query": "error_ratio_5xx",
+        "threshold": 0.05,
+        "observed": 0.5152939578004498,
+        "at": "2026-11-19T14:30:41.151Z"
+      }
+    ]
+  },
+  "investigation": {
+    "id": "5f93f581-6f21-429e-a0c8-2ad1deba2f18",
+    "status": "completed",
+    "started_at": "2026-11-19T14:30:42.629Z",
+    "finished_at": "2026-11-19T14:31:17.794Z",
+    "tool_calls": 16,
+    "error": null
+  },
+  "report": {
+    "status": "probable_cause",
+    "top_hypothesis": {
+      "category": "db_pool_exhaustion",
+      "confidence": "high"
+    },
+    "hypotheses": [
+      {
+        "id": "hyp_1",
+        "category": "db_pool_exhaustion",
+        "confidence": "high"
+      },
+      {
+        "id": "hyp_2",
+        "category": "other",
+        "confidence": "low"
+      },
+      {
+        "id": "hyp_3",
+        "category": "dependency_latency",
+        "confidence": "low"
+      },
+      {
+        "id": "hyp_4",
+        "category": "cpu_saturation",
+        "confidence": "low"
+      },
+      {
+        "id": "hyp_5",
+        "category": "other",
+        "confidence": "low"
+      }
+    ],
+    "validation": "failed",
+    "repair_attempted": true,
+    "violations": [
+      {
+        "path": "timeline.0.event",
+        "rule": "V3",
+        "message": "unbound quantity \"4\" \u2014 use a {key} placeholder bound in values"
+      }
+    ],
+    "warnings_count": 17
+  },
+  "grade": {
+    "outcome": "invalid",
+    "pass": false,
+    "if_validation_had_passed": {
+      "outcome": "correct",
+      "pass": true
+    },
+    "basis": "gradeRun (packages/contracts/src/grading.ts)"
+  },
+  "actual_onset_order": {
+    "method": "Prometheus via contract METRIC_TEMPLATES, step 5 s, baseline [tBaselineStart,tDeploy], onset = first of 2 consecutive points above max(1.25\u00d7baseline max, mean+4\u03c3, baseline max + max(5%, 0.01)) in [tDeploy, detected_at]",
+    "order": [
+      {
+        "metric": "pool_used",
+        "onset": "2026-11-19T14:29:24.000Z",
+        "baseline_max": 1,
+        "peak": 10
+      },
+      {
+        "metric": "pool_pending",
+        "onset": "2026-11-19T14:30:19.000Z",
+        "baseline_max": 0,
+        "peak": 59
+      },
+      {
+        "metric": "pool_wait_p95",
+        "onset": "2026-11-19T14:30:19.000Z",
+        "baseline_max": 0.0009586757990867578,
+        "peak": 2.4359426229508196
+      },
+      {
+        "metric": "latency_p95",
+        "onset": "2026-11-19T14:30:24.000Z",
+        "baseline_max": 0.01150000000000001,
+        "peak": 2.33365201678326
+      },
+      {
+        "metric": "error_ratio_5xx",
+        "onset": "2026-11-19T14:30:24.000Z",
+        "baseline_max": 0,
+        "peak": 0.45086209372481606
+      },
+      {
+        "metric": "pool_timeout_rate",
+        "onset": "2026-11-19T14:30:24.000Z",
+        "baseline_max": 0,
+        "peak": 13.315230000000001
+      }
+    ],
+    "no_onset": [
+      "latency_p50",
+      "request_rate",
+      "pool_idle",
+      "pool_max",
+      "db_operation_p95",
+      "eventloop_delay_p99",
+      "eventloop_utilization"
+    ]
+  },
+  "evidence": {
+    "rows": 16,
+    "by_tool_and_status": {
+      "query_metric": {
+        "ok": 10,
+        "budget_exhausted": 3
+      },
+      "log_volume": {
+        "ok": 1
+      },
+      "log_patterns": {
+        "ok": 1,
+        "budget_exhausted": 1
+      }
+    },
+    "calls": [
+      "ev_1:query_metric:ok:{\"metric\":\"latency_p95\",\"window\":{\"end\":\"2026-11-19T14:30:42.642Z\",\"start\":\"2026-11-19T14:28:26.157Z\"}}",
+      "ev_2:query_metric:ok:{\"metric\":\"error_ratio_5xx\",\"window\":{\"end\":\"2026-11-19T14:30:42.642Z\",\"start\":\"2026-11-19T14:28:26.157Z\"}}",
+      "ev_3:log_volume:ok:{\"window\":{\"end\":\"2026-11-19T14:30:42.642Z\",\"start\":\"2026-11-19T14:28:26.157Z\"}}",
+      "ev_4:query_metric:ok:{\"metric\":\"pool_pending\",\"window\":{\"end\":\"2026-11-19T14:30:42.642Z\",\"start\":\"2026-11-19T14:28:26.157Z\"}}",
+      "ev_5:query_metric:ok:{\"metric\":\"pool_used\",\"window\":{\"end\":\"2026-11-19T14:30:42.642Z\",\"start\":\"2026-11-19T14:28:26.157Z\"}}",
+      "ev_6:query_metric:ok:{\"metric\":\"pool_wait_p95\",\"window\":{\"end\":\"2026-11-19T14:30:42.642Z\",\"start\":\"2026-11-19T14:28:26.157Z\"}}",
+      "ev_7:query_metric:ok:{\"metric\":\"eventloop_delay_p99\",\"window\":{\"end\":\"2026-11-19T14:30:42.642Z\",\"start\":\"2026-11-19T14:28:26.157Z\"}}",
+      "ev_8:log_patterns:ok:{\"window\":{\"end\":\"2026-11-19T14:30:42.642Z\",\"start\":\"2026-11-19T14:28:26.157Z\"},\"severity\":\"error\"}",
+      "ev_9:query_metric:ok:{\"metric\":\"pool_max\",\"window\":{\"end\":\"2026-11-19T14:30:42.642Z\",\"start\":\"2026-11-19T14:28:26.157Z\"}}",
+      "ev_10:query_metric:ok:{\"metric\":\"db_operation_p95\",\"window\":{\"end\":\"2026-11-19T14:30:42.642Z\",\"start\":\"2026-11-19T14:28:26.157Z\"}}",
+      "ev_11:query_metric:ok:{\"metric\":\"pool_pending\",\"window\":{\"end\":\"2026-11-19T14:28:26.157Z\",\"start\":\"2026-11-19T14:26:09.672Z\"}}",
+      "ev_12:query_metric:ok:{\"metric\":\"request_rate\",\"window\":{\"end\":\"2026-11-19T14:30:42.642Z\",\"start\":\"2026-11-19T14:28:26.157Z\"}}",
+      "ev_13:query_metric:budget_exhausted:{\"metric\":\"pool_timeout_rate\",\"window\":\"incident\"}",
+      "ev_14:query_metric:budget_exhausted:{\"metric\":\"pool_idle\",\"window\":\"incident\"}",
+      "ev_15:query_metric:budget_exhausted:{\"metric\":\"eventloop_utilization\",\"window\":\"incident\"}",
+      "ev_16:log_patterns:budget_exhausted:{\"window\":\"incident\",\"severity\":\"warn\"}"
+    ]
+  },
+  "detection_to_report_s": 36.643,
+  "llm_calls": {
+    "attempts": 7,
+    "errors": 0,
+    "by_stage": {
+      "investigate": 5,
+      "report": 2
+    },
+    "input_tokens": 49705,
+    "output_tokens": 7801,
+    "total_tokens": 57506,
+    "latency_ms_total": 33757
+  },
+  "run": "S1 live regression check after the S2 tuning round (main dc42903)",
+  "machine_load": {
+    "before": "19:57 load averages: 5.35 4.20 3.63",
+    "after": "20:04 load averages: 2.61 3.79 3.71"
+  },
+  "incident_resolution": "resolved normally at 2026-11-19T14:36:26.171Z under FAULT=none + 6 rps (waited 80 s, wait-resolve.ts); no DB edits",
+  "model_reported_onset_order": {
+    "source": "report timeline",
+    "order": [
+      "14:29:26 pool_used first non-zero (after a flat baseline)",
+      "14:30:25 first error log line (timeout exceeded when trying to connect)",
+      "14:30:26 pool at cap + pending + p95 jump + 5xx jump",
+      "14:30:41 peak"
+    ],
+    "baseline_queried": [
+      "pool_pending (ev_11)"
+    ],
+    "vs_actual": "matches: actual first anomalous signal pool_used 14:29:24 (model 14:29:26), then pool_pending/pool_wait_p95 14:30:19, then latency_p95/error_ratio_5xx/pool_timeout_rate 14:30:24"
+  },
+  "failure": "validation failed on 1 violation after repair: [V3] timeline.0.event unbound quantity \"4\" (bare number in a timeline event). No V1, no hypothesis V3.",
+  "budget_note": "10 ok query_metric calls + 3 more requested (budget_exhausted) vs the prompt cap of 8; log tools: log_volume 1 ok, log_patterns 1 ok + 1 budget_exhausted"
+}

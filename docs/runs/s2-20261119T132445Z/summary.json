@@ -1,0 +1,51 @@
+{
+  "run": "S2 live, attempt 1 after the S2 tuning round (main dc42903)",
+  "provider": "deepseek",
+  "run_start": "2026-11-19T13:24:45.000Z",
+  "machine_load": {
+    "before": "18:54 load averages: 6.33 3.76 3.44",
+    "after": "19:07 load averages: 10.20 6.27 4.73"
+  },
+  "validity_gate": {
+    "scenario": "S2",
+    "times": {
+      "tBaselineStart": "2026-11-19T13:24:53.000Z",
+      "tDeploy": "2026-11-19T13:26:23.000Z",
+      "tDrop": "2026-11-19T13:36:24.000Z",
+      "tEnd": "2026-11-19T13:37:24.000Z"
+    },
+    "signal_summary": {
+      "baseline_clean": true,
+      "latency_alert_fired": false,
+      "pool_used_max": 10,
+      "pool_max": 10,
+      "pool_used_at_max_seconds": 30,
+      "pool_timeouts_increase": 0,
+      "eventloop_utilization_max": 1,
+      "pool_used_after_load_drop": null
+    },
+    "scenarioValid": {
+      "valid": false,
+      "reasons": [
+        "latency alert did not fire"
+      ]
+    }
+  },
+  "runner_latency_p95": {
+    "ticks": 40,
+    "max": 0.811,
+    "threshold": 1,
+    "note": "runner stopped at its 600 s safety cap: 'alert did not fire within 600s'"
+  },
+  "incident": null,
+  "investigation": null,
+  "llm_calls": {
+    "attempts": 0,
+    "total_tokens": 0
+  },
+  "grade": {
+    "outcome": "not graded",
+    "basis": "invalid run (scenario-runner skill: an invalid run is reported with its reasons, never graded)"
+  },
+  "note": "Same parameters as S2 run 1 (CPU_ITER=300000), which reached p95 2.14 s. Retried once with identical parameters after a 5-min cool-down."
+}

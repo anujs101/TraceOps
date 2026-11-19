@@ -1,0 +1,52 @@
+{
+  "run": "S2 live, attempt 2 after the S2 tuning round (main dc42903); identical parameters to attempt 1",
+  "provider": "deepseek",
+  "run_start": "2026-11-19T13:42:41.000Z",
+  "machine_load": {
+    "before": "19:12 load averages: 2.71 4.10 4.17",
+    "after": "19:25 load averages: 3.19 3.17 3.72"
+  },
+  "validity_gate": {
+    "scenario": "S2",
+    "times": {
+      "tBaselineStart": "2026-11-19T13:42:43.000Z",
+      "tDeploy": "2026-11-19T13:44:13.000Z",
+      "tDrop": "2026-11-19T13:54:14.000Z",
+      "tEnd": "2026-11-19T13:55:14.000Z"
+    },
+    "signal_summary": {
+      "baseline_clean": true,
+      "latency_alert_fired": false,
+      "pool_used_max": 4,
+      "pool_max": 10,
+      "pool_used_at_max_seconds": 0,
+      "pool_timeouts_increase": 0,
+      "eventloop_utilization_max": 0.8874543606744377,
+      "pool_used_after_load_drop": null
+    },
+    "scenarioValid": {
+      "valid": false,
+      "reasons": [
+        "latency alert did not fire",
+        "event loop not saturated"
+      ]
+    }
+  },
+  "runner_latency_p95": {
+    "ticks": 40,
+    "max": 0.084,
+    "threshold": 1,
+    "note": "runner stopped at its 600 s safety cap"
+  },
+  "incident": null,
+  "investigation": null,
+  "llm_calls": {
+    "attempts": 0,
+    "total_tokens": 0
+  },
+  "grade": {
+    "outcome": "not graded",
+    "basis": "invalid run, never graded"
+  },
+  "note": "CPU_ITER=300000 under-drives cpu_burn on a quieter machine: run 1 (valid) had load ~14.9, attempt 1 ~6-10 (p95 0.81 s), attempt 2 ~3 (p95 0.08 s, ELU 0.887). scenario-db-pool.md 'Known sensitivity'. CPU_ITER not changed: operator decision."
+}
