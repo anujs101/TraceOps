@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { deriveWindows, TOOL_NAMES } from '@traceops/contracts';
-import { buildReportSystemPrompt, buildReportUserMessage, buildSystemPrompt, buildUserMessage, INVESTIGATION_BUDGET, LOG_CALL_RESERVE, GAPS_RULE, HYPOTHESIS_RULES } from '../../src/investigator/prompt.ts';
+import { buildReportSystemPrompt, buildReportUserMessage, buildSystemPrompt, buildUserMessage, INVESTIGATION_BUDGET, LOG_CALL_RESERVE, MAX_METRIC_CALLS, GAPS_RULE, HYPOTHESIS_RULES, EVIDENCE_STATUS_RULE, HYPOTHESIS_PLACEHOLDER_RULE, CAUSAL_REASONING, BUDGET_RULES } from '../../src/investigator/prompt.ts';
 import { INVESTIGATION_START, S1_INCIDENT } from './fakes.ts';
 
 const sys = buildSystemPrompt(S1_INCIDENT, INVESTIGATION_START);
@@ -41,6 +41,45 @@ describe('investigator system prompt (spec D §5.1)', () => {
     expect(GAPS_RULE).toMatch(/list what you did not check/);
     expect(GAPS_RULE).toMatch(/Never claim that a tool, data source or log\/metric was unavailable unless a tool call for it returned status "error" or "empty"/);
     expect(GAPS_RULE).toMatch(/evidence id/);
+  });
+  it('generic causal reasoning: onset from the series, later onset = candidate effect, early onset → query the baseline', () => {
+    expect(sys).toContain(CAUSAL_REASONING);
+    expect(CAUSAL_REASONING).toMatch(/find its onset time from its series/);
+    expect(CAUSAL_REASONING).toMatch(/already away from its baseline level at the first point of the incident window/);
+    expect(CAUSAL_REASONING).toMatch(/query it over the baseline before ranking it/);
+    expect(CAUSAL_REASONING).toMatch(/onset comes after another signal's onset is a candidate effect/);
+  });
+  it('generic causal reasoning: USE-style resource check, earliest-onset preference, predictions', () => {
+    expect(CAUSAL_REASONING).toMatch(/utilisation \(is it sustained at or near its maximum or ceiling\?\)/);
+    expect(CAUSAL_REASONING).toMatch(/queueing or waiting/);
+    expect(CAUSAL_REASONING).toMatch(/and its errors/);
+    expect(CAUSAL_REASONING).toMatch(/Prefer as root cause the earliest-onset resource running at or near its maximum that explains the later signals/);
+    expect(CAUSAL_REASONING).toMatch(/what else must be true if it were the root cause/);
+    expect(CAUSAL_REASONING).toMatch(/check it with a call/);
+  });
+  it('budget: metric-call cap keeps the log reserve; no repeat of an empty log tool; args are an object', () => {
+    expect(MAX_METRIC_CALLS).toBe(INVESTIGATION_BUDGET.maxToolCalls - LOG_CALL_RESERVE);
+    expect(sys).toContain(`at most ${MAX_METRIC_CALLS} query_metric calls`);
+    expect(sys).toContain(BUDGET_RULES);
+    expect(BUDGET_RULES).toMatch(/returned status "empty" for a window, do not call that same log tool again for that window/);
+    expect(BUDGET_RULES).toMatch(/Start log work with one log_volume/);
+    expect(BUDGET_RULES).toMatch(/JSON object, never a JSON-encoded string/);
+  });
+  it('report prompt: only ok evidence is cited; non-ok results go to gaps only', () => {
+    const rep = buildReportSystemPrompt(S1_INCIDENT, INVESTIGATION_START);
+    expect(rep).toContain(EVIDENCE_STATUS_RULE);
+    expect(EVIDENCE_STATUS_RULE).toMatch(/"empty", "error" or "budget_exhausted" are never cited in observations, values or the timeline/);
+    expect(EVIDENCE_STATUS_RULE).toMatch(/never become an observation/);
+    expect(EVIDENCE_STATUS_RULE).toMatch(/Mention them only in gaps/);
+    expect(GAPS_RULE).toMatch(/the only place a non-ok evidence id may appear/);
+    expect(rep).not.toMatch(/Every observation cites >= 1 evidence id, and only evidence with status "ok"\./);
+  });
+  it('report prompt: hypotheses reuse keys bound in their cited observations, never invent new ones', () => {
+    const rep = buildReportSystemPrompt(S1_INCIDENT, INVESTIGATION_START);
+    expect(rep).toContain(HYPOTHESIS_PLACEHOLDER_RULE);
+    expect(HYPOTHESIS_PLACEHOLDER_RULE).toMatch(/hypotheses have no values of their own/);
+    expect(HYPOTHESIS_PLACEHOLDER_RULE).toMatch(/already bound in the values of an observation listed in that hypothesis's supporting or contradicting ids/);
+    expect(HYPOTHESIS_PLACEHOLDER_RULE).toMatch(/Never invent a new key in a hypothesis/);
   });
   it('stays cause-neutral so S2 is a fair cause-vs-effect test: no resource, failure-mode or metric-family hints', () => {
     for (const s of [sys, buildReportSystemPrompt(S1_INCIDENT, INVESTIGATION_START), buildUserMessage(S1_INCIDENT)]) {
