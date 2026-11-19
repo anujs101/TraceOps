@@ -20,3 +20,6 @@
 - 11:48 | B | found: runToolLoop rejects malformed-JSON args before run → no evidence row, breaks "one row per call" | assigned to main session (src/llm unowned), Wave 2, low priority | Groq strict mode makes it rare; validator only checks cited evidence
 - 11:49 | B | review | contract-guardian from main (Opus) + /code-review in B worktree after /clear (Opus) | independent context for review; review early while C/D build
 - 11:50 | ops | cleared B before exporting transcript | recovered via /resume + /export; rule: /export before every /clear | transcripts are video evidence
+- 11:53 | C | DONE: 192/192 (96 new: db 15, detector 53, queue 28), 0 skipped, contracts unchanged, handoff lists beyond-contract behaviour | none | —
+- 11:53 | C | self-caught: first queue concurrency tests passed even with SKIP LOCKED removed → added row-lock test that fails without it | none | second mutation-style self-check by C
+- 11:54 | ops | merge plan | review C → merge C, B, A while D still builds; D last | order only constrains D; saves Wave 2 time
