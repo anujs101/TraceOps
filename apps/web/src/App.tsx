@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Api } from './api.ts';
-import { IncidentPage } from './pages.tsx';
 import { IncidentList } from './pages/IncidentList.tsx';
+import { IncidentPage } from './pages/IncidentPage.tsx';
 import { InvestigationPage } from './pages/InvestigationPage.tsx';
 
 function useHash(): string {

@@ -33,6 +33,8 @@ describe('incident list and incident page', () => {
     cleanup();
     go(`#/incidents/${S1_INCIDENT.id}`);
     expect(await screen.findAllByRole('link', { name: /tool calls/ })).toHaveLength(4);
+    expect(screen.getByRole('list', { name: 'Detector rules that fired' }).textContent).toMatch(/from the detector/);
+    expect(screen.getByRole('region', { name: 'Latest investigation' }).textContent).toMatch(/Investigating/);
   });
 
   it('re-run queues a manual investigation', async () => {

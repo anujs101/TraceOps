@@ -306,7 +306,8 @@ td.r .stack { align-items: flex-end; }
 .sub { font-size: var(--t-xs); color: var(--ink-3); }
 
 /* ── incident page ─────────────────────────────────────────────────────── */
-.inc-head { display: grid; gap: var(--s3); margin-bottom: var(--s6); }
+.inc-head { display: grid; gap: var(--s4); margin-bottom: var(--s6); }
+.inc-head .page-title { margin-bottom: 0; }
 .inc-times { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s6); font-size: var(--t-sm); }
 .inc-times div { display: flex; flex-direction: column; }
 .inc-times dt { font-size: var(--t-xs); color: var(--ink-3); }
@@ -364,4 +365,5 @@ td.r .stack { align-items: flex-end; }
   .inc-table td.inc-hyp { flex-basis: 100%; min-width: 0; }
   .inc-table td[data-testid='ttr']::before { content: 'to report '; font-family: var(--sans); color: var(--ink-3); font-size: var(--t-xs); }
   [data-tip]:hover::after { display: none; }
+  .hide-sm { display: none; }
 }
