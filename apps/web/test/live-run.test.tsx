@@ -3,7 +3,7 @@
  * (validated report, 16 evidence rows incl. 4 budget_exhausted). No hand-written data.
  */
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { join } from 'node:path';
 import { ReportApi } from '@traceops/contracts';
 import { MemoryStore } from '../../traceops/src/api/memory-store.ts';
@@ -46,6 +46,27 @@ describe('recorded S1 live run', () => {
     // the top hypothesis's placeholders, in order: pool_max_min, pending_max, p1_count, err_max
     expect([...keys.querySelectorAll('[data-testid^="num-"]')].map((b) => b.getAttribute('data-testid'))).toEqual(['num-pool_max_min', 'num-pending_max', 'num-p1_count', 'num-err_max']);
     expect(within(keys as HTMLElement).getByTestId('num-err_max').textContent).toBe('59.8%');
+  });
+
+  it('Signals: one chart panel per cited metric row, with formatted axes; each opens its evidence', async () => {
+    go(`#/investigations/${invId}`);
+    const sig = (await screen.findByRole('heading', { name: /^Signals/ })).closest('section')!;
+    const panels = sig.querySelectorAll('[data-testid^="signal-"]');
+    expect(panels.length).toBe(6); // capped; the report cites 10 metric rows with series
+    const first = panels[0] as HTMLElement;
+    const id = first.dataset.testid!.slice('signal-'.length);
+    // axis labels: formatted values over the stored series' domain, plus window start/end times
+    const labels = [...first.querySelectorAll('text.axis')].map((t) => t.textContent!);
+    expect(labels).toContain('0'); // pool_used starts at 0, domain anchored at 0
+    expect(labels).toContain('10:42:15');
+    expect(labels.at(-1)).toBe('10:44:30');
+    expect(labels.every((l) => !/e[+-]\d/.test(l) && l.length <= 10)).toBe(true);
+    for (const p of panels) {
+      const pid = (p as HTMLElement).dataset.testid!.slice('signal-'.length);
+      fireEvent.click(within(p as HTMLElement).getByRole('button', { name: /chart$/ }));
+      expect(within(screen.getByTestId('evidence-panel')).getByText(pid)).toBeTruthy();
+    }
+    expect(id).toBe('ev_9'); // obs_1 cites ev_9 (pool_used) first
   });
 
   it('prose units are display-formatted: "{el_max} s" reads 19.4 ms, the stored value is untouched', async () => {

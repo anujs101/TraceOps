@@ -4,6 +4,8 @@ import type { Api, Incident, InvestigationRow, ReportRow } from '../api.ts';
 import { between, clock, dateTime, duration, elapsed, exact, formatWithUnit, offset } from '../lib/format.ts';
 import { useLoad, useNow } from '../lib/useLoad.ts';
 import { CATEGORY, Confidence, Proof, Severity, Status } from '../ui/Badge.tsx';
+import { Card, CardHeader } from '../ui/Card.tsx';
+import { TopBar } from '../ui/Shell.tsx';
 import { ApiProblem, Empty, NotFound, Skeleton } from '../ui/States.tsx';
 
 type Row = { inv: InvestigationRow; report: ReportRow | null };
@@ -21,8 +23,9 @@ export function IncidentPage({ api, id }: { api: Api; id: string }) {
   const [queued, setQueued] = useState<string | null>(null);
   const [rerunError, setRerunError] = useState<string | null>(null);
 
-  if (incident.error) return <main className="page"><ApiProblem text={incident.error} onRetry={incident.reload} /></main>;
-  if (!incident.data) return <main className="page">{incident.loading ? <Skeleton rows={4} label="Loading incident" /> : <NotFound what="incident" />}</main>;
+  const base = <a href="#/">Incidents</a>;
+  if (incident.error) return <><TopBar crumbs={base} /><main className="content"><ApiProblem text={incident.error} onRetry={incident.reload} /></main></>;
+  if (!incident.data) return <><TopBar crumbs={base} /><main className="content">{incident.loading ? <Skeleton rows={4} label="Loading incident" /> : <NotFound what="incident" />}</main></>;
   const i = incident.data;
 
   const rerun = async () => {
@@ -32,19 +35,23 @@ export function IncidentPage({ api, id }: { api: Api; id: string }) {
   const latest = rows.data?.[0];
 
   return (
-    <main className="page">
-      <nav className="crumbs" aria-label="Breadcrumb"><a href="#/">Incidents</a><span aria-hidden="true">/</span><span>{i.service}</span></nav>
+    <>
+    <TopBar crumbs={<>{base}<span className="crumb-sep" aria-hidden="true">/</span><span className="crumb-here">{i.service}</span></>}>
+      <button type="button" className="btn" onClick={rerun}>Run a new investigation</button>
+    </TopBar>
+    <main className="content content-narrow">
       <IncidentHead incident={i} />
 
       {latest && <LatestVerdict row={latest} incident={i} now={now} />}
 
-      <section className="sec" aria-labelledby="h-invs">
-        <h2 id="h-invs">Investigations {rows.data && <span className="count">{rows.data.length}</span>}</h2>
-        <div className="actions">
-          <button type="button" className="btn" onClick={rerun}>Run a new investigation</button>
-          {queued && <span className="quiet" role="status">Investigation queued (job {queued.slice(0, 8)}). It appears below when a worker picks it up.</span>}
-          {rerunError && <span className="fault-text" role="alert">Could not queue it: {rerunError}</span>}
-        </div>
+      <Card aria-labelledby="h-invs">
+        <CardHeader id="h-invs" title="Investigations" meta={rows.data?.length} />
+        {(queued || rerunError) && (
+          <div className="card-note">
+            {queued && <span className="quiet" role="status">Investigation queued (job {queued.slice(0, 8)}). It appears below when a worker picks it up.</span>}
+            {rerunError && <span className="fault-text" role="alert">Could not queue it: {rerunError}</span>}
+          </div>
+        )}
         {rows.error && <ApiProblem text={rows.error} onRetry={rows.reload} />}
         {rows.loading && !rows.data && <Skeleton rows={3} label="Loading investigations" />}
         {rows.data && rows.data.length === 0 && <Empty title="No investigations yet.">The worker starts one automatically when the incident opens, or run one now.</Empty>}
@@ -71,15 +78,16 @@ export function IncidentPage({ api, id }: { api: Api; id: string }) {
             </table>
           </div>
         )}
-      </section>
+      </Card>
     </main>
+    </>
   );
 }
 
 function IncidentHead({ incident: i }: { incident: Incident }) {
   return (
-    <header className="inc-head">
-      <h1 className="page-title"><Severity value={i.severity} /> {i.service} <Status value={i.status} /></h1>
+    <header className="card inc-head">
+      <div className="inc-title"><h1 className="page-title">{i.service}</h1><Severity value={i.severity} /><Status value={i.status} /></div>
       <dl className="inc-times">
         <div><dt>Symptoms started</dt><dd>{dateTime(i.started_at)}</dd></div>
         <div><dt>Detected</dt><dd>{clock(i.detected_at)} <span className="quiet">{offset(i.started_at, i.detected_at)}</span></dd></div>
@@ -120,7 +128,8 @@ function LatestVerdict({ row, incident, now }: { row: Row; incident: Incident; n
   const top = parsed?.success ? parsed.data.hypotheses[0] : undefined;
   const ttr = inv.finished_at ? between(incident.detected_at, inv.finished_at) : null;
   return (
-    <section className="latest" aria-label="Latest investigation">
+    <section className="card latest" aria-label="Latest investigation">
+      <span className="latest-label">Latest verdict</span>
       {inv.status === 'running' ? (
         <><span className="pulse" aria-hidden="true" /><span className="hyp-name">Investigating</span><span className="num-cell quiet">{elapsed(now - Date.parse(inv.started_at))}</span></>
       ) : top ? (
@@ -129,7 +138,7 @@ function LatestVerdict({ row, incident, now }: { row: Row; incident: Incident; n
         <span className="hyp-name">{inv.status === 'failed' ? 'Latest investigation failed' : report ? 'Report has no hypothesis' : 'No report'}</span>
       )}
       {ttr !== null && report && <span className="quiet">report <span className="num-cell">{duration(ttr)}</span> after detection</span>}
-      <a href={`#/investigations/${inv.id}`}>Open the latest investigation</a>
+      <a href={`#/investigations/${inv.id}`} className="btn btn-quiet latest-open">Open the latest investigation</a>
     </section>
   );
 }

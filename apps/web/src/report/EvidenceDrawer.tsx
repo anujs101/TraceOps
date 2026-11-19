@@ -4,7 +4,7 @@ import type { Evidence } from '../api.ts';
 import { baselineFor, evidenceLabel, markIndex, seriesOf, TOOL_LABEL, unitFor } from '../lib/evidence.ts';
 import { between, clock, duration, exact, formatWithUnit, windowRange } from '../lib/format.ts';
 import { Status } from '../ui/Badge.tsx';
-import { Sparkline } from '../ui/Sparkline.tsx';
+import { Chart } from '../ui/Chart.tsx';
 import { EvidenceContext, SourceIcon, type Selection } from './Statement.tsx';
 
 /** The evidence behind a number or a reference: claim check, chart, query, window, status, stats and raw result. */
@@ -68,16 +68,14 @@ function Body({ selection, evidence: e }: { selection: Selection; evidence: Evid
       )}
 
       {pts && (
-        <figure className="chart">
-          <Sparkline points={pts} unit={unitFor(e)} size="large" splitAt={incidentStart} baseline={base?.avg} mark={markIndex(e, selection.field, pts)} />
+        <figure className="drawer-chart">
+          <Chart points={pts} unit={unitFor(e)} size="drawer" splitAt={incidentStart} baseline={base?.avg} mark={markIndex(e, selection.field, pts)} />
           <figcaption>
-            <span>{clock(pts[0]![0])}</span>
             <span className="chart-legend">
               {incidentStart && Date.parse(pts[0]![0]) < Date.parse(incidentStart) && <span className="lg lg-lead">before start</span>}
               <span className="lg lg-inc">incident</span>
               {base && <span className="lg lg-base">baseline avg {formatWithUnit(base.avg, unitFor(e), true)}</span>}
             </span>
-            <span>{clock(pts.at(-1)![0])}</span>
           </figcaption>
         </figure>
       )}

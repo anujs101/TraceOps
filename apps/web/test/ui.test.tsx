@@ -23,7 +23,8 @@ const go = (hash: string) => { window.location.hash = hash; return render(<App a
 describe('incident list and incident page', () => {
   it('lists the incident and its investigations', async () => {
     go('#/');
-    const link = await screen.findByRole('link', { name: /demo-service/ });
+    const table = await screen.findByRole('table');
+    const link = within(table).getByRole('link', { name: /demo-service/ });
     expect(link.getAttribute('href')).toBe(`#/incidents/${S1_INCIDENT.id}`);
     const row = screen.getByTestId(`inc-${S1_INCIDENT.id}`);
     expect(row.textContent).toMatch(/critical/);
@@ -35,6 +36,13 @@ describe('incident list and incident page', () => {
     expect(await screen.findAllByRole('link', { name: /tool calls/ })).toHaveLength(4);
     expect(screen.getByRole('list', { name: 'Detector rules that fired' }).textContent).toMatch(/from the detector/);
     expect(screen.getByRole('region', { name: 'Latest investigation' }).textContent).toMatch(/Investigating/);
+  });
+
+  it('the sidebar lists recent incidents and shows the API status', async () => {
+    go('#/');
+    const recent = await screen.findByRole('list', { name: 'Recent incidents' });
+    expect(within(recent).getByRole('link').getAttribute('href')).toBe(`#/incidents/${S1_INCIDENT.id}`);
+    expect(screen.getByTestId('api-status').textContent).toBe('API connected');
   });
 
   it('re-run queues a manual investigation', async () => {

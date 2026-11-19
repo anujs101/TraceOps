@@ -3,16 +3,17 @@ import type { Evidence, LlmCall } from '../api.ts';
 import { evidenceLabel, headline, markIndex, seriesOf, TOOL_LABEL, unitFor } from '../lib/evidence.ts';
 import { between, clock, duration, formatWithUnit, sig3 } from '../lib/format.ts';
 import { Status } from '../ui/Badge.tsx';
-import { Sparkline } from '../ui/Sparkline.tsx';
+import { Card, CardHeader } from '../ui/Card.tsx';
+import { Chart } from '../ui/Chart.tsx';
 import { EvidenceContext, SourceIcon } from './Statement.tsx';
 
 /** Every tool call the investigation made, in order. Each row opens the drawer. */
 export function EvidenceLedger({ evidence, live = false }: { evidence: Evidence[]; live?: boolean }) {
   const { open, selected, incidentStart } = useContext(EvidenceContext);
   return (
-    <section className="sec" aria-labelledby="h-ev">
-      <h2 id="h-ev">Evidence <span className="count">{evidence.length}{live ? ', collecting' : ''}</span></h2>
-      {evidence.length === 0 ? <p className="quiet">{live ? 'No tool calls yet.' : 'No tool calls were made.'}</p> : (
+    <Card aria-labelledby="h-ev">
+      <CardHeader id="h-ev" title="Evidence" meta={`${evidence.length}${live ? ', collecting' : ''}`} />
+      {evidence.length === 0 ? <p className="card-empty">{live ? 'No tool calls yet.' : 'No tool calls were made.'}</p> : (
         <div className="table-wrap">
           <table className="ledger">
             <thead>
@@ -34,7 +35,7 @@ export function EvidenceLedger({ evidence, live = false }: { evidence: Evidence[
                     <td><Status value={e.status} /></td>
                     <td>{e.window ? <span className="stack"><span className="num-cell">{clock(e.window.start)}–{clock(e.window.end)}</span><span className="sub">{span !== null ? duration(span) : ''}</span></span> : <span className="quiet">none</span>}</td>
                     <td className="r">{h ? <span className="stack"><span className="num-cell">{formatWithUnit(h.value, unitFor(e, h.field), true)}</span><span className="sub">{h.field}</span></span> : <span className="quiet">—</span>}</td>
-                    <td>{pts && pts.length > 1 ? <Sparkline points={pts} unit={unitFor(e)} splitAt={incidentStart} mark={markIndex(e, 'max', pts)} /> : null}</td>
+                    <td>{pts && pts.length > 1 ? <Chart points={pts} unit={unitFor(e)} splitAt={incidentStart} mark={markIndex(e, 'max', pts)} size="micro" /> : null}</td>
                   </tr>
                 );
               })}
@@ -42,7 +43,7 @@ export function EvidenceLedger({ evidence, live = false }: { evidence: Evidence[
           </table>
         </div>
       )}
-    </section>
+    </Card>
   );
 }
 
@@ -50,9 +51,9 @@ export function ModelCalls({ calls }: { calls: LlmCall[] }) {
   const sum = (k: 'input_tokens' | 'output_tokens' | 'latency_ms') => calls.reduce((s, c) => s + (c[k] ?? 0), 0);
   const errors = calls.filter((c) => c.status !== 'ok').length;
   return (
-    <section className="sec" aria-labelledby="h-llm">
-      <h2 id="h-llm">Model calls <span className="count">{calls.length}</span></h2>
-      {calls.length === 0 ? <p className="quiet">No model calls were recorded.</p> : (
+    <Card aria-labelledby="h-llm">
+      <CardHeader id="h-llm" title="Model calls" meta={calls.length} />
+      {calls.length === 0 ? <p className="card-empty">No model calls were recorded.</p> : (
         <details className="calls-wrap">
           <summary>
             {sum('input_tokens').toLocaleString('en-US')} tokens in, {sum('output_tokens').toLocaleString('en-US')} out, {duration(sum('latency_ms'))} total latency
@@ -76,6 +77,6 @@ export function ModelCalls({ calls }: { calls: LlmCall[] }) {
           </div>
         </details>
       )}
-    </section>
+    </Card>
   );
 }
