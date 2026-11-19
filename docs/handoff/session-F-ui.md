@@ -23,8 +23,7 @@
 
 ## Deviations and proposals
 - [validator-timeline-placeholders.md](../proposals/validator-timeline-placeholders.md): V3 doesn't check timeline `{key}`s (S1 run 2 and S2 both show unbound ones). The UI marks them.
-- The incident list reads N+1 (investigations + latest report per incident); the sidebar shares the same load. A summary endpoint would remove this (not proposed yet).
-- List KPIs are display-only counts over the loaded rows, labelled as such.
+- The incident list reads N+1 (investigations + latest report per incident); the sidebar shares the same load. A summary endpoint would remove this (not proposed yet). List KPIs are display-only counts over loaded rows.
 - Fixed in v2: an `sr-only` label inside `.table-wrap` escaped the scroll box and widened phones by 225 px. That was also the cause of the v1 "squeezed" 390 capture, which I wrongly called an artefact.
 
 ## How to run it
