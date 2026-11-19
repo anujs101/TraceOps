@@ -31,7 +31,7 @@ CREATE TABLE llm_calls (
   investigation_id  uuid NOT NULL REFERENCES investigations(id),
   turn              int  NOT NULL CHECK (turn >= 1),
   attempt           int  NOT NULL CHECK (attempt >= 1),                    -- v1.1
-  provider          text NOT NULL,                                         -- v1.1  ('groq')
+  provider          text NOT NULL,                                         -- v1.1  ('groq'; v1.2: or 'deepseek')
   model             text NOT NULL,
   stage             text NOT NULL CHECK (stage IN ('investigate','report')),           -- v1.1
   kind              text NOT NULL CHECK (kind IN ('chat','structured')),               -- v1.1

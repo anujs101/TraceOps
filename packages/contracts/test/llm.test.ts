@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LlmCall, LLM_DEFAULTS, LLM_ERROR_KINDS, RETRYABLE_LLM_ERRORS } from '../src/index.ts';
+import { LlmCall, LLM_DEFAULTS, LLM_ERROR_KINDS, LLM_PROVIDERS, RETRYABLE_LLM_ERRORS } from '../src/index.ts';
 
 const ok = {
   id: '11111111-1111-4111-8111-111111111111', investigation_id: '22222222-2222-4222-8222-222222222222',
@@ -25,7 +25,7 @@ describe('llm_calls row (v1.1)', () => {
     ['error row without error kind', { ...err, error_kind: null }],
     ['error row with token usage', { ...err, input_tokens: 10 }],
     ['structured call with tool calls', { ...ok, kind: 'structured', tool_call_count: 1 }],
-    ['unknown provider', { ...ok, provider: 'deepseek' }],
+    ['unknown provider', { ...ok, provider: 'openai' }], // v1.2: deepseek is now valid
     ['unknown error kind', { ...err, error_kind: 'oops' }],
     ['turn 0', { ...ok, turn: 0 }],
     ['negative tokens', { ...ok, input_tokens: -1 }],
@@ -39,6 +39,21 @@ describe('LLM defaults and taxonomy', () => {
   it('Groq defaults: verified model id; base URL without the /openai/v1 path the SDK adds', () => {
     expect(LLM_DEFAULTS.groq.model).toBe('openai/gpt-oss-20b');
     expect(LLM_DEFAULTS.groq.baseUrl).toBe('https://api.groq.com');
+  });
+  it('v1.2: deepseek is a provider; groq stays the default', () => {
+    expect(LLM_PROVIDERS).toEqual(['groq', 'deepseek']);
+    expect(LLM_DEFAULTS.provider).toBe('groq');
+    expect(LLM_PROVIDERS).toContain(LLM_DEFAULTS.provider);
+  });
+  it('v1.2: DeepSeek defaults: OpenAI-compatible host without a path; model id from the docs', () => {
+    expect(LLM_DEFAULTS.deepseek.baseUrl).toBe('https://api.deepseek.com');
+    expect(new URL(LLM_DEFAULTS.deepseek.baseUrl).pathname).toBe('/');
+    expect(LLM_DEFAULTS.deepseek.model).toBe('deepseek-flash');
+    expect(LLM_DEFAULTS.deepseek.timeoutMs).toBe(30_000);
+  });
+  it('v1.2: llm_calls rows accept provider deepseek, reject unknown providers', () => {
+    expect(LlmCall.safeParse({ ...ok, provider: 'deepseek', model: 'deepseek-flash' }).success).toBe(true);
+    expect(LlmCall.safeParse({ ...ok, provider: 'openai' }).success).toBe(false);
   });
   it('retryable kinds are a subset of the taxonomy and exclude non-transient ones', () => {
     for (const k of RETRYABLE_LLM_ERRORS) expect(LLM_ERROR_KINDS).toContain(k);

@@ -27,5 +27,8 @@ export function createLlmProvider(recorder: CallRecorder, env: NodeJS.ProcessEnv
       const cfg = loadGroqConfig(env);
       return new RecordingProvider(new GroqProvider(createGroqClient(cfg), cfg), recorder);
     }
+    case 'deepseek':
+      // Contracts v1.2 names the provider; the adapter (src/llm/deepseek/) lands with session E.
+      throw new Error('LLM_PROVIDER "deepseek" is not implemented yet (session E adapter pending)');
   }
 }

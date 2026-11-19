@@ -2,11 +2,11 @@ import { z } from 'zod';
 import { IsoUtcMs } from './time.ts';
 
 /**
- * Contracts v1.1 — provider-neutral LLM contract (persistence.md §1 `llm_calls`,
+ * Contracts v1.1/v1.2 — provider-neutral LLM contract (persistence.md §1 `llm_calls`,
  * environment.md §4). Single source for provider names, error taxonomy and the
  * llm_calls row shape. Adapters (apps/traceops/src/llm/<provider>/) must map onto it.
  */
-export const LLM_PROVIDERS = ['groq'] as const; // implemented providers; others are added with their adapter
+export const LLM_PROVIDERS = ['groq', 'deepseek'] as const; // v1.2: deepseek added (adapter: session E); selected via LLM_PROVIDER
 export type LlmProviderName = (typeof LLM_PROVIDERS)[number];
 
 export const LLM_DEFAULTS = {
@@ -14,6 +14,13 @@ export const LLM_DEFAULTS = {
   groq: {
     model: 'openai/gpt-oss-20b', // verified: every live Groq response (2026-11-16/17) reported this id
     baseUrl: 'https://api.groq.com', // groq-sdk appends /openai/v1/...; do NOT include it here
+    timeoutMs: 30_000,
+  },
+  // v1.2. Model id from DeepSeek's docs (api-docs.deepseek.com, 2026-11-19): TO BE CONFIRMED by
+  // session E's live smoke test; amended in a follow-up commit if the API reports a different id.
+  deepseek: {
+    model: 'deepseek-flash',
+    baseUrl: 'https://api.deepseek.com', // OpenAI-compatible host; no /v1 or /beta path here
     timeoutMs: 30_000,
   },
 } as const;
