@@ -18,13 +18,19 @@ const MUST_REDACT: [string, string][] = [
   ['postgres url', 'connect ECONNREFUSED postgres://shop_user:s3cr3tPass@db.internal:5432/shop'],
   ['postgresql url', 'postgresql://admin:p%40ss@10.0.0.5/app failed'],
   ['redis url', 'redis://default:topsecret@cache:6379'],
+  ['https url creds', 'GET https://admin:hunter2pass@internal-registry/x failed'],
+  ['http url creds', 'proxy http://svc:Pr0xyPassw0rd@proxy.internal:3128 refused'],
+  ['ftp url creds', 'upload ftp://deploy:ftpSecret99@files.internal/out.csv failed'],
+  ['amqp url creds', 'amqp://guest:rabbitSecret77@mq:5672 closed'],
+  ['jdbc url creds', 'jdbc:postgresql://app:jdbcSecret55@db:5432/shop timed out'],
+  ['custom scheme creds', 'vault+tls://role:vaultSecret33@vault.internal/v1 denied'],
   ['email', 'order placed by jane.doe+test@example.co.uk today'],
   ['hex 32', 'trace 402ce5e65eda0113982d510db4d99ce4 failed'],
   ['hex 64', 'sha 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'],
   ['base64 blob', 'payload QWxhZGRpbjpvcGVuIHNlc2FtZVRoaXNJc0FMb25nQmFzZTY0U3RyaW5nMTIzNDU2 end'],
 ];
 const SECRET_FRAGMENTS = [
-  'abcDEF123456', '0123456789abcdefghij', 'dXNlcjpwYXNzd29yZDEyMzQ1', 'AbCdEf0123456789', 'AKIAABCDEFGHIJKLMNOP', 'eyJhbGciOiJIUzI1NiJ9',
+  'hunter2pass', 'Pr0xyPassw0rd', 'ftpSecret99', 'rabbitSecret77', 'jdbcSecret55', 'vaultSecret33', 'abcDEF123456', '0123456789abcdefghij', 'dXNlcjpwYXNzd29yZDEyMzQ1', 'AbCdEf0123456789', 'AKIAABCDEFGHIJKLMNOP', 'eyJhbGciOiJIUzI1NiJ9',
   'SuperSecretValue123', 'abc123def456ghi789', 'hunter2hunter2', 's3cr3tPass', 'p%40ss', 'topsecret', 'jane.doe', 'example.co.uk',
   '402ce5e65eda0113982d510db4d99ce4', '9f86d081884c7d65', 'QWxhZGRpbjpvcGVuIHNlc2FtZVRoaXNJc0FM',
 ];
@@ -41,6 +47,11 @@ const MUST_SURVIVE = [
   'span 2437afdb9779e093 finished', // 16 hex chars: below the long-hex threshold
   '/api/v1/products/categories/electronics/featured/items',
   'Error: connect ETIMEDOUT',
+  'Basic validation failed for pool',
+  'Basic configuration missing',
+  'GET https://example.com/a/b?x=1 returned 200',
+  'upstream http://host:8080/health ok',
+  'see https://example.com/users/a:b for details',
 ];
 
 describe('redact: secrets', () => {
@@ -51,6 +62,9 @@ describe('redact: secrets', () => {
   });
   it('keeps the useful scheme and host context of a connection string', () => {
     expect(redact('postgres://u:p@db:5432/x')).toBe('postgres://[REDACTED]@db:5432/x');
+  });
+  it('keeps scheme and host for non-database URLs too', () => {
+    expect(redact('https://admin:hunter2@reg.internal/x')).toBe('https://[REDACTED]@reg.internal/x');
   });
   it('is idempotent', () => {
     for (const [, s] of MUST_REDACT) expect(redact(redact(s))).toBe(redact(s));

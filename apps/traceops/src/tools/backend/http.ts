@@ -8,6 +8,8 @@ export type BackendDeps = {
   /** Per-attempt timeout; default LIMITS.backendTimeoutMs (tools.md §1). */
   timeoutMs?: number;
   signal?: AbortSignal;
+  /** Investigation deadline (epoch ms). Caps each attempt's timeout; no attempt starts after it. */
+  deadline?: number;
 };
 
 /**
@@ -35,7 +37,10 @@ export async function getJson(url: URL, headers: Record<string, string>, deps: B
 
   for (let attempt = 0; attempt < 2; attempt++) {
     if (deps.signal?.aborted) return { ok: false, kind: 'aborted', message: 'aborted' };
-    const timeout = AbortSignal.timeout(timeoutMs);
+    const left = deps.deadline === undefined ? Infinity : deps.deadline - Date.now();
+    if (left <= 0) return { ok: false, kind: 'timeout', message: 'investigation deadline reached' };
+    const attemptMs = Math.min(timeoutMs, left);
+    const timeout = AbortSignal.timeout(attemptMs);
     const signal = deps.signal ? AbortSignal.any([deps.signal, timeout]) : timeout;
     try {
       const res = await doFetch(url, { method: 'GET', headers, signal });
@@ -48,7 +53,7 @@ export async function getJson(url: URL, headers: Record<string, string>, deps: B
     } catch (e) {
       if (deps.signal?.aborted) return { ok: false, kind: 'aborted', message: 'aborted' };
       last = timeout.aborted
-        ? { ok: false, kind: 'timeout', message: `timed out after ${timeoutMs} ms` }
+        ? { ok: false, kind: 'timeout', message: `timed out after ${Math.round(attemptMs)} ms` }
         : { ok: false, kind: 'network', message: e instanceof Error ? e.message.slice(0, 120) : 'request failed' };
     }
   }

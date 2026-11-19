@@ -93,13 +93,30 @@ export function createRuntime(ctx: ToolContext, baseDeps: Pick<BackendDeps, 'fet
     // 5. execute against the backend
     const signals = [ctx.signal, callSignal].filter((s): s is AbortSignal => !!s);
     const signal = signals.length > 1 ? AbortSignal.any(signals) : signals[0];
-    const { output, aborted } = await def.execute(args, w.window, query, { ctx, deps: { ...baseDeps, signal }, id, service });
+    let output: Executed['output'];
+    let aborted: boolean | undefined;
+    let stats: Record<string, number>;
+    try {
+      ({ output, aborted } = await def.execute(args, w.window, query, {
+        ctx, deps: { ...baseDeps, signal, deadline: ctx.budget.deadline }, id, service,
+      }));
+      // 6. stats come from deriveStats, never from the model
+      stats = deriveStats(def.name, output);
+    } catch (e) {
+      // An internal failure must still leave exactly one evidence row (no ev_N gaps).
+      const msg = cleanString(`internal_error: ${e instanceof Error ? e.message : 'tool failed'}`, 300);
+      const result = await record({
+        args: resolvedArgs, rendered_query: query, window: w.window, status: 'error', error: msg,
+        result: early(id, 'error', msg), stats: {},
+      });
+      if (signal?.aborted) throw new Error('aborted');
+      return result;
+    }
 
-    // 6. one evidence row; stats come from deriveStats, never from the model
+    // 7. one evidence row
     const error = typeof output.error === 'string' ? output.error.slice(0, 300) : null;
     const result = await record({
-      args: resolvedArgs, rendered_query: query, window: w.window, status: output.status, error, result: output,
-      stats: deriveStats(def.name, output),
+      args: resolvedArgs, rendered_query: query, window: w.window, status: output.status, error, result: output, stats,
     });
     if (aborted) throw new Error('aborted');
     return result;

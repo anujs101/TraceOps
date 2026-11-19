@@ -1,4 +1,5 @@
-import { renderPromql, type InvestigationWindows, type MetricName } from '@traceops/contracts';
+import type { z } from 'zod';
+import { renderPromql, type InvestigationWindows, type LogVolumeOutput, type MetricName, type SearchLogsInput } from '@traceops/contracts';
 
 /**
  * The only place queries are built. Model input never reaches a query except as an
@@ -13,7 +14,8 @@ function assertService(service: string): void {
 
 // ── windows ─────────────────────────────────────────────────────────────────
 
-export type Window = { start: string; end: string };
+/** The resolved window shape every tool output carries (contract-derived, not hand-written). */
+export type Window = z.infer<typeof LogVolumeOutput>['window'];
 export type WindowArg = Window | 'incident' | 'baseline';
 export type WindowResult = { ok: true; window: Window } | { ok: false; reason: string };
 
@@ -58,10 +60,7 @@ export function escapeRegex(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\\/-]/g, '\\$&');
 }
 
-export type LogFilter = {
-  severity: 'error' | 'warn' | 'info' | null;
-  match: { field: 'message' | 'exception_message'; contains: string } | null;
-};
+export type LogFilter = Pick<z.infer<typeof SearchLogsInput>, 'severity' | 'match'>;
 
 /** tools.md §4: `{service_name="$svc"}` + severity + message / exception_message filter. */
 export function renderLogQuery(service: string, f: LogFilter = { severity: null, match: null }): string {

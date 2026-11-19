@@ -224,6 +224,29 @@ describe('window outside allowed', () => {
   });
 });
 
+describe('internal failure still records exactly one evidence row', () => {
+  it('a malformed Loki timestamp makes execute throw: error row, sanitized, ids contiguous', async () => {
+    const fx = loadFixture('S1', 'loki-search-warn.json') as any;
+    const bad = JSON.parse(JSON.stringify(fx));
+    bad.data.result[0].values[0][0] = 'not-a-number Bearer abcdefghijklmnopqrstuvwxyz0123456789';
+    const h = harness('S1', [JSON.stringify(bad), loadFixtureText('S1', 'loki-search-warn.json')]);
+    const a = await h.call('search_logs', { window: 'incident', severity: 'warn', match: null, limit: null });
+    const b = await h.call('search_logs', { window: 'incident', severity: 'warn', match: null, limit: null });
+    expect(h.rows.map((r) => r.id)).toEqual(['ev_1', 'ev_2']);
+    expect(a).toMatchObject({ evidence_id: 'ev_1', status: 'error' });
+    expect(h.rows[0]!.status).toBe('error');
+    expect(h.rows[0]!.stats).toEqual({});
+    expect(h.rows[0]!.rendered_query).not.toBeNull();
+    expect(h.rows[0]!.error!.startsWith('internal_error')).toBe(true);
+    expect(h.rows[0]!.error!.length).toBeLessThanOrEqual(300);
+    expect(JSON.stringify(h.rows[0])).not.toContain('abcdefghijklmnop');
+    // like invalid-input rows, the model-facing output is the short early form
+    expect(Evidence.safeParse(h.rows[0]).error).toBeUndefined();
+    expect(h.rows[0]!.result).toBe(a);
+    expect(b.status).toBe('ok');
+  });
+});
+
 describe('empty is never zero', () => {
   it('query_metric: empty Prometheus result → status empty, stats null, no stats keys', async () => {
     const h = harness('S1', [loadFixtureText('S1', 'prom-empty.json')]);
@@ -235,7 +258,9 @@ describe('empty is never zero', () => {
   });
 
   it('query_metric: a series of only NaN points is also empty', async () => {
-    const nan = JSON.stringify({ status: 'success', data: { resultType: 'matrix', result: [{ metric: {}, values: [[1794853680, 'NaN'], [1794853695, 'NaN']] }] } });
+    // Real captured response with every sample value replaced by NaN.
+    const fx = loadFixture('S1', 'prom-latency_p95.json') as any;
+    const nan = JSON.stringify({ ...fx, data: { ...fx.data, result: fx.data.result.map((s: any) => ({ ...s, values: s.values.map(([t]: [number, string]) => [t, 'NaN']) })) } });
     const h = harness('S1', [nan]);
     const out = await h.call('query_metric', { metric: 'latency_p95', window: 'incident' });
     expect(out.status).toBe('empty');

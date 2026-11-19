@@ -8,7 +8,7 @@ import type { ToolDef } from './runtime.ts';
 export const searchLogsTool: ToolDef = {
   name: 'search_logs',
   description:
-    'Fetch individual log lines (newest first) for the affected service. Optional filters: severity (error, warn, info), and match = a case-insensitive substring of the log message or of the exception message. ' +
+    'Fetch individual log lines (newest first) for the affected service. Optional filters: severity (error, warn, info), and match = a substring of the log message (case-sensitive) or of the exception message (case-insensitive). ' +
     'limit is 1-50 (default 20). Each line has timestamp, message, severity_text, exception_type, exception_message, route, status, duration_ms and service_version. ' +
     'window is "incident", "baseline", or an explicit {start, end} in ISO 8601 with a zone, at most 60 minutes.',
   input: SearchLogsInput,

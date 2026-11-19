@@ -1,7 +1,8 @@
-import { LIMITS, toIsoUtcMs, type IsoUtcMs } from '@traceops/contracts';
+import type { z } from 'zod';
+import { LIMITS, toIsoUtcMs, type IsoUtcMs, type QueryMetricOutput } from '@traceops/contracts';
 
-export type Point = [IsoUtcMs, number];
-export type SeriesStats = { min: number; max: number; avg: number; first: number; last: number; points: number };
+export type Point = z.infer<typeof QueryMetricOutput>['series'][number];
+export type SeriesStats = NonNullable<z.infer<typeof QueryMetricOutput>['stats']>;
 
 /** [unix s, "value"] → [IsoUtcMs, number]; NaN / ±Inf points are dropped (tools.md §2). */
 export function parseSamples(values: [number, string][]): Point[] {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { lokiQueryLogs, lokiQueryMatrix, promQueryRange } from '../../src/tools/backend/index.ts';
-import { loadFixtureText, loadManifest, replayFetch, type Scenario } from './helpers.ts';
+import { loadFixture, loadFixtureText, loadManifest, replayFetch, type Scenario } from './helpers.ts';
 
 const SCENARIOS: Scenario[] = ['S1', 'S2'];
 const PROM = 'http://prom.test:9090';
@@ -107,6 +107,28 @@ describe('transport behaviour', () => {
     if (!r.ok) expect(r.kind).toBe('timeout');
   });
 
+  it('an expired deadline sends nothing and is not retried', async () => {
+    const { fetch, calls } = replayFetch([loadFixtureText('S1', 'prom-pool_used.json')]);
+    const r = await promQueryRange(q, { fetch, deadline: Date.now() - 1 });
+    expect(calls).toHaveLength(0);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.kind).toBe('timeout');
+  });
+
+  it('each attempt is capped by the time left before the deadline, and the retry is skipped once it passes', async () => {
+    let n = 0;
+    const hang = ((_u: unknown, init?: RequestInit) => {
+      n++;
+      return new Promise((_res, rej) => init!.signal!.addEventListener('abort', () => rej(new DOMException('aborted', 'AbortError'))));
+    }) as unknown as typeof fetch;
+    const t0 = Date.now();
+    const r = await promQueryRange(q, { fetch: hang, timeoutMs: 5_000, deadline: t0 + 60 });
+    expect(Date.now() - t0).toBeLessThan(1_000);
+    expect(n).toBe(1);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.kind).toBe('timeout');
+  });
+
   it('a caller abort is never retried', async () => {
     const ac = new AbortController();
     let n = 0;
@@ -118,7 +140,9 @@ describe('transport behaviour', () => {
   });
 
   it('a 2xx body that matches no schema is kind=parse', async () => {
-    const { fetch } = replayFetch([JSON.stringify({ status: 'success', data: { resultType: 'vector', result: [] } })]);
+    // Real captured matrix response relabelled as a resultType the client does not accept.
+    const fx = loadFixture('S1', 'prom-pool_used.json') as any;
+    const { fetch } = replayFetch([JSON.stringify({ ...fx, data: { ...fx.data, resultType: 'vector' } })]);
     const r = await promQueryRange(q, { fetch });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.kind).toBe('parse');

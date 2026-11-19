@@ -6,10 +6,12 @@ import { LIMITS } from '@traceops/contracts';
  * then free-standing tokens, then long opaque blobs.
  */
 const RULES: [RegExp, string][] = [
-  // scheme://user:pass@host  → scheme://[REDACTED]@host
-  [/\b((?:postgres(?:ql)?|mysql|mariadb|mongodb(?:\+srv)?|redis|rediss|amqps?):\/\/)[^\s:@\/]+:[^\s@\/]+@/gi, '$1[REDACTED]@'],
+  // any scheme://user:pass@host  → scheme://[REDACTED]@host (http, ftp, jdbc:…, db and queue schemes alike)
+  [/(?<![A-Za-z0-9+.-])([a-z][a-z0-9+.-]*:\/\/)[^\s:@\/]+:[^\s@\/]+@/gi, '$1[REDACTED]@'],
   // Authorization: Bearer <token> / Basic <token>
-  [/\b(Bearer|Basic)\s+[A-Za-z0-9._~+\/=-]{8,}/gi, '$1 [REDACTED]'],
+  [/\bBearer\s+[A-Za-z0-9._~+\/=-]{8,}/gi, 'Bearer [REDACTED]'],
+  // Basic only when the token looks like base64 credentials (digit or =+/), so "Basic validation" survives
+  [/\bBasic\s+(?=[A-Za-z0-9+\/=]*[\d=+\/])[A-Za-z0-9+\/]{8,}={0,2}/gi, 'Basic [REDACTED]'],
   // labelled secrets: api_key=…, "token": "…", password: …
   [/\b((?:api[_-]?key|access[_-]?key|secret(?:[_-]?key)?|auth[_-]?token|token|passw(?:or)?d|authorization)["']?\s*[:=]\s*["']?)[^\s"',;&]+/gi, '$1[REDACTED]'],
   // well-known provider key shapes

@@ -1,7 +1,7 @@
 # Handoff: session/B-tools (spec B, tool adapters)
 
 ## Done and verified
-- `/verify` run in this session, no errors or failures: typecheck clean in both workspaces; contracts 110/110 (baseline 110); @traceops/app 270/270 (baseline 96, +174 new, all in `test/tools/`).
+- `/verify` run in this session, no errors or failures: typecheck clean in both workspaces; contracts 110/110 (baseline 110); @traceops/app 285/285 (baseline 96, +189 new, all in `test/tools/`).
 - `/contract-check` against `main`: CONTRACTS UNCHANGED (contracts, docs/contracts, seams.ts untouched).
 - Spec Build steps 1–5, as 6 commits (b3a34dd, 19a026c, d2001d5, 3025d2e, 8df2656, plus this handoff): backend clients, render, redact + sanitized errors, the four tools, `createTools`.
 - Every S1 and S2 fixture is replayed through its adapter; output checked against `TOOL_OUTPUTS`, row against `Evidence`, stats against `deriveStats` and `STATS_KEY_GRAMMAR`.
@@ -12,13 +12,22 @@
 ## Done, not verified
 - Nothing run against live Prometheus or Loki. Request shape (`query_range`, `categorize-labels` header, ns timestamps) is checked only against our own assertions and the fixtures.
 - Loki empty-result tests use a real fixture with `result: []` (no empty Loki fixture exists).
-- `/code-review` and `contract-guardian` not run on this branch yet.
+- Live behaviour of the deadline-capped timeout (only tested with fake fetches).
+
+## Review fixes (`/code-review` + contract-guardian, applied after the handoff above)
+- A throw in `execute`/`deriveStats` now records an `error` row (`internal_error: …`, redacted, ≤ 300 chars) and returns the short early form, so no `ev_N` gaps.
+- `redact`: any `scheme://user:pass@host` is redacted (was a fixed list); `Basic` redacts only base64-looking tokens (needs a digit or `=+/`), so "Basic validation" survives. Trade-off: an all-letter, unpadded Basic credential is not caught by that rule.
+- `getJson`: `BackendDeps.deadline` (set from `ctx.budget.deadline`) caps each attempt; nothing is sent after the deadline and no retry follows it.
+- `search_logs` description: `message` is case-sensitive, `exception_message` case-insensitive.
+- Two tests now build their Prometheus responses from real fixtures; `Window`/`Point`/`SeriesStats`/`LogFilter` types are derived from `@traceops/contracts`.
+- `/code-review` and `contract-guardian` have now been run on this branch.
 
 ## Not done
-- Nothing from the spec's Build list is outstanding.
+- **`log_volume` under-count (open proposal `docs/proposals/tools-step-size.md`):** `[1m]` range with a step doubled above 59 min makes `sum` about half the real count. Contract change, so not fixed here. Does not affect the S1/S2 default windows (7.0 and 5.45 min, step 60 s); only explicit 59–60 min windows.
+- Skipped on purpose: Loki 400 classified as `http` (not `backend`); `truncated` is true when exactly `limit` lines exist.
 
 ## Deviations and proposals
-- No proposals written. No contract or fixture mismatch found.
+- One proposal: `docs/proposals/tools-step-size.md` (log_volume range vs step). No other contract or fixture mismatch found.
 - Judgment calls: pre-execution failures (invalid input, budget, render error) return `{evidence_id, status, error}`, not a full `TOOL_OUTPUTS` shape (no window exists); backend failures return the full shape with empty data. Only 3 severities appear in `log_volume`; others are dropped. `log_patterns` shows normalised messages (`<n>`, `<uuid>`, `<hex>`). Series step grows (15 s / 60 s base) to stay ≤ 60 points.
 
 ## How to run it
