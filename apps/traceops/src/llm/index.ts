@@ -1,11 +1,12 @@
 /**
  * The investigator's only entry point into the LLM layer (Contracts v1.1).
- * Provider SDKs are imported only inside their adapter directory (./groq/ today;
- * a future ./deepseek/ adapter is added here without touching investigator code).
+ * Provider SDKs are imported only inside their adapter directory (./groq/, ./deepseek/ since v1.2);
+ * adding one touches only this selector, never investigator code.
  */
 import { LLM_DEFAULTS, LLM_PROVIDERS, type LlmProviderName } from '@traceops/contracts';
 import { createGroqClient, GroqProvider } from './groq/adapter.ts';
 import { loadGroqConfig } from './groq/config.ts';
+import { createDeepSeekProvider } from './deepseek/index.ts';
 import { RecordingProvider, type CallRecorder } from './recorder.ts';
 import type { LlmProvider } from './types.ts';
 
@@ -28,7 +29,6 @@ export function createLlmProvider(recorder: CallRecorder, env: NodeJS.ProcessEnv
       return new RecordingProvider(new GroqProvider(createGroqClient(cfg), cfg), recorder);
     }
     case 'deepseek':
-      // Contracts v1.2 names the provider; the adapter (src/llm/deepseek/) lands with session E.
-      throw new Error('LLM_PROVIDER "deepseek" is not implemented yet (session E adapter pending)');
+      return createDeepSeekProvider(recorder, env);
   }
 }

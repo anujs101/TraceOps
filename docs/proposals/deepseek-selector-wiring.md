@@ -1,6 +1,6 @@
 # Proposal: wire the DeepSeek adapter into the provider selector
 
-**From:** session E (`session/E-deepseek`) · **Status:** OPEN, for the main session at merge time
+**From:** session E (`session/E-deepseek`) · **Status:** APPLIED by the main session at merge (selector + test). `sk-` redaction already in shared `redactSecrets` (b014d84); the env §6 amendment needs a `contracts/*` change (not done).
 
 ## Problem
 `apps/traceops/src/llm/index.ts` `case 'deepseek'` still throws "not implemented yet". E owns only `src/llm/deepseek/`, so it can't edit the selector.

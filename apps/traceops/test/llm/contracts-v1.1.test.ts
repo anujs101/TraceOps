@@ -22,9 +22,12 @@ describe('provider selection (LLM_PROVIDER)', () => {
   it('rejects unknown providers at startup', () => {
     expect(() => selectedProvider({ LLM_PROVIDER: 'openai' })).toThrow(/unsupported LLM_PROVIDER "openai"/);
   });
-  it('v1.2: accepts deepseek; building it fails clearly until session E adds the adapter', () => {
+  it('v1.2: LLM_PROVIDER=deepseek builds the DeepSeek adapter; without a key it fails clearly at startup', () => {
     expect(selectedProvider({ LLM_PROVIDER: 'deepseek' })).toBe('deepseek');
-    expect(() => createLlmProvider(new MemoryRecorder(), { LLM_PROVIDER: 'deepseek' })).toThrow(/not implemented yet/);
+    expect(() => createLlmProvider(new MemoryRecorder(), { LLM_PROVIDER: 'deepseek' })).toThrow(/DEEPSEEK_API_KEY is not set/);
+    const p = createLlmProvider(new MemoryRecorder(), { LLM_PROVIDER: 'deepseek', DEEPSEEK_API_KEY: 'sk-0123456789abcdef0123456789abcdef' });
+    expect(p).toBeInstanceOf(RecordingProvider);
+    expect([p.name, p.model]).toEqual(['deepseek', 'deepseek-flash']);
   });
 });
 
