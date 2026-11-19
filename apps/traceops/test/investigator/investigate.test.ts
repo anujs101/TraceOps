@@ -118,6 +118,23 @@ describe('investigate: invalid report', () => {
   });
 });
 
+describe('investigate: evidence durability', () => {
+  it('a row whose store write fails is never citable: the validator and the report stage do not see it', async () => {
+    const t = setup([...THREE_TOOL_TURNS, { kind: 'structured', value: VALID_REPORT }, { kind: 'structured', value: VALID_REPORT }]);
+    const stored: string[] = [];
+    t.input.evidence = { append: async (row) => { if (row.id === 'ev_1') throw new Error('db write failed'); stored.push(row.id); } };
+    const out = await investigate(t.input);
+    expect(stored).not.toContain('ev_1');
+    expect(out.status).toBe('completed');
+    const row = t.sinks.reports[0]!;
+    // VALID_REPORT cites ev_1, which was never persisted → the validator rejects the citation
+    expect(row.validation).toBe('failed');
+    expect(JSON.stringify(row.violations)).toContain('ev_1');
+    const reportReq = t.scripted.requests.find((r) => r.kind === 'structured')!;
+    expect(JSON.stringify(reportReq.req.messages)).not.toContain('evidence_id="ev_1"');
+  });
+});
+
 describe('investigate: budget', () => {
   it('stops at 12 executed tool calls, records budget_exhausted rows, then writes the report', async () => {
     // all evidence is query_metric here, so VALID_REPORT fails validation and is repaired once
