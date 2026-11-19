@@ -58,6 +58,16 @@ describe('tool loop', () => {
     expect(r.toolRuns[0]).toMatchObject({ status: 'tool_error', result: 'backend down' });
   });
 
+  it('tool error text is redacted and capped before the model sees it; the loop continues', async () => {
+    const msg = `pg: password auth failed, Authorization: Bearer abcdefgh12345678 key gsk_ABCDEFGHijklmnop12345678 ${'x'.repeat(400)}`;
+    const failing: LocalTool<{ a: number; b: number }> = { ...adder([]), run: async () => { throw new Error(msg); } };
+    const r = await run([toolResponse([{ name: 'add', arguments: '{"a":1,"b":1}' }]), textResponse('noted')], [failing]);
+    const seen = r.messages.find((m) => m.role === 'tool')!.content as string;
+    for (const s of ['abcdefgh12345678', 'gsk_ABCDEFGH']) expect(seen).not.toContain(s);
+    expect((r.toolRuns[0]!.result as string).length).toBeLessThanOrEqual(300);
+    expect(r.finalText).toBe('noted');
+  });
+
   it('enforces the tool-call budget', async () => {
     const calls: unknown[] = [];
     const call = toolResponse([{ name: 'add', arguments: '{"a":1,"b":1}' }]);

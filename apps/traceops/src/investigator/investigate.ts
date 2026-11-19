@@ -7,7 +7,11 @@
  *    (persistence.md §2: "validation: failed and insufficient_evidence are
  *    completed investigations, never retried"; the UI shows "unvalidated")
  *  - cancel_requested observed before a model turn or tool call → cancelled
- *  - any other error (LLM transport after retries, tool layer crash) → failed
+ *  - any other error (LLM transport after retries, report sink) → failed
+ *
+ * A tool crash is data, not an infrastructure failure: runToolLoop turns it into a tool_error
+ * result (redacted, ≤ 300 chars, `toolErrorText`) that the model sees, and the loop continues.
+ * The outcome is then decided by the report like any other run.
  */
 import { z } from 'zod';
 import type { Evidence } from '@traceops/contracts';

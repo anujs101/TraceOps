@@ -36,6 +36,7 @@ export function redactSecrets(text: string): string {
     .replace(/sk-ant-[A-Za-z0-9_-]{8,}/g, 'sk-ant-[REDACTED]')
     .replace(/\bsk-(?!ant-)[A-Za-z0-9]{16,}/g, 'sk-[REDACTED]') // OpenAI-style keys (DeepSeek, v1.2)
     .replace(/\borg_[A-Za-z0-9]+/g, 'org_[REDACTED]') // provider account ids (docs/proposals/llm-redact-account-ids.md)
-    .replace(/(authorization|x-api-key)\s*[:=]\s*\S+/gi, '$1: [REDACTED]')
-    .replace(/Bearer\s+[A-Za-z0-9._-]{8,}/g, 'Bearer [REDACTED]');
+    // Bearer first: in "Authorization: Bearer <token>" the header rule below only covers "Bearer"
+    .replace(/Bearer\s+[A-Za-z0-9._-]{8,}/g, 'Bearer [REDACTED]')
+    .replace(/(authorization|x-api-key)\s*[:=]\s*\S+/gi, '$1: [REDACTED]');
 }

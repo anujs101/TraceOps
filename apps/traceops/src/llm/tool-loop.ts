@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import type { ChatResult, LlmMessage, LlmProvider, ToolCall, ToolSpec } from './types.ts';
+import { redactSecrets } from './errors.ts';
 
 /**
  * A tool the APPLICATION executes. The model only ever sees `spec` and the
@@ -67,6 +68,11 @@ export async function runToolLoop(provider: LlmProvider, initial: LlmMessage[], 
   return { finalText: null, stopReason: 'other', messages, toolRuns, turns: opts.maxTurns };
 }
 
+/** What the model sees for a crashed tool call: redacted, at most 300 chars. */
+export function toolErrorText(e: unknown): string {
+  return redactSecrets(e instanceof Error ? e.message : String(e)).slice(0, 300);
+}
+
 async function executeOne(tc: ToolCall, byName: Map<string, LocalTool<any>>, overBudget: boolean, signal?: AbortSignal): Promise<ToolRun> {
   const base = { callId: tc.id, name: tc.name, rawArguments: tc.argumentsJson };
   if (overBudget) return { ...base, status: 'budget_exhausted', result: 'tool budget exhausted; write your conclusion now' };
@@ -87,6 +93,9 @@ async function executeOne(tc: ToolCall, byName: Map<string, LocalTool<any>>, ove
   try {
     return { ...base, status: 'ok', result: await tool.run(checked.data, { signal }) };
   } catch (e) {
-    return { ...base, status: 'tool_error', result: (e instanceof Error ? e.message : String(e)).slice(0, 300) };
+    // A tool crash is data for the model, not an infrastructure failure: the loop continues and
+    // the investigation outcome is decided by the report as usual. The text reaches the model, so
+    // it is redacted of key-like strings and capped (tools.md §4 redaction, 300-char strings).
+    return { ...base, status: 'tool_error', result: toolErrorText(e) };
   }
 }
