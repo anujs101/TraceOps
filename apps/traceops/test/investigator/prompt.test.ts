@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { deriveWindows, TOOL_NAMES } from '@traceops/contracts';
-import { buildReportSystemPrompt, buildReportUserMessage, buildSystemPrompt, buildUserMessage, INVESTIGATION_BUDGET, LOG_CALL_RESERVE } from '../../src/investigator/prompt.ts';
+import { buildReportSystemPrompt, buildReportUserMessage, buildSystemPrompt, buildUserMessage, INVESTIGATION_BUDGET, LOG_CALL_RESERVE, GAPS_RULE } from '../../src/investigator/prompt.ts';
 import { INVESTIGATION_START, S1_INCIDENT } from './fakes.ts';
 
 const sys = buildSystemPrompt(S1_INCIDENT, INVESTIGATION_START);
@@ -25,6 +25,13 @@ describe('investigator system prompt (spec D §5.1)', () => {
     expect(sys).toContain(`Reserve at least ${LOG_CALL_RESERVE} calls for log tools`);
     expect(LOG_CALL_RESERVE).toBeLessThan(INVESTIGATION_BUDGET.maxToolCalls);
     expect(sys).toMatch(/incident vs baseline/);
+  });
+  it('report prompt: gaps list what was not checked; "unavailable" only after an error/empty call', () => {
+    const rep = buildReportSystemPrompt(S1_INCIDENT, INVESTIGATION_START);
+    expect(rep).toContain(GAPS_RULE);
+    expect(GAPS_RULE).toMatch(/list what you did not check/);
+    expect(GAPS_RULE).toMatch(/Never claim that a tool, data source or log\/metric was unavailable unless a tool call for it returned status "error" or "empty"/);
+    expect(GAPS_RULE).toMatch(/evidence id/);
   });
   it('stays cause-neutral so S2 is a fair cause-vs-effect test: no resource, failure-mode or metric-family hints', () => {
     for (const s of [sys, buildReportSystemPrompt(S1_INCIDENT, INVESTIGATION_START), buildUserMessage(S1_INCIDENT)]) {
