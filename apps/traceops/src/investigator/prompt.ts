@@ -38,17 +38,38 @@ export function buildSystemPrompt(incident: Incident, investigationStart: string
 }
 
 /**
+ * Generic causal reasoning (USE-method style). Cause-neutral: it names no resource, failure mode or
+ * metric family; it only says how to order signals in time and how to test a candidate cause.
+ */
+export const CAUSAL_REASONING = [
+  '- Onset: for every signal that is anomalous vs baseline, find its onset time from its series (the first point clearly away from its baseline level). If a signal is already away from its baseline level at the first point of the incident window, its onset is earlier than the window: query it over the baseline before ranking it.',
+  '- Order: a signal whose onset comes after another signal\'s onset is a candidate effect of that earlier signal, not its cause. Write down the onset order you found.',
+  '- Resources: for each resource you can measure, check its utilisation (is it sustained at or near its maximum or ceiling?), whether work is queueing or waiting for it, and its errors.',
+  '- Prefer as root cause the earliest-onset resource running at or near its maximum that explains the later signals.',
+  '- Predictions: for each hypothesis, state what else must be true if it were the root cause (which other signal must have moved, and in which order), and check it with a call.',
+].join('\n');
+
+/** Generic budget rules: do not waste calls. */
+export const BUDGET_RULES = [
+  '- One call per question: do not repeat the same tool, arguments and window.',
+  '- Start log work with one log_volume over the incident window, to see which severities exist before filtering.',
+  '- If a log tool returned status "empty" for a window, do not call that same log tool again for that window (with any filter); use a different log tool or a different window.',
+  '- Tool arguments are a JSON object, never a JSON-encoded string. A call with invalid input still costs one call of the budget.',
+].join('\n');
+
+/**
  * Generic investigation strategy. Deliberately cause-neutral: it must not name any resource,
  * failure mode or metric family, so S2 (cause vs effect) stays a fair test (scenario-db-pool.md).
  */
 export const LOG_CALL_RESERVE = 4;
+export const MAX_METRIC_CALLS = INVESTIGATION_BUDGET.maxToolCalls - LOG_CALL_RESERVE;
 export const STRATEGY = [
   `Strategy (you have ${INVESTIGATION_BUDGET.maxToolCalls} calls in total; plan them before you start):`,
-  `- Gather both kinds of evidence: metrics (query_metric) AND logs (search_logs, log_patterns, log_volume). Reserve at least ${LOG_CALL_RESERVE} calls for log tools; do not spend the whole budget on metrics.`,
+  `- Gather both kinds of evidence: metrics (query_metric) AND logs (search_logs, log_patterns, log_volume). Reserve at least ${LOG_CALL_RESERVE} calls for log tools; do not spend the whole budget on metrics: at most ${MAX_METRIC_CALLS} query_metric calls.`,
   '- Compare incident vs baseline for the signals that matter, so you can tell what changed from what was always there.',
-  '- Look for the earliest signal that changed, and separate causes from their effects: a symptom that rises later is usually an effect.',
+  CAUSAL_REASONING,
   '- Check at least one competing explanation before concluding, and look for evidence that would contradict your leading hypothesis.',
-  '- One call per question: do not repeat the same tool, arguments and window.',
+  BUDGET_RULES,
 ].join('\n');
 
 function windowsSection(w: InvestigationWindows): string {
@@ -89,9 +110,10 @@ export function buildReportSystemPrompt(incident: Incident, investigationStart: 
     'You write the final incident investigation report as JSON matching the given schema, from the evidence below and nothing else.',
     'Observations are facts directly supported by evidence; hypotheses are inferences, ordered most probable first; recommendations are proposals that reference a hypothesis.',
     HYPOTHESIS_RULES,
-    'Every observation cites >= 1 evidence id, and only evidence with status "ok".',
+    EVIDENCE_STATUS_RULE,
     QUANTITY_RULES,
-    'Every value key is unique across the report and appears in its own statement. Hypothesis statements may only use placeholders of observations they cite. The summary contains no numbers.',
+    'Every value key is unique across the report and appears in its own statement. The summary contains no numbers.',
+    HYPOTHESIS_PLACEHOLDER_RULE,
     'Use "high" confidence only if the supporting observations cite both a prometheus and a loki evidence row.',
     `Ids: obs_1, obs_2, ... and hyp_1, hyp_2, ... Timeline "at": ISO 8601 UTC with milliseconds (e.g. ${w.incident.start}), inside a window you queried; every event cites evidence.`,
     'Use status "insufficient_evidence" (no high-confidence hypothesis) if the evidence does not support a cause.',
@@ -115,8 +137,20 @@ export const HYPOTHESIS_RULES = [
  * a call for it actually returned status error or empty (and then that evidence id is cited).
  */
 export const GAPS_RULE = [
-  'Gaps: list what you did not check (questions you did not ask, signals or windows you did not query, calls cut off with budget_exhausted).',
-  'Never claim that a tool, data source or log/metric was unavailable unless a tool call for it returned status "error" or "empty"; then say which call, by its evidence id. Not having called a tool is "not checked", not "unavailable".',
+  'Gaps: list what you did not check (questions you did not ask, signals or windows you did not query, calls cut off with budget_exhausted), and calls that returned nothing usable (status empty or error).',
+  'Never claim that a tool, data source or log/metric was unavailable unless a tool call for it returned status "error" or "empty"; then say which call, by its evidence id written in the gap text. Gaps are plain strings and the only place a non-ok evidence id may appear. Not having called a tool is "not checked", not "unavailable".',
+].join('\n');
+
+/** Only status "ok" evidence is citable (V1); everything else is a gap. */
+export const EVIDENCE_STATUS_RULE = [
+  'Evidence status: an observation is a fact read from a result with status "ok", and cites >= 1 evidence id with status "ok". Values and timeline events also cite only status "ok" ids.',
+  'Results with status "empty", "error" or "budget_exhausted" are never cited in observations, values or the timeline, and never become an observation (not even "X returned nothing"). Mention them only in gaps, as plain text naming the id, e.g. "log_patterns over the incident window returned empty (ev_11)".',
+].join('\n');
+
+/** Hypotheses reuse observation keys (V3); they never bind their own. */
+export const HYPOTHESIS_PLACEHOLDER_RULE = [
+  'Hypothesis numbers: hypotheses have no values of their own. Every {key} in a hypothesis statement must be a key already bound in the values of an observation listed in that hypothesis\'s supporting or contradicting ids, spelled exactly the same.',
+  'Never invent a new key in a hypothesis. Good: obs_1 binds {lat_max}, so the hypothesis says "... raised p95 latency to {lat_max}". Bad: the hypothesis writes {h_lat} or {hyp_lat_max}. If no cited observation binds the number, write the hypothesis without it.',
 ].join('\n');
 
 /** The evidence re-presented with the contract wrapper (tools.md §1), plus stats so fields are explicit. */

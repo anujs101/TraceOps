@@ -49,7 +49,7 @@ export async function generateValidatedReport(
     convo = [
       ...convo,
       { role: 'assistant', content: output.rawText, toolCalls: [] },
-      { role: 'user', content: repairPrompt(validation, output.value) },
+      { role: 'user', content: repairPrompt(validation, output.value, evidence) },
     ];
   }
 
