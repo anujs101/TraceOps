@@ -1,0 +1,21 @@
+# Detection rules (docs/contracts/detection.md §2). Validated by RuleConfig on load.
+# Rules fire on symptoms (latency, errors), never on suspected causes.
+rules:
+  - id: http-latency-p95
+    service: demo-service
+    group: http-slo          # rules in one group share one incident
+    query: latency_p95       # only symptom templates allowed: latency_p95 | error_ratio_5xx
+    op: ">"
+    threshold: 1.0
+  - id: http-error-ratio
+    service: demo-service
+    group: http-slo
+    query: error_ratio_5xx
+    op: ">"
+    threshold: 0.05
+evaluation:
+  interval_s: 15
+  fire_after: 2
+  resolve_after: 4
+  query_timeout_s: 5
+  reopen_window_s: 300
