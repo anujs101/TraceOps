@@ -14,6 +14,7 @@ Enforced by `.claude/hooks/guard-paths.sh` on every Edit/Write. The hook parses 
 | `session/C-detector` | C: detector, queue, database | `apps/traceops/src/detector/` `apps/traceops/src/queue/` `apps/traceops/src/db/` `apps/traceops/config/` `apps/traceops/test/detector/` `apps/traceops/test/queue/` `apps/traceops/test/db/` `apps/traceops/package.json` |
 | `session/D-investigator` | D: investigator, API, UI | `apps/traceops/src/investigator/` `apps/traceops/src/api/` `apps/traceops/test/investigator/` `apps/traceops/test/api/` `apps/web/` `apps/traceops/package.json` |
 | `session/E-deepseek` | E: DeepSeek adapter | `apps/traceops/src/llm/deepseek/` `apps/traceops/test/llm/deepseek/` `apps/traceops/package.json` |
+| `session/F-ui` | F: web UI | `apps/web/` |
 
 **Every session branch** may also write `docs/proposals/`, `docs/build-log/` and `docs/handoff/`.
 
