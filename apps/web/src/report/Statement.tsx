@@ -29,6 +29,7 @@ export function Num({ v, withCountUnit = false, showUnit = true }: { v: BoundVal
   const unit = unitFor(ev, v.field);
   const f = formatValue(v.value, unit);
   const unitText = !showUnit || !f.unit || f.unit === 'count' || (!withCountUnit && COUNT_UNITS.has(f.unit)) ? '' : f.unit;
+  const unitShown = unitText && COUNT_UNITS.has(unitText) && v.value === 1 ? unitText.replace(/s$/, '') : unitText; // "1 connection"
   const active = selected?.evidenceId === v.evidence_id && selected.field === v.field;
   const what = `${evidenceLabel(ev)} ${v.field}`;
   return (
@@ -36,11 +37,11 @@ export function Num({ v, withCountUnit = false, showUnit = true }: { v: BoundVal
       type="button"
       className={`num${ev ? '' : ' is-missing'}${active ? ' is-active' : ''}`}
       onClick={() => open({ evidenceId: v.evidence_id, field: v.field, claimed: v.value, label: v.key })}
-      aria-label={`${f.text}${unitText ? ` ${unitText}` : ''}: ${what}, exact ${exact(v.value)}. Show evidence`}
+      aria-label={`${f.text}${unitShown ? ` ${unitShown}` : ''}: ${what}, exact ${exact(v.value)}. Show evidence`}
       data-tip={`${what} · exact ${exact(v.value)} · ${v.evidence_id}`}
       data-testid={`num-${v.key}`}
     >
-      {f.text}{unitText && <span className={unitText === '%' ? 'num-u num-pct' : 'num-u'}>{unitText}</span>}
+      {f.text}{unitShown && <span className={unitShown === '%' ? 'num-u num-pct' : 'num-u'}>{unitShown}</span>}
     </button>
   );
 }

@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import type { Report } from '@traceops/contracts';
 import type { Incident, InvestigationRow, ReportRow } from '../api.ts';
 import { evidenceLabel, markIndex, seriesOf, unitFor } from '../lib/evidence.ts';
@@ -42,6 +42,8 @@ export function timeToReport(incident: Incident | null, inv: InvestigationRow): 
 export function Verdict({ r, row, incident, inv }: { r: Report; row: ReportRow; incident: Incident | null; inv: InvestigationRow }) {
   const top = r.hypotheses[0];
   const keys = keyNumbers(r);
+  const [more, setMore] = useState(false);
+  const long = r.summary.length > 220;
   return (
     <section className={`card verdict${row.validation === 'passed' ? '' : ' is-unvalidated'}`} aria-labelledby="h-verdict">
       <div className="verdict-line">
@@ -59,7 +61,10 @@ export function Verdict({ r, row, incident, inv }: { r: Report; row: ReportRow; 
           <p className="verdict-stmt"><Statement text={top.statement} values={hypothesisValues(r, top)} /></p>
         </>
       ) : <h1 id="h-verdict" className="verdict-title">No hypothesis</h1>}
-      <p className="summary"><Statement text={r.summary} values={allValues(r)} /></p>
+      <div className="summary-wrap">
+        <p className={`summary${long && !more ? ' is-clamped' : ''}`}><Statement text={r.summary} values={allValues(r)} /></p>
+        {long && <button type="button" className="more-btn" onClick={() => setMore((m) => !m)} aria-expanded={more}>{more ? 'Show less' : 'Show more'}</button>}
+      </div>
 
       {keys.length > 0 && <dl className="keys">{keys.map((v) => <KeyNumber key={v.key} v={v} />)}</dl>}
 
