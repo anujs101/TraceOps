@@ -49,6 +49,8 @@ describe('repair flow', () => {
     expect(repairMsgs.at(-1)!.content).toMatch(/\[V3\] observations\.0\.statement \(obs_\d+\): unbound quantity "10"/);
     expect(repairMsgs.at(-1)!.content).toMatch(/\[V5\] hypotheses\.1\.confidence \(hyp_\d+\)/);
     expect(repairMsgs.at(-1)!.content).toContain('Rule: "high" confidence requires supporting observations that cite both a prometheus and a loki evidence row');
+    // evidence is passed through, so V3 lines can list usable keys for the hypothesis
+    expect(repairMsgs.at(-1)!.content).not.toMatch(/is not an ok evidence row/);
     expect(rec.records.map((r) => r.stage)).toEqual(['report', 'report']);
   });
 
