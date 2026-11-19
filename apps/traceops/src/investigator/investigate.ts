@@ -88,9 +88,11 @@ export function makeInvestigate(opts: InvestigatorOptions = {}): Investigate {
       if (cancelled) throw new InvestigationCancelled();
     };
 
-    // tee: the validator needs exactly the rows the model saw, in order
+    // tee: the validator sees only rows that are durably stored, in order. A row whose write
+    // fails is never citable: it is not added here, and the write error propagates to the tool
+    // (the model gets a tool_error), so a report can never cite an ev_N the UI can't show.
     const evidence: Evidence[] = [];
-    const sink: EvidenceSink = { append: async (row) => { evidence.push(row); await input.evidence.append(row); } };
+    const sink: EvidenceSink = { append: async (row) => { await input.evidence.append(row); evidence.push(row); } };
 
     const call = <T>(fn: () => Promise<T>) => withRetry(fn, opts.retry ?? INVESTIGATOR_RETRY, opts.sleep);
     const pacing = opts.pacing !== undefined ? opts.pacing : pacingFor(input.provider.name);
