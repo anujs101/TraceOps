@@ -1,6 +1,6 @@
 # Proposal: `error_ratio_5xx` must be 0, not empty, when there are no 5xx responses
 
-**From:** main session (Wave 2, after live S1 runs 1 and 2) · **Severity:** blocks normal incident resolution · 2026-11-19 · **Status:** OPEN, needs a decision and a `contracts/*` change
+**From:** main session (Wave 2, after live S1 runs 1 and 2) · **Severity:** blocks normal incident resolution · 2026-11-19 · **Status:** APPLIED in 2ca784a (Contracts v1.3)
 
 ## Problem
 `METRIC_TEMPLATES.error_ratio_5xx` (`packages/contracts/src/telemetry.ts`):
