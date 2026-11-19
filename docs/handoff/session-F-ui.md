@@ -2,7 +2,7 @@
 
 ## Done and verified
 - v1: commits `4447f69`…`e371029` (readable formatting, drawer, tests). v2: `6d6dccd`, `8c4d7ce`, a laptop-first SaaS + observability redesign: sidebar shell, sticky right rail, Signals chart panels with axes.
-- `/verify` 18:24: all 4 workspaces typecheck; tests contracts 114/114, demo-service 16/16, app 483 (+79 skipped), web 45/45.
+- Build order (v1 a–f, v2 1–5) complete and committed. Final `/verify`: VERIFIED. All 4 workspaces typecheck; tests contracts 114/114, demo-service 16/16, app 483 (+79 skipped), web 45/45.
 - Web tests cover:
   - every number opens its evidence and shows the exact stored value;
   - the unvalidated banner and strip are always visible;
@@ -10,9 +10,8 @@
   - Signals panels open their evidence, and the axes are formatted from the stored series;
   - the sidebar's recent incidents and API status;
   - the recorded S1 run (`docs/runs/`).
-- Screenshots, viewed, all with 0 px horizontal overflow: `~/TraceOps-video/screens/v2-01…12`.
-  - Covered: 1440, 1280×800 (Signals start in the fold), 1512, light, 390.
-  - `v2-10…12` come from the real app on :4000 (S2 Unvalidated with 13 violations, baseline line drawn), via the default Vite target.
+- Final screenshots `~/TraceOps-video/screens/f01…f10`, all from the dev API on 4100 only, each 0 px horizontal overflow, key ones viewed: list, investigation, drawer, unvalidated (run 1 + fixture), light, 390, 1280×800, incident page, running.
+- Earlier set `v2-01…12` is kept (incl. 1512); `v2-10…12` came from the real app on :4000 earlier (S2 Unvalidated, 13 violations, baseline drawn).
 - `/contract-check`: CONTRACTS UNCHANGED. Outside `apps/web/` only build-log, handoff and one proposal changed.
 
 ## Done, not verified
