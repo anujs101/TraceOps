@@ -1,6 +1,6 @@
 # Contract: shared local environment and integration conventions
 
-**Status:** v1.1 (2026-11-18; §4 LLM variables and new §6, everything else unchanged from frozen v1) · **Executable source:** `packages/contracts/src/environment.ts` · New in rc2 (fixes integration risks I2–I6).
+**Status:** v1.2 (2026-11-19; §4 DeepSeek variables and §6 DeepSeek specifics. v1.1 2026-11-18: §4 LLM variables and new §6. Everything else unchanged from frozen v1) · **Executable source:** `packages/contracts/src/environment.ts` · New in rc2 (fixes integration risks I2–I6).
 
 ## 1. Ports (single source: `PORTS`; a test asserts they're unique)
 | Service | Port |
@@ -35,11 +35,15 @@
 | `DATABASE_URL` | demo-service | `postgres://demo:demo@localhost:5432/demo` |
 | `TRACEOPS_DATABASE_URL` | TraceOps | `postgres://traceops:traceops@localhost:5432/traceops` |
 | `PROMETHEUS_URL`, `LOKI_URL` | TraceOps | `http://localhost:9090`, `http://localhost:3100` |
-| `LLM_PROVIDER` | TraceOps | `groq` (default; the only implemented value) |
+| `LLM_PROVIDER` | TraceOps | `groq` (default) or `deepseek` (v1.2). Unknown values fail at startup |
 | `GROQ_API_KEY` | TraceOps | **required**; read only by the Groq adapter; never logged, never in fixtures or `llm_calls` |
 | `GROQ_BASE_URL` | TraceOps | `https://api.groq.com` (default). The API **host** only: groq-sdk appends `/openai/v1/...`, so a value ending in `/openai/v1` is rejected. https required (http only for localhost) |
 | `GROQ_MODEL` | TraceOps | `openai/gpt-oss-20b` (default; the model id every live Groq response reported) |
 | `GROQ_TIMEOUT_MS` | TraceOps | `30000` |
+| `DEEPSEEK_API_KEY` | TraceOps | v1.2. **Required when `LLM_PROVIDER=deepseek`**; read only by the DeepSeek adapter; never logged, never in fixtures or `llm_calls` |
+| `DEEPSEEK_BASE_URL` | TraceOps | v1.2. `https://api.deepseek.com` (default; DeepSeek's OpenAI-compatible host). https required (http only for localhost) |
+| `DEEPSEEK_MODEL` | TraceOps | v1.2. `deepseek-flash` (default, from DeepSeek's docs 2026-11-19; **to be confirmed by session E's live smoke test**) |
+| `DEEPSEEK_TIMEOUT_MS` | TraceOps | v1.2. `30000` |
 | `GROQ_REASONING_EFFORT` | TraceOps | unset, or `low` / `medium` / `high` |
 | `FAULT`, `CPU_ITER`, `SERVICE_VERSION` | demo-service | see `scenario-db-pool.md` |
 
@@ -50,7 +54,7 @@ Secrets live only in the git-ignored `.env` at the repo root. `.env.example` (co
 - TraceOps adapters are tested against these. **Hand-written backend mocks are not allowed.** A test asserts every fixture matches the backend response schemas in `backend.ts`.
 - When telemetry changes, recapture the fixtures and they must still pass.
 
-## 6. LLM provider (v1.1)
+## 6. LLM provider (v1.1; DeepSeek added in v1.2)
 **Interface.** Investigator code depends only on `apps/traceops/src/llm/index.ts`: `createLlmProvider()` and the `LlmProvider` type. It never imports a provider SDK, which is used only inside `apps/traceops/src/llm/<provider>/`. `LlmProvider` has two capabilities:
 - `chat()`: tool-calling turns (stage `investigate`)
 - `structured()`: one JSON response constrained by a schema (stage `report`)
@@ -75,6 +79,13 @@ Secrets live only in the git-ignored `.env` at the repo root. `.env.example` (co
 - tools as `type: function`, `tool_choice: auto`
 - structured output as `response_format: { type: 'json_schema', json_schema: { name, schema, strict: true } }`
 - HTTP 400 with `tool_use_failed` or `json_validate_failed` → `invalid_generation`. Observed live, even in strict mode.
+
+**DeepSeek specifics (v1.2; adapter by session E, not yet implemented):**
+- OpenAI-compatible Chat Completions at `DEEPSEEK_BASE_URL`, bearer auth with `DEEPSEEK_API_KEY`. Session E chooses an OpenAI-compatible SDK or `fetch`; either way the SDK's own retries are disabled (rule 5).
+- Tool calls as `type: function`, `tool_choice: auto`; structured output in a separate request (rule above).
+- Structured output uses DeepSeek's strictest documented mode. Which mode that is (JSON-schema strict vs JSON-object output) is **open until E verifies it live**; whatever it is, `Report` and V0–V8 still run server-side.
+- E maps DeepSeek's HTTP errors into `LLM_ERROR_KINDS` from DeepSeek's error-code documentation and records the mapping in its handoff.
+- The default model id is **to be confirmed** by E's live smoke test (the model the API reports); a wrong id is amended in a follow-up contract commit.
 
 **Error handling:**
 - **Retried:** only the kinds in `RETRYABLE_LLM_ERRORS`, with backoff that honours `retry_after_ms`.

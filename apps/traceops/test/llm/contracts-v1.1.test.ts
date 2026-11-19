@@ -19,8 +19,12 @@ describe('provider selection (LLM_PROVIDER)', () => {
     expect(p).toBeInstanceOf(RecordingProvider);
     expect([p.name, p.model]).toEqual(['groq', 'openai/gpt-oss-20b']);
   });
-  it('rejects providers without an adapter (e.g. deepseek, until implemented)', () => {
-    expect(() => selectedProvider({ LLM_PROVIDER: 'deepseek' })).toThrow(/unsupported LLM_PROVIDER "deepseek"/);
+  it('rejects unknown providers at startup', () => {
+    expect(() => selectedProvider({ LLM_PROVIDER: 'openai' })).toThrow(/unsupported LLM_PROVIDER "openai"/);
+  });
+  it('v1.2: accepts deepseek; building it fails clearly until session E adds the adapter', () => {
+    expect(selectedProvider({ LLM_PROVIDER: 'deepseek' })).toBe('deepseek');
+    expect(() => createLlmProvider(new MemoryRecorder(), { LLM_PROVIDER: 'deepseek' })).toThrow(/not implemented yet/);
   });
 });
 
