@@ -1,4 +1,4 @@
-# TraceOps MVP contracts — v1.4 (2026-11-19; v1.3 2026-11-19; v1.2 2026-11-19; v1.1 2026-11-18; v1 frozen 2026-11-17)
+# TraceOps MVP contracts — v1.5 (2026-11-19; v1.4 2026-11-19; v1.3 2026-11-19; v1.2 2026-11-19; v1.1 2026-11-18; v1 frozen 2026-11-17)
 
 These are the boundaries that let the demo-service and TraceOps be built **in parallel**. A build session may depend only on these files and on `@traceops/contracts`, never on another session's implementation.
 
@@ -20,6 +20,11 @@ Only these changed relative to frozen v1 (`05cad4a`). Everything else is identic
 - `environment.md` §4 and new §6: `LLM_PROVIDER`, `GROQ_*` variables, the provider interface, adapter requirements and error handling. `ANTHROPIC_API_KEY` is removed.
 - `tools.md` §1 and `evidence-and-report.md` §2: provider-neutral wording (Groq replaces the Claude `output_config` references).
 - `packages/contracts/src/llm.ts`: `LlmCall`, `LLM_ERROR_KINDS`, `LLM_DEFAULTS` (+ tests).
+
+## v1.5 amendments (2026-11-19): tool-layer enforcement of the metric share and JSON-string input
+**Reason:** the investigator prompt asks for at most 8 `query_metric` calls so 4 stay for log tools, but the model is untrusted and ignored it in both round-1 runs (10 and 12 metric calls; `docs/runs/s1-20261119T142737Z`, `s2-20261119T144936Z`), so log calls were refused with `budget_exhausted`. One call per run was also lost to JSON-string-encoded arguments (`invalid_input: expected object, received string`). Proposal: `docs/proposals/tools-budget-enforcement.md`. Only these changed relative to v1.4:
+- `tools.md` §1: two bullets (metric share of the budget; JSON-string input decoded once).
+- `packages/contracts/src/tools.ts`: `LIMITS.logCallReserve = 4` (+ test). No schema, status or fixture change; `budget_exhausted` already exists.
 
 ## v1.4 amendments (2026-11-19): S2 `CPU_ITER` 300000 → 400000
 **Reason:** at 300000, S2 reached its intended state only while other load ran on the laptop. Run 1 was valid at load ~14.9; at load ~6–10 p95 peaked at 0.81 s and at ~3 at 0.08 s (ELU 0.887), so the latency alert never fired (two invalid runs, `docs/runs/s2-20261119T132445Z`, `…134241Z`). A calibration with no TraceOps app (`docs/proposals/s2-cpu-iter-retune.md`) found 400000 to be the smallest value with ELU ≥ 0.95, p95 ≥ 1.5 s sustained and 5xx < 0.05. Only these changed relative to v1.3:

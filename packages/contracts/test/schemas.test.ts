@@ -3,7 +3,7 @@ import {
   Report, ReportApi, Incident, RuleConfig, Evidence, deriveWindows,
   METRIC_NAMES, METRIC_TEMPLATES, renderPromql, LOG_ALLOWED_FIELDS, LOG_LINE_KEYS,
   STATS_KEY_GRAMMAR, deriveStats, resolveField, TOOL_NAMES, TOOL_INPUTS, SearchLogsChecked,
-  QueryMetricChecked, IsoUtcMs, toIsoUtcMs, PORTS,
+  QueryMetricChecked, IsoUtcMs, toIsoUtcMs, PORTS, LIMITS,
 } from '../src/index.ts';
 import { validReport, queryMetricOut, logVolumeOut, logPatternsOut, searchLogsOut } from './examples.ts';
 
@@ -49,6 +49,9 @@ describe('telemetry ↔ tools consistency', () => {
 });
 
 describe('tool inputs', () => {
+  it('v1.5: query_metric may use at most maxToolCalls - logCallReserve calls (8 of 12)', () => {
+    expect(LIMITS.maxToolCalls - LIMITS.logCallReserve).toBe(8);
+  });
   it('every tool has an input schema', () => expect(Object.keys(TOOL_INPUTS).sort()).toEqual([...TOOL_NAMES].sort()));
   it('server-side checks enforce limits the API cannot', () => {
     const ok = { window: 'incident', severity: 'error', match: { field: 'exception_message', contains: 'timeout' }, limit: 20 };

@@ -50,6 +50,8 @@ export const LogVolumeChecked = LogVolumeInput.extend({ window: CheckedWindow })
 
 export const LIMITS = {
   maxToolCalls: 12,
+  /** v1.5: calls of the 12 that query_metric cannot use (kept for log tools); query_metric gets at most maxToolCalls - logCallReserve. */
+  logCallReserve: 4,
   maxWallClockMs: 180_000,
   backendTimeoutMs: 5_000,
   maxSeriesPoints: 60,
