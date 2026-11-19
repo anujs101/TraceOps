@@ -3,6 +3,7 @@ import { LlmError } from '../llm/errors.ts';
 import { generateReport } from '../llm/report-stage.ts';
 import type { LlmMessage, LlmProvider } from '../llm/types.ts';
 import { validateReport } from './validator.ts';
+import { repairPrompt } from './repair-prompt.ts';
 
 /** Contracts v1: exactly one repair round. Not configurable on purpose. */
 export const MAX_REPAIR_ROUNDS = 1;
@@ -48,7 +49,7 @@ export async function generateValidatedReport(
     convo = [
       ...convo,
       { role: 'assistant', content: output.rawText, toolCalls: [] },
-      { role: 'user', content: repairPrompt(validation) },
+      { role: 'user', content: repairPrompt(validation, output.value) },
     ];
   }
 
@@ -81,12 +82,4 @@ async function produce(provider: LlmProvider, messages: LlmMessage[], opts: { ma
 
 type StructuredRaw = { value: unknown; rawText: string };
 
-export function repairPrompt(v: ValidationResult): string {
-  const lines = v.violations.slice(0, 30).map((x) => `- [${x.rule}] ${x.path}: ${x.message}`);
-  return [
-    'Your report failed server-side validation. Return the COMPLETE corrected report as JSON matching the same schema.',
-    'Fix exactly these violations and change nothing that is not needed:',
-    ...lines,
-    'Reminders: every number in a statement must be a {key} placeholder bound in that observation\'s values; use "high" confidence only when supporting observations cite both a prometheus and a loki evidence row; otherwise lower the confidence.',
-  ].join('\n');
-}
+export { repairPrompt } from './repair-prompt.ts';
