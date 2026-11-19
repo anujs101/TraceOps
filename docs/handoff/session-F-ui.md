@@ -1,30 +1,31 @@
-# Handoff: session/F-ui (full UI redesign of apps/web/)
+# Handoff: session/F-ui (UI redesign of apps/web/, v1 then v2)
 
 ## Done and verified
-- Commits `4447f69`…`96bf614`, steps (a)–(f), plus `94c2756`: a pinned unvalidated strip, added after the real-app check.
-- `/verify` 17:31: typecheck passes in all 4 workspaces; tests contracts 114/114, demo-service 16/16, app 483 + 79 skipped, web 43/43.
-- Web tests: every number opens its evidence and shows the exact stored value; the unvalidated banner and its violations stay visible with every `<details>` closed; no `ev_N`/`obs_N`/`hyp_N` text in the page body; `formatValue` checked on real run values; the recorded S1 run renders (16 evidence rows, TTR 37.8 s).
-- Vite proxy target from `VITE_API_TARGET` (default `http://localhost:4000`). Unit-tested, and seen working live: 5174 → 4100.
-- `/contract-check`: CONTRACTS UNCHANGED. Outside `apps/web/` only the build log and one proposal changed.
-- Screenshots, viewed: 4 before/after pairs plus light 1440 and dark 390, in `~/TraceOps-video/screens/`. Every capture had 0 px horizontal overflow.
-
-- Real app on :4000, with Postgres holding S1 runs 1 and 2 and S2. I ran Vite with no `VITE_API_TARGET`, i.e. its default target, and made GET requests only. Screens are in `~/TraceOps-video/screens/real-*.png`. Seen:
-  - S2 is Unvalidated with 13 violations, and its V3 placeholders are flagged;
-  - the S2 baseline line is drawn (ev_2, avg 112 ms);
-  - ratio, ms and s units render correctly.
-- That check found that 13 violations made the sticky banner cover half the screen. Fixed in `94c2756`.
+- v1: commits `4447f69`…`e371029` (readable formatting, drawer, tests). v2: `6d6dccd`, `8c4d7ce`, a laptop-first SaaS + observability redesign: sidebar shell, sticky right rail, Signals chart panels with axes.
+- `/verify` 18:24: all 4 workspaces typecheck; tests contracts 114/114, demo-service 16/16, app 483 (+79 skipped), web 45/45.
+- Web tests cover:
+  - every number opens its evidence and shows the exact stored value;
+  - the unvalidated banner and strip are always visible;
+  - no inline ids;
+  - Signals panels open their evidence, and the axes are formatted from the stored series;
+  - the sidebar's recent incidents and API status;
+  - the recorded S1 run (`docs/runs/`).
+- Screenshots, viewed, all with 0 px horizontal overflow: `~/TraceOps-video/screens/v2-01…12`.
+  - Covered: 1440, 1280×800 (Signals start in the fold), 1512, light, 390.
+  - `v2-10…12` come from the real app on :4000 (S2 Unvalidated with 13 violations, baseline line drawn), via the default Vite target.
+- `/contract-check`: CONTRACTS UNCHANGED. Outside `apps/web/` only build-log, handoff and one proposal changed.
 
 ## Done, not verified
 - Keyboard focus return after closing the drawer, and contrast ratios: implemented but not measured.
 
 ## Not done
-- No S2 run directory exists in `docs/runs/`, so the dev API (4100) has no S2. S2 was seen only through the real app.
+- No S2 folder in `docs/runs/`, so the dev API (4100) has no S2. S2 was seen only through the real app.
 
 ## Deviations and proposals
-- [validator-timeline-placeholders.md](../proposals/validator-timeline-placeholders.md): V3 doesn't check `{key}` in timeline events. The recorded S1 run passed with `{pool_used_early}` and `{pool_used_mid}` unbound. The UI marks them unbound.
-- Report sections share one file, `report/Sections.tsx`; the theme follows the system by default.
-- Prose like "{el_max} s" absorbs the unit and shows "19.4 ms". Only when the following unit exactly equals the evidence unit (s, req/s, timeouts/s).
-- The list makes N+1 reads (investigations + latest report per incident). A summary endpoint would remove this (not proposed yet).
+- [validator-timeline-placeholders.md](../proposals/validator-timeline-placeholders.md): V3 doesn't check timeline `{key}`s (S1 run 2 and S2 both show unbound ones). The UI marks them.
+- The incident list reads N+1 (investigations + latest report per incident); the sidebar shares the same load. A summary endpoint would remove this (not proposed yet).
+- List KPIs are display-only counts over the loaded rows, labelled as such.
+- Fixed in v2: an `sr-only` label inside `.table-wrap` escaped the scroll box and widened phones by 225 px. That was also the cause of the v1 "squeezed" 390 capture, which I wrongly called an artefact.
 
 ## How to run it
 ```bash
@@ -35,6 +36,6 @@ npm test -w @traceops/web
 ```
 
 ## For the integrator
-- `dev-api-run.ts` refuses port 4000. `scripts/load-run.ts` reads `docs/runs/<run>/{summary,evidence,report,llm_calls}.json`.
-- `tsconfig.json` now includes `scripts/`. No new dependencies.
-- Fonts come from Google Fonts (Atkinson Hyperlegible Next/Mono), with system fallbacks, so offline is fine.
+- The real app needs `.env`, which this worktree doesn't have: start it from the main checkout (`npm run start:env -w @traceops/app`).
+- No new dependencies. Fonts: Geist / Geist Mono from Google Fonts, with system fallbacks.
+- `dev-api-run.ts` refuses port 4000. `tsconfig.json` includes `scripts/`.
