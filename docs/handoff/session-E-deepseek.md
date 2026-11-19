@@ -31,7 +31,7 @@
 
 **How to run it**
 - `npm test -w @traceops/app -- test/llm/deepseek`
-- Live (spends tokens): `(set -a; . ./.env; set +a; npm run smoke:deepseek -w @traceops/app)`
+- Live (spends tokens): `npm run smoke:deepseek -w @traceops/app`. Its script passes the repo `.env` to the process with `tsx --env-file`; nobody sources, reads or prints `.env` in a shell (CLAUDE.md rule 4). (Changed at merge by the main session.)
 - Once wired: `LLM_PROVIDER=deepseek` plus `DEEPSEEK_API_KEY`. Groq stays the default.
 
 **For the integrator**

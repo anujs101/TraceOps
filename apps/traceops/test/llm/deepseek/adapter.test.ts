@@ -69,8 +69,12 @@ describe('chat()', () => {
     expect(r.toolCalls).toEqual([{ id: 'fc_1', name: 'log_volume', argumentsJson: '{"a":1}' }]);
   });
 
-  it.each([['length', 'length'], ['content_filter', 'other'], ['insufficient_system_resource', 'other']])('finish_reason %s → %s', async (f, stop) => {
+  it.each([['length', 'length'], ['stop', 'end'], ['something_new', 'other']])('finish_reason %s → %s', async (f, stop) => {
     expect((await new DeepSeekProvider(new FakeDeepSeekClient([textResponse('x', f)]), cfg).chat(chatReq)).stopReason).toBe(stop);
+  });
+
+  it.each([['content_filter', 'unknown'], ['insufficient_system_resource', 'capacity']])('finish_reason %s → LlmError %s (see finish-and-headers.test.ts)', async (f, kind) => {
+    await expect(new DeepSeekProvider(new FakeDeepSeekClient([textResponse('x', f)]), cfg).chat(chatReq)).rejects.toMatchObject({ kind });
   });
 
   it.each([

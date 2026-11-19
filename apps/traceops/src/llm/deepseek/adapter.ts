@@ -12,10 +12,28 @@ export type DeepSeekChatClient = {
 /** Name of the single forced tool that carries the structured report (DeepSeek has no json_schema response_format). */
 export const SUBMIT_REPORT_TOOL = 'submit_report';
 
-export function createDeepSeekClient(cfg: DeepSeekConfig): DeepSeekChatClient {
+/**
+ * Request headers sent to DeepSeek. Everything else is dropped: the openai SDK otherwise adds
+ * OPENAI_CUSTOM_HEADERS (read from process.env at construction, not switchable by an option)
+ * and OpenAI-Organization / OpenAI-Project to every request.
+ */
+const ALLOWED_HEADERS = /^(authorization|content-type|content-length|accept|accept-encoding|user-agent|x-stainless-[a-z0-9-]+)$/i;
+
+export const deepSeekFetch = (inner: typeof fetch = fetch): typeof fetch => (input, init) => {
+  const kept = new Headers();
+  new Headers(init?.headers).forEach((v, k) => { if (ALLOWED_HEADERS.test(k)) kept.set(k, v); });
+  return inner(input, { ...init, headers: kept });
+};
+
+export function createDeepSeekClient(cfg: DeepSeekConfig, fetchImpl: typeof fetch = fetch): DeepSeekChatClient {
   // SDK retries off: retries happen in withRetry() so every attempt is recorded.
   // /beta is required for strict tool schemas; baseURL is explicit so OPENAI_BASE_URL is never picked up.
-  return new OpenAI({ apiKey: cfg.apiKey.reveal(), baseURL: cfg.baseUrl + DEEPSEEK_BETA_PATH, maxRetries: 0, timeout: cfg.timeoutMs }) as unknown as DeepSeekChatClient;
+  // organization/project/adminAPIKey/webhookSecret are explicit nulls so OPENAI_* env vars are never picked up;
+  // deepSeekFetch drops any header outside the allowlist (OPENAI_CUSTOM_HEADERS).
+  return new OpenAI({
+    apiKey: cfg.apiKey.reveal(), baseURL: cfg.baseUrl + DEEPSEEK_BETA_PATH, maxRetries: 0, timeout: cfg.timeoutMs,
+    organization: null, project: null, adminAPIKey: null, webhookSecret: null, fetch: deepSeekFetch(fetchImpl),
+  }) as unknown as DeepSeekChatClient;
 }
 
 /**
@@ -40,6 +58,7 @@ export class DeepSeekProvider implements LlmProvider {
     };
     const res = await this.send(body, req.signal);
     const choice = firstChoice(res);
+    throwOnServerStop(choice.finish_reason);
     const msg = choice.message as Record<string, unknown>;
     const toolCalls = parseToolCalls(msg.tool_calls);
     return { content: typeof msg.content === 'string' ? msg.content : null, toolCalls, stopReason: mapFinish(choice.finish_reason, toolCalls.length), meta: this.meta(res) };
@@ -56,6 +75,7 @@ export class DeepSeekProvider implements LlmProvider {
     };
     const res = await this.send(body, req.signal);
     const choice = firstChoice(res);
+    throwOnServerStop(choice.finish_reason);
     if (choice.finish_reason === 'length') throw new LlmError('truncated', 'structured output stopped at max tokens');
     const call = parseToolCalls((choice.message as Record<string, unknown>).tool_calls).find((c) => c.name === SUBMIT_REPORT_TOOL);
     if (!call || call.argumentsJson.trim() === '') throw new LlmError('malformed_response', `structured response has no ${SUBMIT_REPORT_TOOL} tool call`);
@@ -126,10 +146,21 @@ function parseToolCalls(raw: unknown): ToolCall[] {
   });
 }
 
+/**
+ * DeepSeek-specific finish reasons that mean the output is not usable as returned:
+ *  - insufficient_system_resource: the server cut generation off (capacity) → retryable `capacity`
+ *  - content_filter: output withheld by the provider → `unknown` (not retried; not a model-format problem)
+ */
+function throwOnServerStop(reason: unknown): void {
+  if (reason === 'insufficient_system_resource') throw new LlmError('capacity', 'DeepSeek stopped generation: insufficient system resource');
+  if (reason === 'content_filter') throw new LlmError('unknown', 'DeepSeek withheld the output (content_filter)');
+}
+
 function mapFinish(reason: unknown, toolCalls: number): StopReason {
+  // truncation wins over the tool-call shortcut: partial tool calls cut at max tokens are a `length` stop
+  if (reason === 'length') return 'length';
   if (toolCalls > 0 || reason === 'tool_calls') return 'tool_calls';
   if (reason === 'stop') return 'end';
-  if (reason === 'length') return 'length';
   return 'other';
 }
 

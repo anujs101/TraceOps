@@ -1,19 +1,20 @@
 /**
  * DeepSeek live smoke test: ONE run, two requests. Spends a few cents. Not a vitest file.
- *   DEEPSEEK_API_KEY=... npm run smoke:deepseek -w @traceops/app
- * The key is taken from the process environment only (.env is never read). Never printed.
+ *   npm run smoke:deepseek -w @traceops/app      (tsx --env-file=../../.env)
+ * The key reaches the process only through its environment (node's --env-file); this script never
+ * reads .env itself. Never printed.
  *
  *  (a) offline: DeepSeek strict-schema check for ReportApi + the 4 tool schemas
  *  (b) chat(): all 4 TOOL_INPUTS as strict:true tools, tool_choice auto
  *  (c) structured(): ReportApi via forced strict submit_report call, on real S1 fixture evidence → Report.safeParse
- * Raw provider responses (and raw provider errors) are printed verbatim.
+ * Raw provider responses are printed verbatim; raw provider errors are printed through redactSecrets.
  */
 import { Report, TOOL_INPUTS, toApiJsonSchema } from '@traceops/contracts';
 import { createDeepSeekClient, DeepSeekProvider, type DeepSeekChatClient } from '../../../src/llm/deepseek/adapter.ts';
 import { loadDeepSeekConfig } from '../../../src/llm/deepseek/config.ts';
 import { deepseekStrictProblems } from '../../../src/llm/deepseek/schema.ts';
 import { MemoryRecorder, RecordingProvider } from '../../../src/llm/recorder.ts';
-import { LlmError } from '../../../src/llm/errors.ts';
+import { LlmError, redactSecrets } from '../../../src/llm/errors.ts';
 import { REPORT_SCHEMA_NAME, reportProviderSchema } from '../../../src/llm/report-stage.ts';
 import { logPatternsOutput, queryMetricOutput, toEvidence } from '../../../scripts/lib/fixture-evidence.ts';
 
@@ -24,7 +25,12 @@ const inner = createDeepSeekClient(cfg);
 const capturing: DeepSeekChatClient = {
   chat: { completions: { create: async (body, opts) => {
     try { const r = await inner.chat.completions.create(body, opts); raw.push(r); return r; }
-    catch (e: any) { console.log('RAW PROVIDER ERROR:', JSON.stringify({ status: e?.status, error: e?.error, code: e?.code, type: e?.type })); throw e; }
+    catch (e: any) {
+      const errRaw = { status: e?.status, error: e?.error, code: e?.code, type: e?.type };
+      raw.push(errRaw); // included in the key scan at the end
+      console.log('RAW PROVIDER ERROR (redacted):', redactSecrets(JSON.stringify(errRaw)));
+      throw e;
+    }
   } } },
 };
 const mem = new MemoryRecorder();
@@ -48,7 +54,8 @@ const chat = await provider.chat({
 }).catch((e) => { console.log('CHAT ERROR:', errText(e)); return null; });
 console.log('RAW RESPONSE:', JSON.stringify(raw.at(-1)));
 if (chat) console.log('neutral:', JSON.stringify({ stopReason: chat.stopReason, toolCalls: chat.toolCalls, model: chat.meta.model }));
-const chatOk = !!chat && chat.toolCalls.length > 0 && chat.toolCalls.every((c) => (c.name in TOOL_INPUTS) && (TOOL_INPUTS as any)[c.name].safeParse(JSON.parse(c.argumentsJson)).success);
+const parseArgs = (s: string): unknown => { try { return JSON.parse(s); } catch { return Symbol('invalid JSON'); } };
+const chatOk = !!chat && chat.toolCalls.length > 0 && chat.toolCalls.every((c) => (c.name in TOOL_INPUTS) && (TOOL_INPUTS as any)[c.name].safeParse(parseArgs(c.argumentsJson)).success);
 console.log('PASS strict tools accepted + args match zod input schemas:', chatOk);
 
 hr('(c) structured(): ReportApi via forced strict submit_report');
