@@ -2,7 +2,7 @@
  * Investigator prompts (spec D §5.1). Pure functions of the incident and its
  * windows, so they are testable without a provider.
  */
-import { deriveWindows, type Evidence, type Incident, type InvestigationWindows, type ToolName } from '@traceops/contracts';
+import { LIMITS, deriveWindows, type Evidence, type Incident, type InvestigationWindows, type ToolName } from '@traceops/contracts';
 
 /** tools.md §1. */
 export const INVESTIGATION_BUDGET = { maxToolCalls: 12, durationMs: 3 * 60_000 } as const;
@@ -61,7 +61,8 @@ export const BUDGET_RULES = [
  * Generic investigation strategy. Deliberately cause-neutral: it must not name any resource,
  * failure mode or metric family, so S2 (cause vs effect) stays a fair test (scenario-db-pool.md).
  */
-export const LOG_CALL_RESERVE = 4;
+/** Contracts v1.5 (tools.md §1): the tool layer enforces this; the prompt states the same number. */
+export const LOG_CALL_RESERVE = LIMITS.logCallReserve;
 export const MAX_METRIC_CALLS = INVESTIGATION_BUDGET.maxToolCalls - LOG_CALL_RESERVE;
 export const STRATEGY = [
   `Strategy (you have ${INVESTIGATION_BUDGET.maxToolCalls} calls in total; plan them before you start):`,

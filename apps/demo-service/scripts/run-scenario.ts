@@ -4,7 +4,7 @@
  *
  * Timeline (docs/contracts/scenario-db-pool.md "Load profile"):
  *   0. cool-down: wait until Prometheus holds no demo-service samples from the last 5 min
- *   1. baseline on FAULT=none, 1.0.0 at 30 rps for >= 90 s
+ *   1. baseline on FAULT=none, 1.0.0 at 30 rps for 7 min (contract: >= 90 s; see BASELINE_S)
  *   2. restart with the fault on 1.0.1 (simulated deploy), load continues
  *   3. keep load until the latency alert condition holds (detection.md: p95 > 1.0 s, fire_after 2 at 15 s), plus 3 min
  *   4. drop to 6 rps for >= 60 s
@@ -17,7 +17,13 @@ import { renderPromql, scenarioValid, SERVICE, type MetricName, type Scenario, t
 import { startLoad, type LoadHandle } from '../load/load';
 
 // ---- numbers taken from the contracts (do not tune here) ----
-const BASELINE_S = 90; // scenario-db-pool.md: baseline >= 90 s
+// scenario-db-pool.md: baseline >= 90 s. 90 s is too short for the investigator's derived baseline window
+// (detection.md §6): incident = [started_at - 2 min, investigation start] (~2 min 20 s), baseline = the same
+// length just before it, so it starts ~4 min 20 s before started_at. started_at can come ~5-25 s after the
+// deploy, and rate[1m] / the 15 s gauge lookback need ~75 s of healthy samples first: healthy 1.0.0 traffic
+// must start >= ~5.75 min before the deploy. 7 min leaves ~70 s for a slow worker pickup.
+// (Round-1 runs at 90 s: the S2 baseline window was entirely before demo-service started, S1's only partly covered.)
+const BASELINE_S = 420;
 const LOAD_RPS = 30;
 const LOW_STOCK_SHARE = 0.02;
 const DROP_RPS = 6;

@@ -168,6 +168,12 @@ describe('invalid input', () => {
     ['window without a zone', 'log_volume', { window: { start: '2026-11-16T18:00:00', end: '2026-11-16T18:10:00' } }],
     ['window not a date', 'log_volume', { window: { start: 'yesterday', end: 'now' } }],
     ['window is an unknown keyword', 'log_volume', { window: 'last_hour' }],
+    // v1.5: a JSON string is decoded once; only an object result is used, otherwise the raw string is invalid
+    ['JSON string that is not JSON', 'search_logs', '{"window": incident, "severity": "error", "match": null, "limit": 20}'],
+    ['JSON string of an array', 'query_metric', '["latency_p95", "incident"]'],
+    ['JSON string of a string (decoded once only)', 'query_metric', JSON.stringify(JSON.stringify({ metric: 'latency_p95', window: W }))],
+    ['JSON string of null', 'query_metric', 'null'],
+    ['JSON string of an object that fails the checks', 'query_metric', JSON.stringify({ metric: 'cpu_temp', window: W })],
   ];
   it.each(cases)('%s → error row with raw args, no backend call', async (_n, tool, args) => {
     const h = harness('S1', [loadFixtureText('S1', 'prom-empty.json')]);
@@ -186,6 +192,19 @@ describe('invalid input', () => {
     expect(row.status).toBe('error');
     expect(row.stats).toEqual({});
     expect(row.result).toBe(out);
+  });
+});
+
+describe('v1.5: JSON-string arguments are decoded once', () => {
+  it('a JSON string holding an object runs like that object; the row stores the resolved args', async () => {
+    const h = harness('S1', [loadFixtureText('S1', 'prom-pool_used.json')]);
+    const out = await h.call('query_metric', JSON.stringify({ metric: 'pool_used', window: 'incident' }));
+    expect(out.status).toBe('ok');
+    expect(h.calls).toHaveLength(1);
+    const row = h.rows[0]!;
+    expect(Evidence.safeParse(row).error).toBeUndefined();
+    expect(row.args).toEqual({ metric: 'pool_used', window: h.windows.incident });
+    expect(row.rendered_query).not.toBeNull();
   });
 });
 
@@ -310,6 +329,35 @@ describe('budget', () => {
     const h = harness('S1', [loadFixtureText('S1', 'prom-pool_used.json')], { budget: { maxToolCalls: 1, deadline: Date.now() + 60_000 } });
     expect((await h.call('query_metric', { nope: true })).status).toBe('error');
     expect((await h.call('query_metric', { nope: true })).status).toBe('budget_exhausted');
+  });
+
+  it('v1.5: query_metric gets at most maxToolCalls - logCallReserve calls; log tools keep the rest', async () => {
+    const h = harness('S1', [loadFixtureText('S1', 'prom-pool_used.json')]); // maxToolCalls 12
+    const args = { metric: 'pool_used', window: 'incident' };
+    for (let i = 1; i <= 8; i++) expect((await h.call('query_metric', args)).status).toBe('ok');
+    const ninth = await h.call('query_metric', args);
+    expect(ninth).toMatchObject({ evidence_id: 'ev_9', status: 'budget_exhausted' });
+    expect(ninth.error).toBe('budget_exhausted: query_metric limit reached (8 of 12 calls); the remaining calls are reserved for log tools (log_volume, log_patterns, search_logs)');
+    expect(h.calls).toHaveLength(8); // nothing sent for the refused call
+    const row = h.rows[8]!;
+    expect(Evidence.safeParse(row).error).toBeUndefined();
+    expect(row).toMatchObject({ id: 'ev_9', tool: 'query_metric', status: 'budget_exhausted', rendered_query: null, window: null, args, stats: {} });
+    // log tools still run; the refused call counted toward the 12 (ev_10..ev_12 are left)
+    for (const id of ['ev_10', 'ev_11', 'ev_12']) {
+      const out = await h.call('log_volume', { window: 'incident' });
+      expect(out.evidence_id).toBe(id);
+      expect(out.status).not.toBe('budget_exhausted');
+    }
+    expect((await h.call('log_volume', { window: 'incident' })).error).toMatch(/^budget_exhausted: the tool budget is used up/);
+    expect(h.rows.map((r) => r.id)).toEqual(Array.from({ length: 13 }, (_, i) => `ev_${i + 1}`));
+  });
+
+  it('v1.5: the metric limit counts invalid query_metric calls too, and not log calls', async () => {
+    const h = harness('S1', [loadFixtureText('S1', 'prom-pool_used.json')]);
+    for (let i = 0; i < 3; i++) await h.call('log_volume', { window: 'incident' });
+    for (let i = 0; i < 8; i++) await h.call('query_metric', i === 0 ? { nope: true } : { metric: 'pool_used', window: 'incident' });
+    expect(h.rows.slice(3).map((r) => r.status)).toEqual(['error', 'ok', 'ok', 'ok', 'ok', 'ok', 'ok', 'ok']);
+    expect((await h.call('query_metric', { metric: 'pool_used', window: 'incident' })).error).toMatch(/query_metric limit reached/);
   });
 
   it('after the deadline, tools return budget_exhausted', async () => {

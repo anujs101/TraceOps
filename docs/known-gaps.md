@@ -22,3 +22,8 @@ These are recorded and not fixed. Each one is either a deliberate deferral or wa
 
 ## Demo service (session A)
 - **`POST /orders` connection leak outside the fault.** If the stock-check query throws, the client is never released, under every `FAULT` value (`apps/demo-service/src/app.ts`). Fix this before S2 or evaluation runs.
+
+## Evaluation design (S2)
+- **S2's distinguishing signal comes after the investigation.** scenario-db-pool.md names "the pool recovers when load drops" as the S1/S2 discriminator. The load drop happens ≥ 3 min after detection, but the investigation finishes ~36 s after detection (`docs/runs/s2-20261119T144936Z`), so the investigator can never observe recovery.
+- **Onsets tie at 5 s resolution.** At `CPU_ITER=400000`, `pool_used`, `pool_pending`, `eventloop_delay_p99` and `eventloop_utilization` all leave baseline at the same 5 s step (14:54:22 in `s2-20261119T144936Z`), with latency, `pool_wait_p95` and `db_operation_p95` one step later. Onset order alone cannot separate cause from effect; only utilisation-vs-queueing can.
+- **Tier 2 idea (not built):** a follow-up investigation after recovery (or after the load drop) that re-checks the open hypotheses against what recovered and what did not.

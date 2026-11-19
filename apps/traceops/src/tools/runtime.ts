@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import {
-  TOOL_SOURCE, deriveStats, deriveWindows, toApiJsonSchema, toIsoUtcMs,
+  LIMITS, TOOL_SOURCE, deriveStats, deriveWindows, toApiJsonSchema, toIsoUtcMs,
   type Evidence, type InvestigationWindows, type ToolName,
 } from '@traceops/contracts';
 import type { LocalTool } from '../llm/tool-loop.ts';
@@ -35,6 +35,17 @@ export type ToolDef = {
 /** What the model sees when nothing was sent (invalid input, budget, internal failure). */
 const early = (id: string, status: 'error' | 'budget_exhausted', error: string) => ({ evidence_id: id, status, error });
 
+/** A JSON-encoded string whose content is a JSON object → that object; anything else unchanged. */
+export function decodeOnce(raw: unknown): unknown {
+  if (typeof raw !== 'string') return raw;
+  try {
+    const v: unknown = JSON.parse(raw);
+    return v !== null && typeof v === 'object' && !Array.isArray(v) ? v : raw;
+  } catch {
+    return raw;
+  }
+}
+
 function reason(err: z.ZodError): string {
   const parts: string[] = [];
   for (const i of err.issues) {
@@ -50,6 +61,10 @@ export function createRuntime(ctx: ToolContext, baseDeps: Pick<BackendDeps, 'fet
   const windows: InvestigationWindows = deriveWindows(ctx.incident.started_at, ctx.investigationStart);
   const service = ctx.incident.service;
   let calls = 0;
+  let metricCalls = 0;
+  // tools.md §1 (v1.5): query_metric may use at most this many of the calls; the rest are for log tools.
+  // A budget no larger than the reserve (tests) has no reservation.
+  const metricCap = ctx.budget.maxToolCalls > LIMITS.logCallReserve ? ctx.budget.maxToolCalls - LIMITS.logCallReserve : ctx.budget.maxToolCalls;
 
   async function run(def: ToolDef, raw: unknown, callSignal?: AbortSignal): Promise<unknown> {
     // Numbered synchronously, so parallel calls get ids in request order (evidence-and-report.md §1).
@@ -71,9 +86,16 @@ export function createRuntime(ctx: ToolContext, baseDeps: Pick<BackendDeps, 'fet
     if (n > ctx.budget.maxToolCalls || Date.now() > ctx.budget.deadline) {
       return rejected(raw, null, 'budget_exhausted', 'budget_exhausted: the tool budget is used up; write your report now');
     }
+    if (def.name === 'query_metric' && ++metricCalls > metricCap) {
+      return rejected(raw, null, 'budget_exhausted',
+        `budget_exhausted: query_metric limit reached (${metricCap} of ${ctx.budget.maxToolCalls} calls); the remaining calls are reserved for log tools (log_volume, log_patterns, search_logs)`);
+    }
+
+    // 1b. JSON-string input (tools.md §1, v1.5): decoded once; only an object result is used
+    const input = decodeOnce(raw);
 
     // 2. *Checked schema: invalid input is recorded raw and nothing is sent
-    const parsed = def.checked.safeParse(raw);
+    const parsed = def.checked.safeParse(input);
     if (!parsed.success) return rejected(raw, null, 'error', invalidInput(reason(parsed.error)));
     const args = parsed.data as { window: WindowArg };
 
