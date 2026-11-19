@@ -14,13 +14,15 @@ const unitOf = (query: string): string | null => (METRIC_TEMPLATES as Record<str
 
 export function IncidentPage({ api, id }: { api: Api; id: string }) {
   const incident = useLoad(() => api.getIncident(id), [api, id]);
+  const [queued, setQueued] = useState<string | null>(null);
+  // after a rerun: poll until a new investigation row appears (the worker creates it), at most 2 min
+  const [awaiting, setAwaiting] = useState<{ count: number; until: number } | null>(null);
   const rows = useLoad<Row[]>(async () => {
     const invs = await api.listInvestigations(id);
     return Promise.all(invs.map(async (inv) => ({ inv, report: inv.status === 'running' ? null : await api.getReport(inv.id) })));
-  }, [api, id], (d) => (d?.some((r) => r.inv.status === 'running') ? 2000 : null));
+  }, [api, id], (d) => (d?.some((r) => r.inv.status === 'running') || (awaiting && (d?.length ?? 0) <= awaiting.count && Date.now() < awaiting.until) ? 2000 : null));
   const running = !!rows.data?.some((r) => r.inv.status === 'running');
   const now = useNow(running);
-  const [queued, setQueued] = useState<string | null>(null);
   const [rerunError, setRerunError] = useState<string | null>(null);
 
   const base = <a href="#/">Incidents</a>;
@@ -30,7 +32,7 @@ export function IncidentPage({ api, id }: { api: Api; id: string }) {
 
   const rerun = async () => {
     setRerunError(null);
-    try { setQueued((await api.rerun(id)).job_id); rows.reload(); } catch (e) { setRerunError(e instanceof Error ? e.message : String(e)); }
+    try { setQueued((await api.rerun(id)).job_id); setAwaiting({ count: rows.data?.length ?? 0, until: Date.now() + 120_000 }); rows.reload(); } catch (e) { setRerunError(e instanceof Error ? e.message : String(e)); }
   };
   const latest = rows.data?.[0];
 

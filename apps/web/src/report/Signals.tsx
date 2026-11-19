@@ -3,6 +3,7 @@
  * order (max 6). Each panel shows the stored series with axes and the value the
  * report cites from it; the panel opens the drawer on that evidence.
  */
+import { jumpTo } from '../lib/jump.ts';
 import { useContext } from 'react';
 import type { Report } from '@traceops/contracts';
 import { baselineFor, evidenceLabel, markIndex, seriesOf, unitFor } from '../lib/evidence.ts';
@@ -32,7 +33,7 @@ export function Signals({ r }: { r: Report }) {
   return (
     <Card aria-labelledby="h-sig" className="signals-card">
       <CardHeader id="h-sig" title="Signals" meta={panels.length > shown.length ? `${shown.length} of ${panels.length}` : shown.length}
-        actions={<a href="#h-ev" className="link-quiet">All evidence</a>} />
+        actions={<a href="#h-ev" onClick={jumpTo('h-ev')} className="link-quiet">All evidence</a>} />
       <div className="signals">
         {shown.map(({ id, value }) => {
           const e = byId.get(id)!;

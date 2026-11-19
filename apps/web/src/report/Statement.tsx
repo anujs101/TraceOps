@@ -12,6 +12,8 @@ export type EvidenceCtx = {
   incidentStart: string | null;
   selected: Selection | null;
   open: (s: Selection) => void;
+  /** hyp_N / obs_N → the label of its card ("hypothesis 1" = rank 1), so prose and cards agree. */
+  refs?: Map<string, string>;
 };
 
 export const EvidenceContext = createContext<EvidenceCtx>({ byId: new Map(), all: [], incidentStart: null, selected: null, open: () => {} });
@@ -81,10 +83,10 @@ export function SourceIcon({ source }: { source?: 'prometheus' | 'loki' }) {
  * Renders prose with {key} placeholders replaced by their bound values.
  * An unbound placeholder is shown as-is and marked, never guessed.
  * Evidence ids in prose ("ev_13") become evidence references; hyp_N / obs_N
- * read as "hypothesis N" / "observation N". Nothing else in the prose changes.
+ * read as "hypothesis N" / "observation N", N being the card's rank/position (refs). Nothing else changes.
  */
 export function Statement({ text, values = [] }: { text: string; values?: BoundValue[] }) {
-  const { byId } = useContext(EvidenceContext);
+  const { byId, refs } = useContext(EvidenceContext);
   const byKey = new Map(values.map((v) => [v.key, v]));
   const parts = text.split(/(\{[a-z][a-z0-9_]*\}|\bev_[1-9]\d*\b|\b(?:hyp|obs)_[1-9]\d*\b)/g);
   const out: ReactNode[] = [];
@@ -92,7 +94,7 @@ export function Statement({ text, values = [] }: { text: string; values?: BoundV
     const p = parts[i]!;
     if (/^ev_[1-9]\d*$/.test(p)) { out.push(<EvidenceRef key={i} id={p} />); continue; }
     const ref = /^(hyp|obs)_(\d+)$/.exec(p);
-    if (ref) { out.push(<span key={i}>{ref[1] === 'hyp' ? 'hypothesis' : 'observation'} {ref[2]}</span>); continue; }
+    if (ref) { out.push(<span key={i}>{refs?.get(p) ?? `${ref[1] === 'hyp' ? 'hypothesis' : 'observation'} ${ref[2]}`}</span>); continue; }
     const m = /^\{([a-z][a-z0-9_]*)\}$/.exec(p);
     if (!m) { if (p) out.push(<span key={i}>{p}</span>); continue; }
     const v = byKey.get(m[1]!);

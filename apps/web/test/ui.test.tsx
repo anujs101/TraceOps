@@ -3,6 +3,9 @@
  * the S1 fixtures (apps/traceops/src/api/dev/seed-s1.ts). No hand-written reports.
  */
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { waitFor } from '@testing-library/react';
+import { EvidenceContext, Statement } from '../src/report/Statement.tsx';
+import type { Api } from '../src/api.ts';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryStore } from '../../traceops/src/api/memory-store.ts';
 import { INV_FAILED, INV_RUNNING, INV_UNVALIDATED, INV_VALIDATED, seedS1 } from '../../traceops/src/api/dev/seed-s1.ts';
@@ -51,6 +54,25 @@ describe('incident list and incident page', () => {
     expect(await screen.findByRole('status')).toHaveProperty('textContent', expect.stringMatching(/Investigation queued/));
     expect(store.jobs).toHaveLength(1);
   });
+
+  it('after a re-run the page keeps polling until the new investigation appears (review fix)', async () => {
+    // every seeded investigation finished, so nothing else would poll; the worker creates the new row only later
+    let calls = 0;
+    const finished = async (id: string) => (await store.listInvestigations(id)).filter((x) => x.status !== 'running');
+    const slow: Api = {
+      ...api,
+      listInvestigations: async (id) => {
+        const rows = await finished(id);
+        calls++;
+        // the new row (a copy of a real one under a new id) shows up from the 3rd load on
+        return calls >= 3 ? [{ ...rows[0]!, id: '00000000-0000-4000-8000-00000000abcd', started_at: new Date().toISOString() }, ...rows] : rows;
+      },
+    };
+    window.location.hash = `#/incidents/${S1_INCIDENT.id}`;
+    render(<App api={slow} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Run a new investigation' }));
+    await waitFor(() => expect(document.querySelector('a[href="#/investigations/00000000-0000-4000-8000-00000000abcd"]')).not.toBeNull(), { timeout: 5000 });
+  }, 10_000);
 });
 
 describe('validated S1 report', () => {
@@ -140,6 +162,31 @@ describe('other investigation states', () => {
     expect(screen.getByTestId('seal').textContent).toMatch(/Unvalidated/);
     // a pinned strip keeps it on screen while scrolling, whatever the list length
     expect(screen.getByTestId('validation-strip').textContent).toMatch(/^Unvalidated claims are unchecked: \d+ violations?$/);
+  });
+
+  it('the pinned strip and in-page anchors stay on the investigation page (review fix)', async () => {
+    go(`#/investigations/${INV_UNVALIDATED}`);
+    const strip = await screen.findByTestId('validation-strip');
+    const scrolled: string[] = [];
+    Element.prototype.scrollIntoView = function (this: Element) { scrolled.push(this.id); };
+    fireEvent.click(strip);
+    expect(window.location.hash).toBe(`#/investigations/${INV_UNVALIDATED}`);
+    expect(scrolled).toContain('validation');
+    // even a plain anchor hash (typed, or from a link without the handler) does not route away
+    window.location.hash = '#validation';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    expect(screen.getByTestId('validation')).toBeTruthy();
+    expect(screen.queryByRole('table', { name: /incidents/i })).toBeNull();
+  });
+
+  it('prose hyp_N / obs_N read as the card rank, not the id number (review fix)', () => {
+    const refs = new Map([['hyp_2', 'hypothesis 1'], ['hyp_1', 'hypothesis 2'], ['obs_3', 'observation 1']]);
+    const { container } = render(
+      <EvidenceContext.Provider value={{ byId: new Map(), all: [], incidentStart: null, selected: null, open: () => {}, refs }}>
+        <p><Statement text="hyp_1 is less likely than hyp_2, see obs_3 and obs_9" /></p>
+      </EvidenceContext.Provider>,
+    );
+    expect(container.textContent).toBe('hypothesis 2 is less likely than hypothesis 1, see observation 1 and observation 9');
   });
 
   it('the drawer handles the short error shape {evidence_id, status, error}', async () => {

@@ -10,7 +10,11 @@ import { Shell, type Theme } from './ui/Shell.tsx';
 function useHash(): string {
   const [hash, setHash] = useState(() => window.location.hash);
   useEffect(() => {
-    const on = () => { setHash(window.location.hash); document.documentElement.scrollTop = 0; };
+    const on = () => {
+      // only route hashes (#/...) navigate; a plain in-page anchor (#validation) must not reset the page
+      if (window.location.hash !== '' && !window.location.hash.startsWith('#/')) return;
+      setHash(window.location.hash); document.documentElement.scrollTop = 0;
+    };
     window.addEventListener('hashchange', on);
     return () => window.removeEventListener('hashchange', on);
   }, []);

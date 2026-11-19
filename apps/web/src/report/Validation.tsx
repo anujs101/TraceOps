@@ -1,4 +1,5 @@
 import type { ReportRow } from '../api.ts';
+import { jumpTo } from '../lib/jump.ts';
 
 /**
  * Unvalidated: a loud banner with every violation listed (no disclosure can
@@ -11,7 +12,7 @@ export function ValidationBanner({ row }: { row: ReportRow }) {
   const n = row.violations.length;
   return (
     <>
-    <a className="banner-strip" href="#validation" data-testid="validation-strip">
+    <a className="banner-strip" href="#validation" onClick={jumpTo('validation')} data-testid="validation-strip">
       <strong>Unvalidated</strong> <span>claims are unchecked: {n} {n === 1 ? 'violation' : 'violations'}</span>
     </a>
     <section className="banner-bad" id="validation" aria-label="Validation" data-testid="validation" role="region">

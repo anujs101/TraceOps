@@ -19,6 +19,14 @@ import { TimeRuler } from '../ui/TimeRuler.tsx';
 
 type Data = { inv: InvestigationRow; incident: Incident | null; evidence: Evidence[]; report: ReportRow | null; calls: LlmCall[] };
 
+/** Prose labels that match the cards: hypotheses by rank, observations by position (Sections.tsx). */
+function reportRefs(r: Report): Map<string, string> {
+  return new Map([
+    ...r.hypotheses.map((h, i) => [h.id, `hypothesis ${i + 1}`] as const),
+    ...r.observations.map((o, i) => [o.id, `observation ${i + 1}`] as const),
+  ]);
+}
+
 export function InvestigationPage({ api, id, onIncident }: { api: Api; id: string; onIncident?: (id: string | null) => void }) {
   const load = useLoad<Data | null>(async () => {
     const inv = await api.getInvestigation(id);
@@ -58,7 +66,7 @@ export function InvestigationPage({ api, id, onIncident }: { api: Api; id: strin
   const r: Report | null = parsed?.success ? parsed.data : null;
 
   return (
-    <EvidenceContext.Provider value={{ byId, all: load.data.evidence, incidentStart: incident?.started_at ?? null, selected, open }}>
+    <EvidenceContext.Provider value={{ byId, all: load.data.evidence, incidentStart: incident?.started_at ?? null, selected, open, refs: r ? reportRefs(r) : undefined }}>
       <TopBar crumbs={<>
         {crumbsBase}
         {incident && <><span className="crumb-sep" aria-hidden="true">/</span><a href={`#/incidents/${incident.id}`}>{incident.service}</a></>}
