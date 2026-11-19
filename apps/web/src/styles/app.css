@@ -116,8 +116,15 @@ button { font: inherit; color: inherit; }
 .spark-dot { fill: var(--signal); }
 
 /* ── unvalidated banner: loud, sticky, never collapsible ───────────────── */
+.banner-strip {
+  position: sticky; top: 44px; z-index: 15; display: flex; gap: var(--s2); align-items: baseline;
+  margin: 0 calc(-1 * var(--s4)) var(--s2); padding: 6px var(--s4); font-size: var(--t-sm);
+  background: var(--fault); color: var(--bg); text-decoration: none;
+}
+.banner-strip:hover { text-decoration: none; }
+.banner-strip strong { font-weight: 700; }
 .banner-bad {
-  position: sticky; top: 44px; z-index: 15; margin: 0 0 var(--s5);
+  margin: 0 0 var(--s5); scroll-margin-top: 90px;
   padding: var(--s3) var(--s4); border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--fault) 18%, var(--surface)); border: 1px solid var(--fault); border-left-width: 6px;
 }
@@ -163,8 +170,9 @@ button { font: inherit; color: inherit; }
 .ruler-name { color: var(--ink-2); }
 .ruler-time { font-family: var(--mono); font-weight: 600; font-size: var(--t-sm); }
 
-.keys { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; margin: 0; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; }
-.key { background: var(--surface); padding: var(--s3); min-width: 0; }
+.keys { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0; margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; }
+/* hairlines between tiles without painting empty grid cells */
+.key { background: var(--surface); padding: var(--s3); min-width: 0; box-shadow: 1px 0 0 var(--line), 0 1px 0 var(--line); }
 .key dt { font-size: var(--t-xs); color: var(--ink-2); font-family: var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .key-field { color: var(--ink-3); }
 .key dd { margin: var(--s1) 0 0; display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s2); }

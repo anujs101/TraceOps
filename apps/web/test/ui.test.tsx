@@ -130,6 +130,8 @@ describe('other investigation states', () => {
     for (const d of container.querySelectorAll('details')) d.open = false;
     expect(screen.getByTestId('validation')).toBe(band);
     expect(screen.getByTestId('seal').textContent).toMatch(/Unvalidated/);
+    // a pinned strip keeps it on screen while scrolling, whatever the list length
+    expect(screen.getByTestId('validation-strip').textContent).toMatch(/^Unvalidated claims are unchecked: \d+ violations?$/);
   });
 
   it('the drawer handles the short error shape {evidence_id, status, error}', async () => {

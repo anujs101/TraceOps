@@ -1,14 +1,20 @@
 import type { ReportRow } from '../api.ts';
 
 /**
- * Unvalidated: a loud banner, sticky at the top, violations always listed
- * (no disclosure can hide them). Validated: a quiet seal; warnings behind a
- * disclosure, their count always visible.
+ * Unvalidated: a loud banner with every violation listed (no disclosure can
+ * hide them), plus a slim strip pinned under the top bar so "unvalidated"
+ * stays on screen while scrolling, however long the list is (S2 had 13).
+ * Validated: a quiet seal; warnings behind a disclosure, count always visible.
  */
 export function ValidationBanner({ row }: { row: ReportRow }) {
   if (row.validation === 'passed') return null;
+  const n = row.violations.length;
   return (
-    <section className="banner-bad" aria-label="Validation" data-testid="validation" role="region">
+    <>
+    <a className="banner-strip" href="#validation" data-testid="validation-strip">
+      <strong>Unvalidated</strong> <span>claims are unchecked: {n} {n === 1 ? 'violation' : 'violations'}</span>
+    </a>
+    <section className="banner-bad" id="validation" aria-label="Validation" data-testid="validation" role="region">
       <p className="banner-head">
         <strong>Unvalidated</strong>{' '}
         <span>
@@ -23,6 +29,7 @@ export function ValidationBanner({ row }: { row: ReportRow }) {
       )}
       {row.warnings.length > 0 && <p className="banner-foot">{row.warnings.length} {row.warnings.length === 1 ? 'warning' : 'warnings'} as well.</p>}
     </section>
+    </>
   );
 }
 
