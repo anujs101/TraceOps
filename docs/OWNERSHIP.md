@@ -24,4 +24,4 @@ Enforced by `.claude/hooks/guard-paths.sh` on every Edit/Write. The hook parses 
 - Root `package.json`, `CLAUDE.md`, `.claude/`, `docs/specs/`, `docs/OWNERSHIP.md`: main session only.
 
 ## Merge order (Wave 2)
-C → B → A → E → D. Run `contract-guardian` and `/code-review` on each branch before merging it.
+C → B → A → D → E. Run `contract-guardian` and `/code-review` on each branch before merging it.
