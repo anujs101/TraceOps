@@ -67,7 +67,7 @@ describe('validated S1 report', () => {
     expect(obs2.textContent).not.toMatch(/\{used_max\}/);
     const report = (await store.getReport(INV_VALIDATED))!.report as any;
     const usedMax = report.observations[1].values.find((v: any) => v.key === 'used_max').value;
-    expect(within(obs2).getByTestId('num-used_max').textContent).toBe(`${usedMax}ev_2`);
+    expect(within(obs2).getByTestId('num-used_max').textContent).toBe(String(usedMax));
   });
 
   it('clicking a number opens its evidence: query, window, status, result and the cited field', async () => {
@@ -88,7 +88,7 @@ describe('validated S1 report', () => {
   it('an evidence chip opens that row; Escape closes the panel', async () => {
     go(`#/investigations/${INV_VALIDATED}`);
     const obs4 = await screen.findByTestId('obs-obs_4');
-    fireEvent.click(within(obs4).getByTestId('chip-ev_6'));
+    fireEvent.click(within(obs4).getByTestId('ref-ev_6'));
     const panel = screen.getByTestId('evidence-panel');
     expect(within(panel).getByRole('heading').textContent).toBe('ev_6 · Log search');
     expect(within(panel).queryByTestId('claim')).toBeNull();
@@ -116,7 +116,7 @@ describe('other investigation states', () => {
   it('the evidence panel handles the short error shape {evidence_id, status, error}', async () => {
     go(`#/investigations/${INV_UNVALIDATED}`);
     expect(await screen.findByRole('heading', { name: 'All evidence (9)' })).toBeTruthy();
-    fireEvent.click(screen.getByTestId('chip-ev_9'));
+    fireEvent.click(screen.getByTestId('ref-ev_9'));
     const panel = screen.getByTestId('evidence-panel');
     const ev = (await store.listEvidence(INV_UNVALIDATED)).find((e) => e.id === 'ev_9')!;
     expect(Object.keys(ev.result as object).sort()).toEqual(['error', 'evidence_id', 'status']);

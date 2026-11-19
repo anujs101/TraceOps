@@ -1,0 +1,86 @@
+/*
+ * TraceOps design tokens. Dark first.
+ * Each hue has exactly one meaning:
+ *   proven  = validated, evidence ok, resolved, supports
+ *   caution = warning severity, validator warnings, budget_exhausted, medium risk
+ *   fault   = UNVALIDATED, failed, critical, contradicts, high risk
+ *   signal  = interactive (numbers, links, focus) and the incident line in charts
+ * Every colour has a text or shape twin; meaning never rests on colour alone.
+ */
+:root {
+  --bg: #1a1f26;
+  --surface: #212731;
+  --raise: #2a313c;
+  --line: #363e4a;
+  --line-soft: #2c333d;
+  --ink: #e6e9ee;
+  --ink-2: #a3acb9;
+  --ink-3: #737d8b;
+  --proven: #4cc38a;
+  --caution: #e8a33d;
+  --fault: #f0645a;
+  --signal: #7db4ff;
+  --proven-wash: color-mix(in srgb, var(--proven) 14%, transparent);
+  --caution-wash: color-mix(in srgb, var(--caution) 14%, transparent);
+  --fault-wash: color-mix(in srgb, var(--fault) 16%, transparent);
+  --signal-wash: color-mix(in srgb, var(--signal) 14%, transparent);
+  --shade: color-mix(in srgb, var(--signal) 9%, transparent);
+  --scrim: rgb(8 10 14 / 0.6);
+
+  /* Atkinson Hyperlegible was drawn for character distinction (0/O, 1/l/I).
+     System fallbacks keep the page fine offline. */
+  --sans: 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --mono: 'Atkinson Hyperlegible Mono', ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+
+  /* type scale: 14 px base, minor third */
+  --t-xs: 12px; --lh-xs: 16px;
+  --t-sm: 13px; --lh-sm: 18px;
+  --t-md: 14px; --lh-md: 20px;
+  --t-lg: 17px; --lh-lg: 24px;
+  --t-xl: 20px; --lh-xl: 26px;
+  --t-2xl: 28px; --lh-2xl: 32px;
+
+  /* 4 px grid */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 20px; --s6: 24px; --s8: 32px; --s10: 40px;
+  --radius: 4px;
+  --radius-lg: 8px;
+  --measure: 72ch;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    --bg: #f4f6f9;
+    --surface: #ffffff;
+    --raise: #edf0f4;
+    --line: #d5dae1;
+    --line-soft: #e4e8ed;
+    --ink: #1b222c;
+    --ink-2: #4e5866;
+    --ink-3: #7a8391;
+    --proven: #1f8a55;
+    --caution: #a8650a;
+    --fault: #c9372c;
+    --signal: #2861c9;
+    --shade: color-mix(in srgb, var(--signal) 7%, transparent);
+    --scrim: rgb(27 34 44 / 0.35);
+    color-scheme: light;
+  }
+}
+:root[data-theme='light'] {
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --raise: #edf0f4;
+  --line: #d5dae1;
+  --line-soft: #e4e8ed;
+  --ink: #1b222c;
+  --ink-2: #4e5866;
+  --ink-3: #7a8391;
+  --proven: #1f8a55;
+  --caution: #a8650a;
+  --fault: #c9372c;
+  --signal: #2861c9;
+  --shade: color-mix(in srgb, var(--signal) 7%, transparent);
+  --scrim: rgb(27 34 44 / 0.35);
+  color-scheme: light;
+}

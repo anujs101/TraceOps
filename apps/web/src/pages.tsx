@@ -150,7 +150,7 @@ export function InvestigationPage({ api, id }: { api: Api; id: string }) {
   };
 
   return (
-    <EvidenceContext.Provider value={{ byId, selected, open: setSelected }}>
+    <EvidenceContext.Provider value={{ byId, all: evidence, incidentStart: incident?.started_at ?? null, selected, open: setSelected }}>
       <div className={`inv-layout${selected ? ' has-panel' : ''}`}>
         <main className="page inv-main">
           <p className="crumbs"><a href="#/">Incidents</a>{incident && <> / <a href={`#/incidents/${incident.id}`}>{incident.service}</a></>}</p>

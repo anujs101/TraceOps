@@ -1,50 +1,17 @@
-/* TraceOps UI. Colour carries meaning only: source (metrics/logs) and trust (validated/unvalidated/failed). */
+@import './styles/tokens.css';
+/* step (a): old names mapped onto the new tokens until the pages are rebuilt */
 :root {
-  --bg: #e9edf1;
-  --surface: #ffffff;
-  --ink: #17202a;
-  --ink-2: #4c5866;
-  --line: #ccd4dc;
-  --metrics: #0f6e66;
-  --metrics-tint: #dcf0ed;
-  --logs: #4a3fbf;
-  --logs-tint: #e6e3fb;
-  --ok: #1d7a3e;
-  --ok-tint: #e1f3e6;
-  --warn: #9a5a00;
-  --warn-tint: #fbefd9;
-  --bad: #b42323;
-  --bad-tint: #fbe4e4;
-  --focus: #2563eb;
-  --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
-  color-scheme: light;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #12171d;
-    --surface: #1a2129;
-    --ink: #e4e9ee;
-    --ink-2: #9aa7b4;
-    --line: #2f3a46;
-    --metrics: #4fc7b8;
-    --metrics-tint: #133632;
-    --logs: #a79cff;
-    --logs-tint: #27234d;
-    --ok: #5fcf85;
-    --ok-tint: #143322;
-    --warn: #f0b250;
-    --warn-tint: #3a2b10;
-    --bad: #ff7b7b;
-    --bad-tint: #3d1818;
-    --focus: #7aa7ff;
-    color-scheme: dark;
-  }
+  --metrics: var(--signal); --metrics-tint: var(--signal-wash);
+  --logs: var(--signal); --logs-tint: var(--signal-wash);
+  --ok: var(--proven); --ok-tint: var(--proven-wash);
+  --warn: var(--caution); --warn-tint: var(--caution-wash);
+  --bad: var(--fault); --bad-tint: var(--fault-wash);
+  --focus: var(--signal);
 }
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 var(--sans); font-variant-numeric: tabular-nums; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: var(--t-md)/var(--lh-md) var(--sans); font-variant-numeric: tabular-nums; }
 a { color: inherit; }
 code, pre { font-family: var(--mono); font-size: 0.86em; }
 h1 { font-size: 1.75rem; line-height: 1.2; font-weight: 600; margin: 0 0 0.4rem; }
@@ -212,3 +179,18 @@ p { margin: 0 0 0.5rem; }
   .panel { animation: panel-in 140ms ease-out; }
   @keyframes panel-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 }
+
+/* step (a) primitives */
+.num { position: relative; font-family: var(--mono); background: transparent; color: var(--signal); border-bottom: 1px dotted currentColor; padding: 0 1px; margin: 0; border-radius: 0; font-weight: 500; }
+.num:hover, .num.is-active { background: var(--signal-wash); color: var(--signal); }
+.num-u { font-family: var(--sans); color: var(--ink-2); }
+.ref { font: inherit; font-size: var(--t-sm); display: inline-flex; gap: 4px; align-items: center; background: none; border: 1px solid var(--line); border-radius: var(--radius); color: var(--ink-2); padding: 0 6px; cursor: pointer; margin-right: 4px; }
+.ref.is-bad { color: var(--caution); border-style: dashed; }
+.src-ico { width: 12px; height: 12px; }
+.spark-lead { fill: none; stroke: var(--ink-3); stroke-width: 1.5; }
+.spark-inc { fill: none; stroke: var(--signal); stroke-width: 1.75; }
+.spark-shade { fill: var(--shade); }
+.spark-base { stroke: var(--ink-3); stroke-dasharray: 3 3; }
+.spark-mark { fill: var(--bg); stroke: var(--signal); stroke-width: 2; }
+.spark-dot { fill: var(--signal); }
+.spark-large { width: 100%; height: auto; display: block; }

@@ -1,10 +1,15 @@
 import { resolveField, valueMatches } from '@traceops/contracts';
 import type { Evidence } from '../api.ts';
-import { clock, evidenceTitle, toolLabel, windowText } from '../format.ts';
-import type { Selection } from './Statement.tsx';
+import { evidenceTitle, toolLabel, windowText } from '../format.ts';
+import { EvidenceContext, type Selection } from './Statement.tsx';
+import { useContext } from 'react';
+import { Sparkline } from '../ui/Sparkline.tsx';
+import { baselineFor, markIndex, seriesOf, unitFor } from '../lib/evidence.ts';
+import { exact, formatWithUnit } from '../lib/format.ts';
 
 /** The evidence behind a number or a citation: rendered query, window, status and result. */
 export function EvidencePanel({ selection, evidence, onClose }: { selection: Selection; evidence: Evidence | undefined; onClose: () => void }) {
+  const { all, incidentStart } = useContext(EvidenceContext);
   if (!evidence) {
     return (
       <aside className="panel" aria-label="Evidence">
@@ -16,7 +21,7 @@ export function EvidencePanel({ selection, evidence, onClose }: { selection: Sel
   const resolved = selection.field ? resolveField(evidence, selection.field) : undefined;
   const matches = selection.claimed !== undefined && resolved !== undefined && valueMatches(selection.claimed, resolved);
   const series = seriesOf(evidence);
-  const seriesAt = selection.field?.match(/series@(.+)$/)?.[1];
+  const unit = unitFor(evidence, selection.field);
 
   return (
     <aside className="panel" aria-label={`Evidence ${evidence.id}`} data-testid="evidence-panel">
@@ -30,7 +35,7 @@ export function EvidencePanel({ selection, evidence, onClose }: { selection: Sel
         <div className={`claim ${resolved === undefined ? 'claim-bad' : matches ? 'claim-ok' : 'claim-bad'}`} data-testid="claim">
           <div>
             <span className="claim-k">Report says</span>
-            <span className="claim-v">{String(selection.claimed)}</span>
+            <span className="claim-v">{formatWithUnit(selection.claimed!, unit, true)}</span><span className="claim-k">exact {exact(selection.claimed!)}</span>
           </div>
           <div>
             <span className="claim-k">Evidence <code>{selection.field}</code></span>
@@ -51,7 +56,7 @@ export function EvidencePanel({ selection, evidence, onClose }: { selection: Sel
         <dd><pre className="code small">{JSON.stringify(evidence.args)}</pre></dd>
       </dl>
 
-      {series && series.length > 1 && <Sparkline points={series} highlightAt={seriesAt} />}
+      {series && <Sparkline points={series} unit={unit} size="large" splitAt={incidentStart} baseline={baselineFor(evidence, all)?.avg} mark={markIndex(evidence, selection.field, series)} />}
 
       {Object.keys(evidence.stats).length > 0 && (
         <table className="stats">
@@ -78,29 +83,5 @@ function PanelHead({ title, onClose }: { title: string; onClose: () => void }) {
       <h2>{title}</h2>
       <button type="button" className="icon-btn" onClick={onClose} aria-label="Close evidence">✕</button>
     </div>
-  );
-}
-
-function seriesOf(e: Evidence): [string, number][] | null {
-  const r = e.result as { series?: unknown } | null;
-  return e.tool === 'query_metric' && Array.isArray(r?.series) ? (r.series as [string, number][]) : null;
-}
-
-function Sparkline({ points, highlightAt }: { points: [string, number][]; highlightAt?: string }) {
-  const W = 320, H = 72, P = 4;
-  const vals = points.map((p) => p[1]);
-  const min = Math.min(...vals), max = Math.max(...vals);
-  const x = (i: number) => P + (i * (W - 2 * P)) / (points.length - 1);
-  const y = (v: number) => H - P - (max === min ? 0.5 : (v - min) / (max - min)) * (H - 2 * P);
-  const d = points.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p[1]).toFixed(1)}`).join(' ');
-  const hi = highlightAt ? points.findIndex((p) => p[0] === highlightAt) : -1;
-  return (
-    <figure className="spark">
-      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Series from ${clock(points[0]![0])} to ${clock(points.at(-1)![0])}, min ${min}, max ${max}`}>
-        <path d={d} fill="none" />
-        {hi >= 0 && <circle cx={x(hi)} cy={y(points[hi]![1])} r={4} />}
-      </svg>
-      <figcaption><span>{clock(points[0]![0])}</span><span>min {min} · max {max}</span><span>{clock(points.at(-1)![0])}</span></figcaption>
-    </figure>
   );
 }
