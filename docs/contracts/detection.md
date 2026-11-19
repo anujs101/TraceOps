@@ -31,6 +31,7 @@ evaluation:
 ## 3. Rule state machine (per rule; in memory; rebuilt by re-evaluating on restart)
 `ok → pending(n) → firing → recovering(n) → ok`. A breach while recovering → `firing`; OK while pending → `ok`.
 **Missing data** (empty result, NaN, query error): no transition, logged and counted. It never resolves an incident.
+v1.3: a healthy service with traffic and no 5xx evaluates `error_ratio_5xx` to **0** (`ok`), not empty, so an `http-slo` group can resolve. Only "no traffic at all" is still missing data for that rule.
 The detector uses `/api/v1/query` (instant) with the same template strings as the tools.
 
 ## 4. Incident lifecycle

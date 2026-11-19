@@ -1,4 +1,4 @@
-# TraceOps MVP contracts — v1.2 (2026-11-19; v1.1 2026-11-18; v1 frozen 2026-11-17)
+# TraceOps MVP contracts — v1.3 (2026-11-19; v1.2 2026-11-19; v1.1 2026-11-18; v1 frozen 2026-11-17)
 
 These are the boundaries that let the demo-service and TraceOps be built **in parallel**. A build session may depend only on these files and on `@traceops/contracts`, never on another session's implementation.
 
@@ -20,6 +20,12 @@ Only these changed relative to frozen v1 (`05cad4a`). Everything else is identic
 - `environment.md` §4 and new §6: `LLM_PROVIDER`, `GROQ_*` variables, the provider interface, adapter requirements and error handling. `ANTHROPIC_API_KEY` is removed.
 - `tools.md` §1 and `evidence-and-report.md` §2: provider-neutral wording (Groq replaces the Claude `output_config` references).
 - `packages/contracts/src/llm.ts`: `LlmCall`, `LLM_ERROR_KINDS`, `LLM_DEFAULTS` (+ tests).
+
+## v1.3 amendments (2026-11-19): `error_ratio_5xx` is 0, not empty, without 5xx
+**Reason:** with no 5xx series the old numerator was empty, so the whole ratio was empty, which counts as missing data. detection.md §3 says missing data never resolves an incident, and §4 resolves only when every rule is `ok`. So an `http-slo` incident could never resolve on a healthy service. This was seen in both live S1 runs: the error-ratio rule reported `empty` through the healthy baseline, and each run's incident stayed `open` until the database was edited (`docs/proposals/detection-error-ratio-empty.md`). Only these changed relative to v1.2:
+- `packages/contracts/src/telemetry.ts` `METRIC_TEMPLATES.error_ratio_5xx`: the numerator becomes `(sum(rate(…5..…[1m])) or vector(0))`, and the denominator is unchanged. With traffic and no 5xx the result is `0`; with no traffic the denominator is empty, so the result is still empty and counts as missing data. Tests added.
+- `tools.md` §3 and `detection.md` §3: one sentence each on the new behaviour.
+- **Fixtures (unchanged):** `S1/` and `S2/prom-error_ratio_5xx.json` are raw responses to the *old* query, captured 2026-11-16 in the lab stack. They stay valid backend responses (schema tests pass), and no test depends on the points the new query would add. But they are **not** what the new query returns for those windows: it would add `0`-valued points at times with traffic and no 5xx. They are not recaptured, because the lab data is gone; a later recapture will replace them.
 
 ## v1.2 amendments (2026-11-19): DeepSeek provider
 **Reason:** Wave 2 adds a DeepSeek adapter (session E). `environment.md` §6 requires a new provider to be a value in `LLM_PROVIDERS` with its env vars in the contract, and the app's provider switch is typed on `LlmProviderName`, so the adapter cannot be built without this change (`docs/proposals/llm-provider-deepseek.md`). Only these changed relative to v1.1. Everything else is identical.

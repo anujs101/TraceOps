@@ -24,6 +24,13 @@ describe('telemetry ↔ tools consistency', () => {
     expect(METRIC_NAMES.sort()).toEqual(Object.keys(METRIC_TEMPLATES).sort());
     for (const m of METRIC_NAMES) expect(renderPromql(m, 'demo-service')).not.toContain('$svc');
   });
+  it('v1.3: error_ratio_5xx defaults only the 5xx numerator to 0; the total denominator stays bare', () => {
+    const q = renderPromql('error_ratio_5xx', 'demo-service');
+    const [num, den] = q.split(' / ');
+    expect(num).toMatch(/^\(sum\(rate\(http_server_request_duration_seconds_count\{service_name="demo-service",http_response_status_code=~"5\.\."\}\[1m\]\)\) or vector\(0\)\)$/);
+    expect(den).toBe('sum(rate(http_server_request_duration_seconds_count{service_name="demo-service"}[1m]))');
+    expect(den).not.toContain('vector(0)'); // no traffic must stay empty (missing data), never 0/0
+  });
   it('rejects injection through the service name', () => {
     expect(() => renderPromql('pool_used', 'x"} or vector(1) #')).toThrow();
   });

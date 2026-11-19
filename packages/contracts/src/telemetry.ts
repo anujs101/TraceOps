@@ -24,7 +24,10 @@ export const METRIC_TEMPLATES = {
   request_rate: { unit: 'req/s', promql: `sum(rate(${METRICS.httpDuration}_count{service_name="$svc"}[1m]))` },
   error_ratio_5xx: {
     unit: 'ratio',
-    promql: `sum(rate(${METRICS.httpDuration}_count{service_name="$svc",http_response_status_code=~"5.."}[1m])) / sum(rate(${METRICS.httpDuration}_count{service_name="$svc"}[1m]))`,
+    // v1.3: `or vector(0)` on the numerator only. With traffic and no 5xx the ratio is 0 (not empty), so the
+    // rule can return to ok and the group can resolve. With no traffic the denominator is empty and the result
+    // stays empty (missing data). docs/proposals/detection-error-ratio-empty.md
+    promql: `(sum(rate(${METRICS.httpDuration}_count{service_name="$svc",http_response_status_code=~"5.."}[1m])) or vector(0)) / sum(rate(${METRICS.httpDuration}_count{service_name="$svc"}[1m]))`,
   },
   pool_used: { unit: 'connections', promql: `sum(last_over_time(${METRICS.poolCount}{service_name="$svc",db_client_connection_state="used"}[15s]))` },
   pool_idle: { unit: 'connections', promql: `sum(last_over_time(${METRICS.poolCount}{service_name="$svc",db_client_connection_state="idle"}[15s]))` },

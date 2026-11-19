@@ -28,7 +28,7 @@ output: { evidence_id; status; metric; unit; window: {start,end}; step_s;
 |---|---|---|
 | `latency_p95` / `latency_p50` | s | `histogram_quantile(0.95\|0.5, sum by (le) (rate(http_server_request_duration_seconds_bucket{service_name="$svc"}[1m])))` |
 | `request_rate` | req/s | `sum(rate(http_server_request_duration_seconds_count{service_name="$svc"}[1m]))` |
-| `error_ratio_5xx` | ratio | 5xx rate ÷ total rate (same metric, `http_response_status_code=~"5.."`) |
+| `error_ratio_5xx` | ratio | `(5xx rate or vector(0))` ÷ total rate (same metric, `http_response_status_code=~"5.."`). v1.3: **0, not empty**, when there is traffic and no 5xx; still empty when there is no traffic |
 | `pool_used` / `pool_idle` | connections | `sum(last_over_time(db_client_connection_count{service_name="$svc",db_client_connection_state="used"\|"idle"}[15s]))` |
 | `pool_max` | connections | `max(last_over_time(db_client_connection_max{service_name="$svc"}[15s]))` |
 | `pool_pending` | requests | `sum(last_over_time(db_client_connection_pending_requests{service_name="$svc"}[15s]))` |
