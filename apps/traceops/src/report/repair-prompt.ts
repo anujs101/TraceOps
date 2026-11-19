@@ -68,7 +68,7 @@ function citedObservations(candidate: unknown, path: string): string[] {
   return [...new Set(ids.filter((x): x is string => typeof x === 'string'))];
 }
 
-/** Specific instruction for V1 / V3 violations (what to do, not only what is wrong). */
+/** Specific instruction for V1 / V3 violations (incl. unbound quantities) (what to do, not only what is wrong). */
 function fixHint(v: Issue, candidate: unknown, where: string | null, evidence?: Evidence[]): string | null {
   if (v.rule === 'V1') {
     const m = /^(ev_\w+) is unknown or not status ok$/.exec(v.message);
@@ -82,6 +82,28 @@ function fixHint(v: Issue, candidate: unknown, where: string | null, evidence?: 
       `  Fix: ${what}. Remove ${id} from this observation's evidence_ids (and any values entry that uses it).`,
       `  If no evidence id with status "ok" is left, delete the observation${where ? ` ${where}` : ''} entirely, remove ${where ?? 'its id'} from every hypothesis's supporting/contradicting ids, and instead write a gap that names the call by id (e.g. "<tool> over <window> returned ${row?.status ?? 'empty'} (${id})"). Results that are not "ok" belong only in gaps.`,
     ].join('\n');
+  }
+  if (v.rule === 'V3') {
+    const q = /^unbound quantity "([^"]+)"/.exec(v.message);
+    if (q) {
+      const tok = q[1]!;
+      const approx = /^[~≈]/.test(tok) ? ` Approximate numbers ("~", "about", "≈") are quantities too.` : '';
+      const section = v.path.split('.')[0];
+      if (section === 'observations') {
+        return `  Fix: "${tok}" is a number written as text.${approx} Add a values entry {key, evidence_id, field, value} copied exactly from one of this observation's cited ok evidence rows and replace "${tok}" with {key}; if no cited evidence field holds that number, delete it from the sentence.`;
+      }
+      if (section === 'timeline') {
+        return `  Fix: "${tok}" is a number written as text.${approx} Timeline events cannot bind values, so they cannot contain numbers: remove "${tok}" from this event and describe the change in words (e.g. "rose", "reached its maximum"). Put the number in an observation instead, as a {key} placeholder bound in its values.`;
+      }
+      if (section === 'hypotheses') {
+        const byObs = keysByObservation(candidate);
+        const usable = citedObservations(candidate, v.path).map((o) => `${o}: ${(byObs.get(o) ?? []).join(', ') || '(no keys)'}`).join('; ');
+        return `  Fix: "${tok}" is a number written as text.${approx} Hypotheses have no values of their own: replace "${tok}" with a {key} already bound in an observation this hypothesis cites${usable ? ` (available: ${usable})` : ''}, or rewrite the sentence without that number.`;
+      }
+      if (section === 'summary') {
+        return `  Fix: the summary must contain no numbers at all. Remove "${tok}" and describe it in words; the numbers belong in observations.`;
+      }
+    }
   }
   if (v.rule === 'V3' && v.path.startsWith('hypotheses.')) {
     const missing = /^placeholder \{([^}]+)\} has no value$/.exec(v.message);

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { explainViolation, keyBindings, repairPrompt, RULES } from '../../src/report/repair-prompt.ts';
 import { validateReport } from '../../src/report/validator.ts';
 import { evidence, firstLiveReport, repairedReport } from '../fixtures/first-live-report.ts';
-import { s2Evidence, s2Report } from '../fixtures/s2-live-run.ts';
+import { s2Evidence, s2Report, s2Run2Evidence, s2Run2Report } from '../fixtures/s2-live-run.ts';
 
 /** The live S1 failure (2026-11-19): one key bound in two observations. */
 function withDuplicateKey() {
@@ -116,5 +116,55 @@ describe('repair prompt: actionable V1/V3 (live S2 run 1, 2026-11-19)', () => {
     const line = explainViolation(v.violations[0]!, s2Report);
     expect(line).toContain('ev_7 is not an ok evidence row');
     expect(line).toContain('Rule: ');
+  });
+});
+
+describe('repair prompt: actionable unbound quantities (live S2 run 2, 2026-11-19)', () => {
+  const v = validateReport(s2Run2Report, s2Run2Evidence);
+  const unbound = v.violations.filter((x) => x.rule === 'V3' && x.message.startsWith('unbound quantity'));
+  const lines = unbound.map((x) => explainViolation(x, s2Run2Report, s2Run2Evidence));
+
+  it('the fixture reproduces the live failure: 25 unbound quantities + 1 unused key (26×V3), nothing else', () => {
+    expect(unbound).toHaveLength(25);
+    expect(v.violations.filter((x) => x.message.startsWith('value key'))).toHaveLength(1);
+    expect(v.violations).toHaveLength(26);
+  });
+
+  it('every unbound-quantity line keeps what + where + rule and adds a Fix', () => {
+    for (const line of lines) {
+      expect(line).toMatch(/^- \[V3\] (observations|timeline|hypotheses)\.\d+\.(statement|event)/);
+      expect(line).toContain('Rule: ');
+      expect(line).toContain('Fix: ');
+    }
+  });
+
+  it('observation: bind the number in values from a cited ok row and replace it with {key}', () => {
+    const line = explainViolation(unbound.find((x) => x.path === 'observations.0.statement')!, s2Run2Report, s2Run2Evidence);
+    expect(line).toContain('"0.009" is a number written as text');
+    expect(line).toContain("Add a values entry {key, evidence_id, field, value} copied exactly from one of this observation's cited ok evidence rows");
+    expect(line).toContain('replace "0.009" with {key}');
+  });
+
+  it('timeline: events cannot bind values, so remove the number and describe it in words', () => {
+    const line = explainViolation(unbound.find((x) => x.path.startsWith('timeline.'))!, s2Run2Report, s2Run2Evidence);
+    expect(line).toContain('Timeline events cannot bind values');
+    expect(line).toMatch(/remove "[^"]+" from this event and describe the change in words/);
+  });
+
+  it('approximations are named as quantities', () => {
+    const line = lines.find((l) => l.includes('"~0.013"'))!;
+    expect(line).toContain('Approximate numbers ("~", "about", "≈") are quantities too');
+  });
+
+  it('hypothesis and summary branches (mutated copy of the real report)', () => {
+    const r = structuredClone(s2Run2Report) as any;
+    r.hypotheses[0].statement += ' reaching 42';
+    r.summary = 'Latency reached 3 seconds.';
+    const vv = validateReport(r, s2Run2Evidence);
+    const hyp = vv.violations.find((x) => x.path === 'hypotheses.0.statement' && x.message.includes('"42"'))!;
+    const hl = explainViolation(hyp, r, s2Run2Evidence);
+    expect(hl).toContain('Hypotheses have no values of their own: replace "42" with a {key} already bound in an observation this hypothesis cites (available: ');
+    const sum = vv.violations.find((x) => x.path === 'summary' && x.message.startsWith('unbound quantity'))!;
+    expect(explainViolation(sum, r, s2Run2Evidence)).toContain('the summary must contain no numbers at all');
   });
 });
