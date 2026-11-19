@@ -1,0 +1,128 @@
+{
+  "run": "S1 live end to end (first integrated run)",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "run_start": "2026-11-19T10:26:26.000Z",
+  "validity_gate": {
+    "scenario": "S1",
+    "times": {
+      "tBaselineStart": "2026-11-19T10:26:35.000Z",
+      "tDeploy": "2026-11-19T10:28:05.000Z",
+      "tDrop": "2026-11-19T10:32:36.000Z",
+      "tEnd": "2026-11-19T10:33:36.000Z"
+    },
+    "signal_summary": {
+      "baseline_clean": true,
+      "latency_alert_fired": true,
+      "pool_used_max": 10,
+      "pool_max": 10,
+      "pool_used_at_max_seconds": 200,
+      "pool_timeouts_increase": 6344.76036919527,
+      "eventloop_utilization_max": 0.10143687713688374,
+      "pool_used_after_load_drop": 10
+    },
+    "scenarioValid": {
+      "valid": true,
+      "reasons": []
+    }
+  },
+  "incident": {
+    "id": "a165d158-eacd-4a41-b838-4079b09bcbe2",
+    "service": "demo-service",
+    "group": "http-slo",
+    "severity": "critical",
+    "status": "open",
+    "started_at": "2026-11-19T10:29:25.129Z",
+    "detected_at": "2026-11-19T10:29:40.130Z",
+    "reopen_count": 0,
+    "trigger": [
+      {
+        "rule_id": "http-latency-p95",
+        "query": "latency_p95",
+        "threshold": 1,
+        "observed": 2.425,
+        "at": "2026-11-19T10:34:24.475Z"
+      },
+      {
+        "rule_id": "http-error-ratio",
+        "query": "error_ratio_5xx",
+        "threshold": 0.05,
+        "observed": 1,
+        "at": "2026-11-19T10:34:24.475Z"
+      }
+    ]
+  },
+  "investigation": {
+    "id": "a355fcb6-e2ef-4911-822c-9044ab4a1de5",
+    "trigger": "auto",
+    "status": "completed",
+    "model": "deepseek-flash",
+    "started_at": "2026-11-19T10:29:40.463Z",
+    "finished_at": "2026-11-19T10:30:14.401Z",
+    "tool_calls": 14,
+    "error": null
+  },
+  "report": {
+    "status": "probable_cause",
+    "top_hypothesis": {
+      "category": "db_pool_exhaustion",
+      "confidence": "medium"
+    },
+    "hypotheses": [
+      {
+        "id": "hyp_1",
+        "category": "db_pool_exhaustion",
+        "confidence": "medium"
+      },
+      {
+        "id": "hyp_2",
+        "category": "dependency_latency",
+        "confidence": "low"
+      },
+      {
+        "id": "hyp_3",
+        "category": "cpu_saturation",
+        "confidence": "low"
+      }
+    ],
+    "validation": "failed",
+    "repair_attempted": true,
+    "violations": [
+      {
+        "path": "observations.2.values.1.key",
+        "rule": "V0",
+        "message": "value keys must be unique across the report"
+      }
+    ],
+    "warnings": []
+  },
+  "evidence": {
+    "rows": 14,
+    "by_status": {
+      "budget_exhausted": 2,
+      "empty": 1,
+      "ok": 11
+    },
+    "tools_used": [
+      "query_metric"
+    ]
+  },
+  "detection_to_report_s": 34.3,
+  "detection_to_report_note": "detected_at → investigation finished_at (reports has no created_at; finish follows the report write)",
+  "llm_calls": {
+    "attempts": 5,
+    "errors": 0,
+    "by_stage": {
+      "investigate": 3,
+      "report": 2
+    },
+    "input_tokens": 31047,
+    "output_tokens": 7525,
+    "total_tokens": 38572,
+    "latency_ms_total": 33678,
+    "cost_estimate_usd": {
+      "value": 0.00917,
+      "basis": "deepseek-flash off-peak list price (api-docs.deepseek.com/quick_start/pricing, read 2026-11-19): $0.15/M input cache-miss, $0.60/M output; cache_read_tokens not reported, so all input priced as cache miss (upper bound). Peak (06:00-10:00, 01:00-04:00 UTC weekdays) would be 2x."
+    }
+  }
+}
