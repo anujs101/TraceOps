@@ -31,34 +31,6 @@ function Problem({ text }: { text: string }) {
   return <p className="problem" role="alert">Could not load from the TraceOps API ({text}). Check that it is running on port 4000.</p>;
 }
 
-// ── incident list ──────────────────────────────────────────────────────────
-
-export function IncidentList({ api }: { api: Api }) {
-  const { data, error, loading } = useLoad(() => api.listIncidents(), [api]);
-  return (
-    <main className="page">
-      <h1>Incidents</h1>
-      {error && <Problem text={error} />}
-      {loading && !data && <p className="muted">Loading incidents…</p>}
-      {data && data.length === 0 && <p className="muted">No incidents yet. The detector opens one when a symptom rule fires.</p>}
-      {data && data.length > 0 && (
-        <ul className="list">
-          {data.map((i) => (
-            <li key={i.id}>
-              <a href={`#/incidents/${i.id}`} className="row-link">
-                <span className={`sev sev-${i.severity}`}>{i.severity}</span>
-                <span className="row-main"><strong>{i.service}</strong> {i.trigger.map((t) => t.rule_id).join(', ')}</span>
-                <span className="muted">started {dateTime(i.started_at)}</span>
-                <Status value={i.status} />
-              </a>
-            </li>
-          ))}
-        </ul>
-      )}
-    </main>
-  );
-}
-
 // ── incident ───────────────────────────────────────────────────────────────
 
 export function IncidentPage({ api, id }: { api: Api; id: string }) {

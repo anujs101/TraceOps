@@ -20,6 +20,20 @@ afterEach(() => { cleanup(); window.location.hash = ''; });
 const go = (hash: string) => { window.location.hash = hash; return render(<App api={api} />); };
 
 describe('recorded S1 live run', () => {
+  it('incident list row: status, severity, service, time to report, top hypothesis, proof', async () => {
+    go('#/');
+    const link = await screen.findByRole('link', { name: 'demo-service' });
+    const row = link.closest('tr')!;
+    expect(row.textContent).toMatch(/open/);
+    expect(row.textContent).toMatch(/critical/);
+    expect(row.textContent).toMatch(/10:44:15/);
+    expect(within(row).getByTestId('ttr').textContent).toBe('37.8 s');
+    expect(row.textContent).toMatch(/Connection pool exhaustion/);
+    expect(row.textContent).toMatch(/high confidence/);
+    expect(row.textContent).toMatch(/✓ Validated/);
+    expect(row.querySelectorAll('button[data-testid^="num-"]')).toHaveLength(0); // no unclickable numbers posing as evidence
+  });
+
   it('verdict: validated, top hypothesis, detection→report time, key numbers in display units', async () => {
     go(`#/investigations/${invId}`);
     const seal = await screen.findByTestId('validation');

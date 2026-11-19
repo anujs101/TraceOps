@@ -358,8 +358,10 @@ td.r .stack { align-items: flex-end; }
   .trigger { grid-template-columns: 1fr; }
   .inc-table thead { display: none; }
   .inc-table, .inc-table tbody, .inc-table tr, .inc-table td { display: block; }
-  .inc-table tr { display: grid; grid-template-columns: auto 1fr auto; gap: 2px var(--s3); padding: var(--s3); border-bottom: 1px solid var(--line-soft); }
+  .inc-table tr { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s1) var(--s3); padding: var(--s3); border-bottom: 1px solid var(--line-soft); }
   .inc-table td { padding: 0; border: 0; }
-  .inc-table td.inc-hyp { grid-column: 1 / -1; min-width: 0; }
+  .inc-table td:nth-child(3) { order: -1; flex-basis: 100%; }
+  .inc-table td.inc-hyp { flex-basis: 100%; min-width: 0; }
+  .inc-table td[data-testid='ttr']::before { content: 'to report '; font-family: var(--sans); color: var(--ink-3); font-size: var(--t-xs); }
   [data-tip]:hover::after { display: none; }
 }

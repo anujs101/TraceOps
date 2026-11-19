@@ -109,5 +109,7 @@ export function windowRange(w: { start: string; end: string } | null): string {
 /** Elapsed m:ss for a running clock. */
 export function elapsed(ms: number): string {
   const s = Math.max(0, Math.floor(ms / 1000));
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  if (s >= 3600) return `${Math.floor(s / 3600)}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
+  return `${Math.floor(s / 60)}:${pad(s % 60)}`;
 }

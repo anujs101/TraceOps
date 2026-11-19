@@ -25,6 +25,11 @@ describe('incident list and incident page', () => {
     go('#/');
     const link = await screen.findByRole('link', { name: /demo-service/ });
     expect(link.getAttribute('href')).toBe(`#/incidents/${S1_INCIDENT.id}`);
+    const row = screen.getByTestId(`inc-${S1_INCIDENT.id}`);
+    expect(row.textContent).toMatch(/critical/);
+    // the newest investigation of the seeded incident is still running
+    expect(within(row).getByTestId('ttr').textContent).toMatch(/^running \d+(:\d\d)+$/);
+    expect(row.textContent).toMatch(/Investigating…/);
     cleanup();
     go(`#/incidents/${S1_INCIDENT.id}`);
     expect(await screen.findAllByRole('link', { name: /tool calls/ })).toHaveLength(4);
@@ -151,7 +156,7 @@ describe('other investigation states', () => {
   it('a running investigation shows live progress and can be cancelled', async () => {
     go(`#/investigations/${INV_RUNNING}`);
     expect(await screen.findByText('Investigating')).toBeTruthy();
-    expect(screen.getByTestId('elapsed').textContent).toMatch(/^\d+:\d\d$/);
+    expect(screen.getByTestId('elapsed').textContent).toMatch(/^\d+(:\d\d)+$/);
     fireEvent.click(screen.getByRole('button', { name: 'Cancel investigation' }));
     expect(await screen.findByRole('button', { name: 'Cancelling…' })).toBeTruthy();
     expect((await store.getInvestigation(INV_RUNNING))!.cancel_requested).toBe(true);

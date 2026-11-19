@@ -1,6 +1,6 @@
 /** Display formatting, on values taken from the real S1 run (docs/runs/s1-20261119T104115Z). */
 import { describe, expect, it } from 'vitest';
-import { duration, exact, formatValue, formatWithUnit, offset, sig3 } from '../src/lib/format.ts';
+import { duration, elapsed, exact, formatValue, formatWithUnit, offset, sig3 } from '../src/lib/format.ts';
 
 describe('formatValue', () => {
   it.each([
@@ -52,6 +52,8 @@ describe('durations', () => {
     expect(duration(850)).toBe('850 ms');
     expect(duration(135_286)).toBe('2 m 15 s');
     expect(duration(3_900_000)).toBe('1 h 5 m');
+    expect(elapsed(42_000)).toBe('0:42');
+    expect(elapsed(3_725_000)).toBe('1:02:05');
     expect(offset('2026-11-19T10:44:15.403Z', '2026-11-19T10:44:30.403Z')).toBe('+15.0 s');
   });
 });
