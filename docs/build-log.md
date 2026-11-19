@@ -19,3 +19,4 @@
 - 11:48 | B | DONE: 270/270 tests (174 new), S1+S2 fixture replay, contracts unchanged, handoff written | none | —
 - 11:48 | B | found: runToolLoop rejects malformed-JSON args before run → no evidence row, breaks "one row per call" | assigned to main session (src/llm unowned), Wave 2, low priority | Groq strict mode makes it rare; validator only checks cited evidence
 - 11:49 | B | review | contract-guardian from main (Opus) + /code-review in B worktree after /clear (Opus) | independent context for review; review early while C/D build
+- 11:50 | ops | cleared B before exporting transcript | recovered via /resume + /export; rule: /export before every /clear | transcripts are video evidence
